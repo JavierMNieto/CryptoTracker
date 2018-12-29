@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import pprint
+import time
 from urllib.parse import parse_qs as pq
 from fnmatch import fnmatch
 from traceback import print_exc
@@ -28,12 +29,12 @@ def load_misc(path, start_response):
             message = open(path, "r").read().encode()
             contentType = [('Content-Type', 'text/html')]
         else:
-            start_response('404 NOT OK FUCK YOU', contentType + [('Cache-Control', 'no-store, must-revalidate'), ('Pragma', 'no-cache'), ('Expires', '0')])
-            return "<h1> PAGE NOT FOUND PLS FUCK OFF </h1>".encode()
+            start_response('404 NOT OK', contentType + [('Cache-Control', 'no-store, must-revalidate'), ('Pragma', 'no-cache'), ('Expires', '0')])
+            return "<h1> PAGE NOT FOUND </h1>".encode()
         return message
     except:
-        start_response('404 NOT OK FUCK YOU', contentType + [('Cache-Control', 'no-store, must-revalidate'), ('Pragma', 'no-cache'), ('Expires', '0')])
-        return "<h1> PAGE NOT FOUND PLS FUCK OFF </h1>".encode()
+        start_response('404 NOT OK', contentType + [('Cache-Control', 'no-store, must-revalidate'), ('Pragma', 'no-cache'), ('Expires', '0')])
+        return "<h1> PAGE NOT FOUND </h1>".encode()
     
 
 def eprint(*args, **kwargs):
@@ -56,6 +57,11 @@ def application(environ, start_response):
         st = pprint.pformat(calls[req_path[0]](environ))
         message += ('<pre style="word-wrap: break-word; white-space: pre-wrap;">' + st + "</pre>")
         message = message.encode()
+        starttime = time.time()
+        while True:
+            print("Refresh")
+            search.refresh()
+            time.sleep(60.0 - ((time.time() - starttime) % 60.0))
     else:
         message = load_misc(environ["REQUEST_URI"][1:], start_response)
     return [message]

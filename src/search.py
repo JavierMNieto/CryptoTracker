@@ -14,20 +14,20 @@ class Search:
 		params = pq(environ['QUERY_STRING'])
 		return 'addr' in params
 
-	def getTxs(self, addrObj, maxTime, offset):
+	def getTxs(self, addrObj, offset):
 		url = self.btcUrl + addrObj['addr'] + '?&offset=' + str(offset)
 		print('Checking ' + url)
 		obj = (requests.get(url)).json()
 		go  = True
 		i   = 0
 		with self.driver.session() as session:
-				lastTxid = session.run("Match (a)-[r]->(b) WHERE a.addr = {addr} OR b.addr = {addr} "
-							"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
+				lastTxid = session.run("Match (a:BTC)-[r]->(b:BTC) WHERE a.addr = {addr} OR b.addr = {addr} "
+										"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
 				lastTxid = lastTxid.single()
 		if lastTxid is not None:
 			lastTxid = lastTxid[0]
 		for tx in obj['txs']:
-			if time.time() - tx['time'] > maxTime or tx['hash'] == lastTxid:
+			if time.time() - tx['time'] > int(addrObj['maxTime']) or tx['hash'] == lastTxid:
 				go = False
 				break
 			i = i + 1
@@ -77,18 +77,18 @@ class Search:
 						for outName, outValue in outputs.items():
 							if inName == outName:
 								continue
-							val    = 0
+							val = 0
 							if inName == addrObj['addr'] and len(inputs) == 1:
 								val = outValue
 								relTxt = 'amountSent'
 							else:
-								val    = inValue
+								val = inValue
 								relTxt = 'amountReceived'
 							if val <= minVal:
 								continue
-							session.run("MERGE (a:Address {addr:$addr}) "
+							session.run("MERGE (a:BTC {addr:$addr}) "
 										"ON CREATE SET a.name = {addr}", addr = inName if inName is not addrObj['addr'] else outName)
-							session.run("MATCH (a:Address), (b:Address) WHERE a.addr = {aAddr} AND b.addr = {bAddr} "
+							session.run("MATCH (a:BTC), (b:BTC) WHERE a.addr = {aAddr} AND b.addr = {bAddr} "
 										"CREATE (a)-[:`" + str(val) + "` {txid:$txid, time:$time, " + relTxt + ":$val, txTotal:$amount, epoch:$epoch}]->(b)", txid = tx['hash'], 
 										time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time'])), epoch = tx['time'], relTxt = relTxt, val = str(val), aAddr = inName, bAddr = outName, amount = str(amount))
 				addrObj['txs'].append({'txid': tx['hash'], 'time': tx['time'], 'inputs': inputs, 'outputs': outputs, 'amount': amount})
@@ -96,7 +96,22 @@ class Search:
 			print("All Transactions Collected")
 			return addrObj
 		else:
-			return self.getTxs(addrObj, maxTime, offset + 50)
+			return self.getTxs(addrObj, offset + 50)
+
+	def refresh(self):
+		with self.driver.session() as session:
+			nodes = session.run("MATCH (n:BTC) RETURN n")
+			if nodes is None:
+				return
+			for node in nodes:
+				node = node.get(node.keys()[0])
+				obj = (requests.get(self.btcUrl + node['addr'])).json()
+				addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
+				session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
+							"SET a.balance = {balance}", addr = addrObj['addr'], balance = addrObj['balance'])
+				if "minTx" in node and "maxTime" in node:
+					addrObj = { 'addr': obj['address'], 'n_txs': obj['n_tx'], 'minTx': node['minTx'], 'maxTime': node['maxTime'], 'txs': []}
+					self.getTxs(addrObj, 0) 
 
 	def getAddr(self, environ):
 		if not self.checkParams(environ):
@@ -104,18 +119,18 @@ class Search:
 		queryString = pq(environ["QUERY_STRING"])
 		addr    = queryString['addr'][0]
 		name	= queryString['name'][0] if 'name' in queryString and queryString['name'][0] is not '' else addr
-		maxTime = int(queryString['time'][0]) if 'time' in queryString else None
+		maxTime = int(queryString['time'][0]) if 'time' in queryString else -1
 		minTx	= float(queryString['minTx'][0]) if 'minTx' in queryString else -1
 		obj = (requests.get(self.btcUrl + addr)).json()
-		addrObj = {'name': name, 'addr': obj['address'], 'balance': obj['final_balance']/satoshi, 'n_txs': obj['n_tx'], 'minTx': minTx, 'txs': []}
+		addrObj = {'name': name, 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi), 'n_txs': obj['n_tx'], 'minTx': minTx, 'maxTime': maxTime, 'txs': []}
 		with self.driver.session() as session:
-			session.run("MERGE (a:Address {addr:$addr}) "
-						"ON CREATE SET a.minTx = {minTx}, a.name = {name} "
-						"ON MATCH SET a.minTx  = {minTx}, a.name = {name}", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'])
+			session.run("MERGE (a:BTC {addr:$addr}) "
+						"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
+						"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime}", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
 		if maxTime < 0 or maxTime is None: 
 			return addrObj
 		else:
-			addrObj = self.getTxs(addrObj, maxTime, 0)
+			addrObj = self.getTxs(addrObj, 0)
 			return addrObj
 
 	def close(self):
