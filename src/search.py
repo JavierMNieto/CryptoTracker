@@ -79,7 +79,7 @@ class Search:
 								continue
 							val    = 0
 							if inName == addrObj['addr'] and len(inputs) == 1:
-								val    = outValue
+								val = outValue
 								relTxt = 'amountSent'
 							else:
 								val    = inValue
