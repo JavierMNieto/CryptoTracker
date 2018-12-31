@@ -10,7 +10,9 @@ from traceback import print_exc
 
 sys.path.insert(0, os.path.dirname(__file__))
 from search import Search
-search = Search('https://blockchain.info/rawaddr/', {'url': 'bolt://localhost:7687', 'user': 'neo4j', 'pass': '2282002'})
+from constants import neo4j
+
+search = Search('https://blockchain.info/rawaddr/', 'https://api.omniwallet.org/v1/address/addr/details/', {'url': 'bolt://localhost:7687', 'user': neo4j['user'], 'pass': neo4j['pass']})
 
 def load_misc(path, start_response):
     contentType = []
@@ -33,6 +35,7 @@ def load_misc(path, start_response):
             return "<h1> PAGE NOT FOUND </h1>".encode()
         return message
     except:
+        print_exc(file=open("log.txt", "a"))
         start_response('404 NOT OK', contentType + [('Cache-Control', 'no-store, must-revalidate'), ('Pragma', 'no-cache'), ('Expires', '0')])
         return "<h1> PAGE NOT FOUND </h1>".encode()
     
@@ -43,7 +46,9 @@ def eprint(*args, **kwargs):
 def logPrint(*args, **kwargs):
     print(*args, file=open("log.txt", "a"), **kwargs)
 
-calls = {"getAddr": search.getAddr}
+calls = {"getBTC": search.getBTC,
+        "getUSDT": search.getUSDT,
+        "refresh": search.refresh}
 
 def application(environ, start_response):
     message = ("<h1>Hello World</h1> <p>" + str(environ) + "</p>")
@@ -52,16 +57,20 @@ def application(environ, start_response):
     req_path = environ["REQUEST_URI"].strip().split("/")[1:]
     start_response('200 OK', [('Content-Type', 'text/html')])
     print(req_path[0])
-    logPrint(req_path[0])
+    #logPrint(req_path[0])
     if req_path[0] in calls:
-        st = pprint.pformat(calls[req_path[0]](environ))
-        message += ('<pre style="word-wrap: break-word; white-space: pre-wrap;">' + st + "</pre>")
-        message = message.encode()
-        starttime = time.time()
-        while True:
-            print("Refresh")
-            search.refresh()
-            time.sleep(60.0 - ((time.time() - starttime) % 60.0))
+        if req_path[0] == 'refresh':
+            calls[req_path[0]]()
+        else:
+            st = pprint.pformat(calls[req_path[0]](environ))
+            message += ('<pre style="word-wrap: break-word; white-space: pre-wrap;">' + st + "</pre>")
+            message = message.encode()
+        #search.refresh()
+        #starttime = time.time()
+        #while True:
+        #    print("Refresh")
+        #    search.refresh()
+        #    time.sleep(300.0 - ((time.time() - starttime) % 300.0))
     else:
         message = load_misc(environ["REQUEST_URI"][1:], start_response)
     return [message]
