@@ -48,7 +48,8 @@ def logPrint(*args, **kwargs):
 
 calls = {"getBTC": search.getBTC,
         "getUSDT": search.getUSDT,
-        "refresh": search.refresh}
+        "refresh": search.refresh,
+        "collapse": search.collapse}
 
 def application(environ, start_response):
     message = ("<h1>Hello World</h1> <p>" + str(environ) + "</p>")
@@ -59,7 +60,7 @@ def application(environ, start_response):
     print(req_path[0])
     #logPrint(req_path[0])
     if req_path[0] in calls:
-        if req_path[0] == 'refresh':
+        if req_path[0] == 'refresh' or req_path[0] == 'collapse':
             calls[req_path[0]]()
         else:
             st = pprint.pformat(calls[req_path[0]](environ))

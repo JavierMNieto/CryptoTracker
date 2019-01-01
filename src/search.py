@@ -6,41 +6,39 @@ from urllib.parse import parse_qs as pq
 from neo4j.v1 import GraphDatabase
 from constants import *
 from traceback import print_exc
+from threading import Thread, Lock
+import queue
+
 
 def numWithCommas(num):
 	return ("{:,}".format(num))
+
+
 
 class Search: 
 	def __init__(self, btcUrl, usdtUrl, neo4j):
 		self.btcUrl = btcUrl
 		self.usdtUrl = usdtUrl
 		self.driver = GraphDatabase.driver(neo4j['url'], auth=(neo4j['user'], neo4j['pass']))
+		self.mutex = Lock()
+		self.done = False
+		self.queue = queue.Queue()
+		self.page = 0
 
 	def checkParams(self, environ):
 		params = pq(environ['QUERY_STRING'])
 		return 'addr' in params
 
-	def usdtRequest(self, addr, page):
+	def usdtRequest(self, addr, page, num):
 		try: 
-			proxy = proxies[0]
-			if proxy['uses'] > 9:
-				if time.time() - proxy['stopTime'] > 60:
-					proxy['uses'] = 0
-				else:
-					del(proxies[0])
-					proxies.append(proxy)
-					return self.usdtRequest(addr, page)
-			proxy = None if proxies[0]['proxy'] is None else proxies[0]['proxy']['https']
-			print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxy))
-			obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[0]['proxy'])).json()
-			proxies[0]['uses'] = proxies[0]['uses'] + 1
-			if proxies[0]['uses'] > 9:
-				proxies[0]['stopTime'] = time.time()
+			print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]))
+
+			obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
 			return obj
 		except Exception as e:
 			print(e)
 			print_exc(file=open("log.txt", "a"))
-			return {}
+			return None
 
 	def getTxs(self, addrObj, offset, isChange):
 		url = self.btcUrl + addrObj['addr'] + '?&offset=' + str(offset)
@@ -132,8 +130,59 @@ class Search:
 		else:
 			return self.getTxs(addrObj, offset + 50, isChange)
 
+	def threadCall(self, threadNum, addrObj, lastTxid):
+		while not self.done:
+			currPage = 0
+			self.mutex.acquire()
+			currPage = self.page
+			self.page += 1
+			self.mutex.release()
+			print("Page {} with Thread {}".format(currPage, threadNum))
+			obj = self.usdtRequest(addrObj['addr'], currPage, threadNum)
+			#add to queue
+			if obj is None or self.done or ('error' in obj and obj['error']):
+				if self.done:
+					print("All Transactions Collected for thread {}".format(threadNum))
+					return 0
+				elif obj is None or 'error' in obj and obj['error']  :
+					print("Max Transactions Requested From OmniExplorer")
+					#wait
+					starttime = time.time()
+					wait = True
+					while wait:
+						print("Waiting One Minute...")
+						time.sleep(60.0 - ((time.time() - starttime) % 60.0))
+						wait = False
+						obj = self.usdtRequest(addrObj['addr'], currPage, threadNum)
+			for tx in obj['transactions']:
+				exist = self.driver.session().run("MATCH (a:BTC)-[r]->(b:BTC) WHERE r.txid = {txid} RETURN r.txid", txid = tx['txid'])
+				exist = exist.single()
+				isNotValid = 'valid' not in tx or not tx['valid'] or int(tx['propertyid']) != 31 or (int(tx['type_int']) != 0 and int(tx['type_int']) != 55) or float(tx['amount']) < addrObj['minTx'] or exist is not None 
+				if isNotValid:
+					continue
+				if time.time() - tx['blocktime'] > addrObj['maxTime'] or tx['txid'] == lastTxid:
+						if tx['txid'] == lastTxid:
+							print("No New Transactions")
+						self.mutex.acquire()
+						self.done = True
+						self.mutex.release()
+						return 0
+				inName = tx['sendingaddress']
+				outName = tx['referenceaddress']
+				sortedTx = {'addr': addrObj['addr'], 'txid': tx['txid'], 'time': tx['blocktime'], 'inputs': {inName: tx['amount']}, 'outputs': {outName: (float(tx['amount']) - float(tx['fee']))}, 'amount': tx['amount']}
+				#print("Here {}".format(sortedTx['txid']))
+				self.queue.put(sortedTx)
+			if self.page == obj['pages']:
+				print("No More Transactions Left")
+				self.mutex.acquire()
+				self.done = True
+				self.mutex.release()
+				return addrObj
+		return 0
+
+
 	def getUTxs(self, addrObj, page, isChange):
-		obj = self.usdtRequest(addrObj['addr'], page)
+		obj = self.usdtRequest(addrObj['addr'], page, 0)
 		go  = True
 		lastTxid = ''
 		if not isChange:
@@ -173,6 +222,7 @@ class Search:
 				return self.getUTxs(addrObj, page, isChange)
 			elif 'error' in obj and obj['error']:
 				print("Max Transactions Requested From OmniExplorer")
+				#proxies[0]['uses'] = 10
 				return self.getUTxs(addrObj, page, isChange)
 			elif page == obj['pages']:
 				print("No More Transactions Left")
@@ -188,7 +238,7 @@ class Search:
 		name	= queryString['name'][0] if 'name' in queryString and queryString['name'][0] is not '' else addr
 		maxTime = int(queryString['time'][0]) if 'time' in queryString else -1
 		minTx	= float(queryString['minTx'][0]) if 'minTx' in queryString else -1
-		obj = self.usdtRequest(addr, 1)
+		obj = self.usdtRequest(addr, 1, 0)
 		if obj is None:
 			print("Address Does Not Exist")
 			return "Address Does Not Exist"
@@ -203,10 +253,12 @@ class Search:
 		if maxTime < 0 or maxTime is None: 
 			return addrObj
 		else:
-			addrObj = self.getUTxs(addrObj, 1, isChange)
-			return addrObj
+			self.threadTest(addrObj, isChange)
 
 	def refresh(self):
+		self.done = False
+		self.page = 1
+		#set lastTxId
 		with self.driver.session() as session:
 			nodes = session.run("MATCH (n:BTC) RETURN n")
 			if nodes is not None:
@@ -215,33 +267,90 @@ class Search:
 					obj = (requests.get(self.btcUrl + node['addr'])).json()
 					addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
 					session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
-								"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch}", addr = addrObj['addr'], balance = addrObj['balance'], lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+								"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch}", addr = addrObj['addr'], balance = addrObj['balance'], 
+								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 					if "minTx" in node and "maxTime" in node:
 						addrObj = { 'addr': obj['address'], 'n_txs': obj['n_tx'], 'minTx': node['minTx'], 'maxTime': node['maxTime'], 'txs': []}
-						addrObj = self.getTxs(addrObj, 0, False)
+						self.getTxs(addrObj, 0, False)
 			nodes = session.run("MATCH (n:USDT) RETURN n")
 			if nodes is not None:
 				for node in nodes:
 					node = node.get(node.keys()[0])
-					obj = self.usdtRequest(node['addr'], 1)
+					obj = self.usdtRequest(node['addr'], 1, 0)
 					if 'error' in obj and obj['error']:
 						return
 					for coin in obj['balance']:
 						if int(coin['id']) == 31:
 							addrObj = { 'addr': obj['address'], 'balance': float(coin['value'])/satoshi}
 							session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
-										"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch}", addr = addrObj['addr'], balance = addrObj['balance'], lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+										"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch}", 
+										addr = addrObj['addr'], balance = addrObj['balance'], lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 							break
 					if "minTx" in node and "maxTime" in node:
 						addrObj = { 'addr': obj['address'], 'minTx': node['minTx'], 'maxTime': node['maxTime'], 'txs': []}
-						addrObj = self.getUTxs(addrObj, 1, False)
+						self.getUTxs(addrObj, 1, False)
 			print("Addresses Updated")
+
+	def databaseThread(self, message):
+		tx = self.queue.get(block = True, timeout= None)
+		while tx:
+			for inName, inValue in tx['inputs'].items():
+				for outName, outValue in tx['outputs'].items():
+					if inName == outName:
+						continue
+					val = 0
+					if inName == tx['addr'] and len(tx['inputs']) == 1:
+						val = outValue
+					else:
+						val = inValue
+					if val <= minVal:
+						continue
+					with self.driver.session() as session:
+						session.run("MERGE (a:USDT {addr:$addr}) "
+									"ON CREATE SET a.name = {addr}", addr = inName if outName == tx['addr'] else outName)
+						session.run("MATCH (a:USDT), (b:USDT) WHERE a.addr = {aAddr} AND b.addr = {bAddr} "
+									"CREATE (a)-[:`" + numWithCommas(float(val)) + "` {txid:$txid, time:$time, amount:$amount, epoch:$epoch, isTotal:$isTotal}]->(b)",
+									aAddr = inName, bAddr = outName, txid = tx['txid'], time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time'])), 
+									amount = tx['amount'], epoch = tx['time'], isTotal = False)
+
+
+	def threadTest(self, addrObj, isChange):
+		self.done = False
+		self.page = 0
+		threads = []
+		lastTxid = ''
+		if not isChange:
+			with self.driver.session() as session:
+					lastTxid = session.run("Match (a:USDT)-[r]->(b:USDT) WHERE a.addr = {addr} OR b.addr = {addr} "
+											"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
+					lastTxid = lastTxid.single()
+			if lastTxid is not None:
+				lastTxid = lastTxid[0]
+		dataThread = Thread(target=self.databaseThread)
+		for x in range(0, len(proxies)):
+			threads.append(Thread(target=self.threadCall, args = (x, addrObj, lastTxid)))
+			threads[x].start()
+		for x in range(0, len(proxies)):
+			threads[x].join()
+		self.queue.put(None)
+		print("Done with all Threads")
+	def collapse(self):
+		with self.driver.session() as session:
 			nodes = session.run("MATCH (a)-[r]->(b) WITH a, b, count(r) as rCount, SUM(toInt(r.amount)) as total " 
-								"WHERE rCount > 4 RETURN a.addr, b.addr, total")
+								"WHERE rCount > 1 RETURN a.addr, b.addr, total, labels(a)[0], labels(b)[0]")
+			session.run("Match ()-[r {isTotal:True}]->() detach delete r")
 			if nodes is not None:
 				for node in nodes:
-					print(node)
-
+					aAddr = node.get(node.keys()[0])
+					bAddr = node.get(node.keys()[1])
+					total = node.get(node.keys()[2]) 
+					aType = node.get(node.keys()[3]) 
+					bType = node.get(node.keys()[4]) 
+					session.run("MATCH (a:"+ aType + " {addr:$aAddr}), (b:" + bType + " {addr:$bAddr}) "
+								"CREATE (a)-[r:`" + numWithCommas(total) + "` {isTotal:$isTotal, amount:$amount, lastUpdate:$lastUpdate, epoch:$epoch}]->(b) ",
+								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, 
+								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+		print("Total Transactions Updated")
 
 	def getBTC(self, environ):
 		if not self.checkParams(environ):
