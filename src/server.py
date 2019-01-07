@@ -38,13 +38,6 @@ def load_misc(path, start_response):
         print_exc(file=open("log.txt", "a"))
         start_response('404 NOT OK', contentType + [('Cache-Control', 'no-store, must-revalidate'), ('Pragma', 'no-cache'), ('Expires', '0')])
         return "<h1> PAGE NOT FOUND </h1>".encode()
-    
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-def logPrint(*args, **kwargs):
-    print(*args, file=open("log.txt", "a"), **kwargs)
 
 calls = {"getBTC": search.getBTC,
         "getUSDT": search.getUSDT,
