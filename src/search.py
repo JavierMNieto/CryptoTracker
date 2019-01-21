@@ -57,7 +57,7 @@ class Search:
 				return 0
 			i = 0
 			for tx in obj['txs']:
-				if time.time() - tx['time'] > int(addrObj['maxTime']) or tx['hash'] == lastTxid:
+				if addrObj['lastTxTime'] > tx['time'] or time.time() - tx['time'] > int(addrObj['maxTime']) or tx['hash'] == lastTxid:
 					if tx['hash'] == lastTxid:
 						print("No New Transactions") 
 					self.mutex.acquire()
@@ -65,7 +65,7 @@ class Search:
 					self.mutex.release()
 					break
 				i += 1	
-				exist = self.driver.session().run("MATCH (a:BTC)-[r]->(b:BTC) WHERE r.txid = {txid} RETURN r.txid", txid = tx['hash'])
+				exist = self.driver.session().run("MATCH (a:BTC)-[r:BTCTX]->(b:BTC) WHERE r.txid = {txid} RETURN r.txid", txid = tx['hash'])
 				exist = exist.single()
 				if exist is not None:
 					continue
@@ -135,14 +135,14 @@ class Search:
 						wait = False
 						obj = self.usdtRequest(addrObj['addr'], currPage, threadNum)
 			for tx in obj['transactions']:
-				if time.time() - tx['blocktime'] > addrObj['maxTime'] or tx['txid'] == lastTxid:
+				if addrObj['lastTxTime'] > tx['blocktime'] or time.time() - tx['blocktime'] > addrObj['maxTime'] or tx['txid'] == lastTxid:
 					if tx['txid'] == lastTxid:
 						print("No New Transactions")
 					self.mutex.acquire()
 					self.done = True
 					self.mutex.release()
 					break
-				exist = self.driver.session().run("MATCH (a:USDT)-[r]->(b:USDT) WHERE r.txid = {txid} RETURN r.txid", txid = tx['txid'])
+				exist = self.driver.session().run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE r.txid = {txid} RETURN r.txid", txid = tx['txid'])
 				exist = exist.single()
 				isNotValid = 'valid' not in tx or not tx['valid'] or int(tx['propertyid']) != 31 or (int(tx['type_int']) != 0 and int(tx['type_int']) != 55) or float(tx['amount']) < addrObj['minTx'] or exist is not None 
 				if isNotValid:
@@ -182,7 +182,7 @@ class Search:
 						session.run("MERGE (a:" + addrObj['type'] + " {addr:$addr}) "
 									"ON CREATE SET a.name = {addr}", addr = inName if outName == tx['addr'] else outName)
 						session.run("MATCH (a:" + addrObj['type'] + "), (b:" + addrObj['type'] + ") WHERE a.addr = {aAddr} AND b.addr = {bAddr} "
-									"CREATE (a)-[:`" + numWithCommas(float(val)) + "` {txid:$txid, time:$time, amount:$amount, epoch:$epoch, isTotal:$isTotal}]->(b)",
+									"CREATE (a)-[:" + addrObj['type'] + "TX {txid:$txid, time:$time, amount:$amount, epoch:$epoch, isTotal:$isTotal}]->(b)",
 									aAddr = inName, bAddr = outName, txid = tx['txid'], time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time'])), 
 									amount = tx['amount'], epoch = tx['time'], isTotal = False)
 			tx = self.queue.get(block=True, timeout=None)
@@ -206,9 +206,13 @@ class Search:
 		addrObj = {'name': name, 'type': 'USDT', 'addr': obj['address'], 'minTx': minTx, 'maxTime': maxTime, 'txs': []}
 		self.addrObj = addrObj
 		with self.driver.session() as session:
-			session.run("MERGE (a:USDT {addr:$addr}) "
-						"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-						"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime}", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
+			lastTime = session.run("MERGE (a:USDT {addr:$addr}) "
+									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
+									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
+									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
+			lastTime = lastTime.single()
+			lastTime = lastTime[0]
+		addrObj['lastTxTime'] = float(lastTime)
 		if maxTime < 0 or maxTime is None: 
 			return addrObj
 		else:
@@ -219,7 +223,7 @@ class Search:
 		self.page = 1
 		threads = []
 		with self.driver.session() as session:
-			lastTxid = session.run("Match (a:USDT)-[r]->(b:USDT) WHERE (a.addr = {addr} OR b.addr = {addr}) AND NOT r.isTotal "
+			lastTxid = session.run("Match (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.addr = {addr} OR b.addr = {addr}) AND NOT r.isTotal "
 									"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
 			lastTxid = lastTxid.single()
 		if lastTxid is not None:
@@ -263,9 +267,13 @@ class Search:
 		addrObj = {'name': name, 'type': 'BTC', 'addr': obj['address'], 'n_txs': obj['n_tx'], 'minTx': minTx, 'maxTime': maxTime, 'txs': []}
 		self.addrObj = addrObj
 		with self.driver.session() as session:
-			session.run("MERGE (a:BTC {addr:$addr}) "
-						"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-						"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime}", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
+			lastTime = session.run("MERGE (a:BTC {addr:$addr}) "
+									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
+									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
+									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
+			lastTime = lastTime.single()
+			lastTime = lastTime[0]
+		addrObj['lastTxTime'] = float(lastTime)
 		if maxTime < 0 or maxTime is None: 
 			return addrObj
 		else:
@@ -276,7 +284,7 @@ class Search:
 		self.page = 0
 		threads = []
 		with self.driver.session() as session:
-			lastTxid = session.run("Match (a:BTC)-[r]->(b:BTC) WHERE (a.addr = {addr} OR b.addr = {addr}) AND NOT r.isTotal "
+			lastTxid = session.run("Match (a:BTC)-[r:BTCTX]->(b:BTC) WHERE (a.addr = {addr} OR b.addr = {addr}) AND NOT r.isTotal "
 										"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
 			lastTxid = lastTxid.single()
 		if lastTxid is not None:
@@ -304,13 +312,18 @@ class Search:
 					node = node.get(node.keys()[0])
 					obj = (requests.get(self.btcUrl + node['addr'])).json()
 					addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
-					session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
-								"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch}", addr = addrObj['addr'], balance = addrObj['balance'], 
-								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+					lastTime = session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
+											"WITH a, a.epoch as lastTime "
+											"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} "
+											"RETURN lastTime", addr = addrObj['addr'], balance = addrObj['balance'], 
+											lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+					lastTime = lastTime.single()
+					lastTime = lastTime[0]
 					if "minTx" in node and "maxTime" in node:
 						self.done = False
 						self.page = 0
-						addrObj = { 'addr': obj['address'], 'type': 'BTC', 'n_txs': obj['n_tx'], 'minTx': node['minTx'], 'maxTime': node['maxTime'], 'txs': []}
+						addrObj = { 'addr': obj['address'], 'type': 'BTC', 'n_txs': obj['n_tx'], 
+									'minTx': node['minTx'], 'maxTime': node['maxTime'], 'lastTxTime': lastTime, 'txs': []}
 						self.addrObj = addrObj
 						self.threadsBTC(addrObj, )
 			nodes = session.run("MATCH (n:USDT) RETURN n")
@@ -318,19 +331,23 @@ class Search:
 				for node in nodes:
 					node = node.get(node.keys()[0])
 					obj = self.usdtRequest(node['addr'], 1, 0)
-					if 'error' in obj and obj['error']:
+					if obj is None or 'error' in obj and obj['error']:
 						return
 					for coin in obj['balance']:
 						if int(coin['id']) == 31:
 							addrObj = { 'addr': obj['address'], 'balance': float(coin['value'])/satoshi}
-							session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
-										"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch}", 
-										addr = addrObj['addr'], balance = addrObj['balance'], lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+							lastTime = session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
+													"WITH a, a.epoch as lastTime "
+													"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} "
+													"RETURN lastTime", addr = addrObj['addr'], balance = addrObj['balance'], lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+							lastTime = lastTime.single()
+							lastTime = lastTime[0]
 							break
 					if "minTx" in node and "maxTime" in node:
 						self.done = False
 						self.page = 1
-						addrObj = { 'addr': obj['address'], 'type': 'USDT', 'minTx': node['minTx'], 'maxTime': node['maxTime'], 'txs': []}
+						addrObj = { 'addr': obj['address'], 'type': 'USDT', 'minTx': node['minTx'],
+									'maxTime': node['maxTime'], 'lastTxTime': lastTime, 'txs': []}
 						self.addrObj = addrObj
 						self.threadsUSDT(addrObj, )
 			print("Addresses Updated")
@@ -338,18 +355,22 @@ class Search:
 	def collapse(self):
 		with self.driver.session() as session:
 			nodes = session.run("MATCH (a)-[r]->(b) WITH a, b, count(r) as rCount, SUM(toInt(r.amount)) as total " 
-								"WHERE rCount > 1 RETURN a.addr, b.addr, total, labels(a)[0], labels(b)[0]")
-			session.run("Match ()-[r {isTotal:True}]->() detach delete r")
+								"WHERE rCount > 1 RETURN a.addr, b.addr, total, labels(a)[0], labels(b)[0], rCount")
+			#session.run("Match ()-[r {isTotal:True}]->() detach delete r")
 			if nodes is not None:
 				for node in nodes:
 					aAddr = node.get(node.keys()[0])
 					bAddr = node.get(node.keys()[1])
-					total = node.get(node.keys()[2]) 
+					total = float(node.get(node.keys()[2])) 
 					aType = node.get(node.keys()[3]) 
-					bType = node.get(node.keys()[4]) 
+					bType = node.get(node.keys()[4])
+					TxsNum = float(node.get(node.keys()[5]))
+					avgTotal = total/TxsNum
 					session.run("MATCH (a:"+ aType + " {addr:$aAddr}), (b:" + bType + " {addr:$bAddr}) "
-								"CREATE (a)-[r:`" + numWithCommas(total) + "` {isTotal:$isTotal, amount:$amount, lastUpdate:$lastUpdate, epoch:$epoch}]->(b) ",
-								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, 
+								"MERGE (a)-[r:" + aType + "TX {isTotal:$isTotal}]->(b) "
+								"ON CREATE SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.TxsNum = {TxsNum} "
+								"ON MATCH SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.TxsNum = {TxsNum} ",
+								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, avgTxTotal = avgTotal, TxsNum = TxsNum,
 								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 		print("Total Transactions Updated")
 
