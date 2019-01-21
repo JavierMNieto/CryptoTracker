@@ -11,13 +11,11 @@
 	<link rel="stylesheet" href="{% static 'navbar.css' %}">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
 	 crossorigin="anonymous">
-	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-	 crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
 	 crossorigin="anonymous"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
 	 crossorigin="anonymous"></script>
-	<script src="{% static 'alchemy/alchemy.min.js' %}"></script>
 </head>
 
 <body>
@@ -59,7 +57,7 @@
 			<!-- d-* hiddens the Sidebar in smaller devices. Its itens can be kept on the Navbar 'Menu' -->
 			<!-- Bootstrap List Group -->
 			<ul class="list-group sticky-top sticky-offset">
-				<a href="" target="iframe_a" class="bg-dark list-group-item list-group-item-action">Home</a>
+				<a href="{% url 'usdt:search' 0 %}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">Home</a>
 				{% for x in search %}
 				<a href="{% url 'usdt:search' x %}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
 					<div class="d-flex w-100 justify-content-start align-items-center">
@@ -74,11 +72,7 @@
 
 		<!-- MAIN -->
 		<div class="col py-3">
-
-			<h2>Iframe - Target for a Link</h2>
-			<iframe src="{% url 'usdt:search' 0 %}" frameborder="0" name="iframe_a" width="90%">
-				<div id="alchemy" class="alchemy"></div>
-			</iframe>
+			<iframe src="{% url 'usdt:search' 0 %}" frameborder="0" name="iframe_a" width="90%" height="1000px"></iframe>
 		</div>
 		<!-- Main Col END -->
 
@@ -114,14 +108,6 @@
 		// Collapse/Expand icon
 		$('#collapse-icon').toggleClass('fa-angle-double-left fa-angle-double-right');
 	}
-
-	document.getElementById('addr').onclick = function() {
-		graphData = {{data}};
-		var alchemy = new Alchemy({
-			dataSource: graphData
-		});
-	}
-	
 </script>
 
 </html>

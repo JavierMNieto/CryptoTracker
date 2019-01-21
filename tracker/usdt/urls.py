@@ -21,6 +21,7 @@ from . import views
 
 app_name = 'usdt'
 urlpatterns = [
+    path('admin/', admin.site.urls, name='admin'),
     path('home/', views.home),
     path('navbar/', views.nav),
     path('search/<str:id>', views.search, name='search'),

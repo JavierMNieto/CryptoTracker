@@ -1,0 +1,280 @@
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 171, in _new_conn
+    (self._dns_host, self.port), self.timeout, **extra_kw)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\connection.py", line 56, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\socket.py", line 748, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 815, in _prepare_proxy
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 180, in _new_conn
+    self, "Failed to establish a new connection: %s" % e)
+urllib3.exceptions.NewConnectionError: <urllib3.connection.VerifiedHTTPSConnection object at 0x08091EB0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x08091EB0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 507, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x08091EB0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed')))
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 851, in connect
+    negotiate(self, dest_addr, dest_port)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 497, in _negotiate_SOCKS5
+    self, CONNECT, dest_addr)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 548, in _SOCKS5_request
+    raise SOCKS5AuthError("SOCKS5 authentication failed")
+socks.SOCKS5AuthError: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 88, in _new_conn
+    **extra_kw
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 262, in create_connection
+    raise err
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 252, in create_connection
+    sock.connect((remote_host, remote_port))
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 100, in wrapper
+    return function(*args, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 855, in connect
+    raise GeneralProxyError("Socket error", error)
+socks.GeneralProxyError: Socket error: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 343, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 849, in _validate_conn
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 110, in _new_conn
+    "Failed to establish a new connection: %s" % error
+urllib3.exceptions.NewConnectionError: <urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x08621DD0>: Failed to establish a new connection: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x08621DD0>: Failed to establish a new connection: SOCKS5 authentication failed'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 513, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x08621DD0>: Failed to establish a new connection: SOCKS5 authentication failed'))
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 851, in connect
+    negotiate(self, dest_addr, dest_port)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 497, in _negotiate_SOCKS5
+    self, CONNECT, dest_addr)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 548, in _SOCKS5_request
+    raise SOCKS5AuthError("SOCKS5 authentication failed")
+socks.SOCKS5AuthError: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 88, in _new_conn
+    **extra_kw
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 262, in create_connection
+    raise err
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 252, in create_connection
+    sock.connect((remote_host, remote_port))
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 100, in wrapper
+    return function(*args, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 855, in connect
+    raise GeneralProxyError("Socket error", error)
+socks.GeneralProxyError: Socket error: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 343, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 849, in _validate_conn
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 110, in _new_conn
+    "Failed to establish a new connection: %s" % error
+urllib3.exceptions.NewConnectionError: <urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x04E5B490>: Failed to establish a new connection: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x04E5B490>: Failed to establish a new connection: SOCKS5 authentication failed'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 513, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x04E5B490>: Failed to establish a new connection: SOCKS5 authentication failed'))
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 171, in _new_conn
+    (self._dns_host, self.port), self.timeout, **extra_kw)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\connection.py", line 56, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\socket.py", line 748, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 815, in _prepare_proxy
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 180, in _new_conn
+    self, "Failed to establish a new connection: %s" % e)
+urllib3.exceptions.NewConnectionError: <urllib3.connection.VerifiedHTTPSConnection object at 0x0875DF90>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x0875DF90>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 507, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x0875DF90>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed')))
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 815, in _prepare_proxy
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 324, in connect
+    self._tunnel()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\http\client.py", line 911, in _tunnel
+    message.strip()))
+OSError: Tunnel connection failed: 502 Proxy Error: server_error Error creating ext request: Connection closed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 502 Proxy Error: server_error Error creating ext request: Connection closed')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 507, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 502 Proxy Error: server_error Error creating ext request: Connection closed')))
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 33, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
+TypeError: can only concatenate str (not "NoneType") to str
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 33, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
+TypeError: can only concatenate str (not "NoneType") to str
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 33, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
+TypeError: can only concatenate str (not "NoneType") to str

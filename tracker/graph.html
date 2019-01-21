@@ -1,0 +1,126 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 500px;
+            height: 500px;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+        #config {
+            float: left;
+            width: 400px;
+            height: 600px;
+        }
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<div id = "config"></div>
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"color": "green", "id": 7220, "label": "138peSkKMgVWuDLmfinzUq6XkkKH2u1LwS", "shape": "dot", "size": 10.0, "title": "Address: 138peSkKMgVWuDLmfinzUq6XkkKH2u1LwS\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:47"}, {"color": "green", "id": 7026, "label": "1KYiKJEfdJtap9QX2v9BXJMpz2SfU4pgZw", "shape": "dot", "size": 15.220804785131577, "title": "Address: 1KYiKJEfdJtap9QX2v9BXJMpz2SfU4pgZw\u003cbr\u003e Balance: 34,805,365.23421051\u003cbr\u003e Last Updated: 2019-01-20 14:19:38"}, {"color": "green", "id": 7025, "label": "Treasury", "shape": "dot", "size": 80.041480672, "title": "Address: 1NTMakcgVwQpMdGxRQnFKyb3G1FAJysSfz\u003cbr\u003e Balance: 466,943,204.48\u003cbr\u003e Last Updated: 2019-01-20 14:18:35"}, {"color": "green", "id": 6613, "label": "3LCx3zGC9wsaF5iLDg8do6TdwfJ9yCcwMn", "shape": "dot", "size": 10.0, "title": "Address: 3LCx3zGC9wsaF5iLDg8do6TdwfJ9yCcwMn\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:46"}, {"color": "green", "id": 7221, "label": "18LwW2Xa5dnZaNSXBPffZD9D12iY3DG3xm", "shape": "dot", "size": 10.0, "title": "Address: 18LwW2Xa5dnZaNSXBPffZD9D12iY3DG3xm\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:48"}, {"color": "green", "id": 6588, "label": "1DzfWVFwCMyA5BQdXgoiCCzebpG5ApZHpR", "shape": "dot", "size": 10.1424208, "title": "Address: 1DzfWVFwCMyA5BQdXgoiCCzebpG5ApZHpR\u003cbr\u003e Balance: 949,472.0\u003cbr\u003e Last Updated: 2019-01-20 14:23:39"}, {"color": "green", "id": 7200, "label": "1PMhH9maPSV9XR3NxYQ3zjzFyfTUSGPEEm", "shape": "dot", "size": 10.0, "title": "Address: 1PMhH9maPSV9XR3NxYQ3zjzFyfTUSGPEEm\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:46"}, {"color": "green", "id": 7223, "label": "3CTbzqFZrg1tV7L4zeQW3qwESqumffb2VP", "shape": "dot", "size": 10.0, "title": "Address: 3CTbzqFZrg1tV7L4zeQW3qwESqumffb2VP\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:51"}, {"color": "green", "id": 6304, "label": "3D2GQZ741GUiJebeTG2pyWQzHtuK6R9VS9", "shape": "dot", "size": 10.0, "title": "Address: 3D2GQZ741GUiJebeTG2pyWQzHtuK6R9VS9\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:33"}, {"color": "green", "id": 7222, "label": "1Pgtb3k8YfnRwa5uM7rviWrYUiqB2ptYNh", "shape": "dot", "size": 10.0, "title": "Address: 1Pgtb3k8YfnRwa5uM7rviWrYUiqB2ptYNh\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:49"}, {"color": "green", "id": 6634, "label": "1MZAayfFJ9Kki2csoYjFVRKHFFSkdoMLtX", "shape": "dot", "size": 10.0, "title": "Address: 1MZAayfFJ9Kki2csoYjFVRKHFFSkdoMLtX\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:29"}, {"color": "green", "id": 6302, "label": "19RCsnXKSyL6ygjZKWiquwDQ9nwe7ZHNPm", "shape": "dot", "size": 10.0, "title": "Address: 19RCsnXKSyL6ygjZKWiquwDQ9nwe7ZHNPm\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:20"}, {"color": "green", "id": 6615, "label": "1QJ6VA6ZAMdpwtVSfcUyhLkPPQJAjstsf6", "shape": "dot", "size": 10.0, "title": "Address: 1QJ6VA6ZAMdpwtVSfcUyhLkPPQJAjstsf6\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:48"}, {"color": "green", "id": 6648, "label": "1H98CDmBbSeE9g3UXdeQtYJTfetuJfxko5", "shape": "dot", "size": 10.0, "title": "Address: 1H98CDmBbSeE9g3UXdeQtYJTfetuJfxko5\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:30"}, {"color": "green", "id": 6616, "label": "1GsbzmRsgMHLYdgjSNgHcViapYP1qqooaC", "shape": "dot", "size": 10.0, "title": "Address: 1GsbzmRsgMHLYdgjSNgHcViapYP1qqooaC\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:49"}, {"color": "green", "id": 6649, "label": "1EBkbLEGCgPR6TX6jmMwgvheMsCx8c2Q6S", "shape": "dot", "size": 10.0, "title": "Address: 1EBkbLEGCgPR6TX6jmMwgvheMsCx8c2Q6S\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:31"}, {"color": "green", "id": 6650, "label": "1PyuMUWCzyPRBDoniMW8VMeEfhMXXyrKvQ", "shape": "dot", "size": 10.0, "title": "Address: 1PyuMUWCzyPRBDoniMW8VMeEfhMXXyrKvQ\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:31"}, {"color": "green", "id": 6628, "label": "1gHBSN6UmWcWCqr77ujoXcUzQ15ZrevFy", "shape": "dot", "size": 10.0, "title": "Address: 1gHBSN6UmWcWCqr77ujoXcUzQ15ZrevFy\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:50"}, {"color": "green", "id": 6629, "label": "1AtVuUgpDAiv9QC5cL8SvG2T9xJ5ie5Cbe", "shape": "dot", "size": 10.0, "title": "Address: 1AtVuUgpDAiv9QC5cL8SvG2T9xJ5ie5Cbe\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:51"}, {"color": "green", "id": 7108, "label": "1BJARPfutKZEMs2VgtWyTg4B2bEPXdpvt7", "shape": "dot", "size": 10.0, "title": "Address: 1BJARPfutKZEMs2VgtWyTg4B2bEPXdpvt7\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:41"}, {"color": "green", "id": 6651, "label": "18fMWVaYHVJn4WgLpz5g4xxqsFhLCQ4X9L", "shape": "dot", "size": 10.0, "title": "Address: 18fMWVaYHVJn4WgLpz5g4xxqsFhLCQ4X9L\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:32"}, {"color": "green", "id": 6589, "label": "1Mfn26ABTDBexhSUbsE3MxKBLSHfHQj9Z7", "shape": "dot", "size": 10.241591095, "title": "Address: 1Mfn26ABTDBexhSUbsE3MxKBLSHfHQj9Z7\u003cbr\u003e Balance: 1,610,607.3\u003cbr\u003e Last Updated: 2019-01-20 14:23:45"}, {"color": "green", "id": 7109, "label": "124tNrZeR1UzoSbB3eKgytVDh7KNsiTdgo", "shape": "dot", "size": 10.000012, "title": "Address: 124tNrZeR1UzoSbB3eKgytVDh7KNsiTdgo\u003cbr\u003e Balance: 80.0\u003cbr\u003e Last Updated: 2019-01-20 14:19:42"}, {"color": "green", "id": 7150, "label": "1GKxDH6JVnTrucF8C5ZCDU7HymG6BAjgG2", "shape": "dot", "size": 10.0, "title": "Address: 1GKxDH6JVnTrucF8C5ZCDU7HymG6BAjgG2\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:43"}, {"color": "green", "id": 7110, "label": "1JmcmV1uLTbP4KByqrVuAJFEBCsDCDmhF2", "shape": "dot", "size": 10.0, "title": "Address: 1JmcmV1uLTbP4KByqrVuAJFEBCsDCDmhF2\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:42"}, {"color": "green", "id": 6652, "label": "17SCkNSFbwmWqxjbddnaMQ988pgMurtXKk", "shape": "dot", "size": 10.0, "title": "Address: 17SCkNSFbwmWqxjbddnaMQ988pgMurtXKk\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:33"}, {"color": "green", "id": 6668, "label": "1AYn2nKmULaAH676zMKbyF8Qu1waYtzUQZ", "shape": "dot", "size": 10.0, "title": "Address: 1AYn2nKmULaAH676zMKbyF8Qu1waYtzUQZ\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:18:35"}, {"color": "green", "id": 7151, "label": "13PwuM3iVqCjqaetQTs1GoWaVEXTP8orNa", "shape": "dot", "size": 10.0, "title": "Address: 13PwuM3iVqCjqaetQTs1GoWaVEXTP8orNa\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:45"}, {"color": "green", "id": 7155, "label": "1GrZG61AoHVn8UZcHiX2gJgAkajRaTo1C3", "shape": "dot", "size": 10.032103484665667, "title": "Address: 1GrZG61AoHVn8UZcHiX2gJgAkajRaTo1C3\u003cbr\u003e Balance: 214,023.23110445\u003cbr\u003e Last Updated: 2019-01-20 14:19:45"}, {"color": "green", "id": 7240, "label": "1NVUsMUonxLMz3LN1op9QrcuN2FLMbpsoq", "shape": "dot", "size": 10.0, "title": "Address: 1NVUsMUonxLMz3LN1op9QrcuN2FLMbpsoq\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:52"}, {"color": "green", "id": 7260, "label": "1LQQL1n3y9He8Yw8MFHtVKXt5TMR35t2nD", "shape": "dot", "size": 10.0, "title": "Address: 1LQQL1n3y9He8Yw8MFHtVKXt5TMR35t2nD\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:19:53"}, {"color": "green", "id": 6303, "label": "3MbYQMMmSkC3AgWkj9FMo5LsPTW1zBTwXL", "shape": "dot", "size": 10.0, "title": "Address: 3MbYQMMmSkC3AgWkj9FMo5LsPTW1zBTwXL\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:27"}, {"color": "green", "id": 6614, "label": "1GjgKbj69hDB7YPQF9KwPEy274jLzBKVLh", "shape": "dot", "size": 10.0, "title": "Address: 1GjgKbj69hDB7YPQF9KwPEy274jLzBKVLh\u003cbr\u003e Balance: 0\u003cbr\u003e Last Updated: 2019-01-20 14:23:47"}]);
+        edges = new vis.DataSet([{"arrowStrikeThrough": false, "from": 7220, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: de2e6c0740e0070cf67a95588233e15921a9fd352dca523cf32149c304105e14\u003cbr\u003e Total: 1,998,000.0\u003cbr\u003e Time: 2019-01-18 15:44:57", "to": 7026, "value": 1998000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: fb42d7bc17ea02f4e0d73d429f7651b681956d56719c945c5d5bb21b3a420d22\u003cbr\u003e Total: 1,998,000.0\u003cbr\u003e Time: 2019-01-18 15:31:34", "to": 7220, "value": 1998000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 44a3d35b0939b3bb25b2500a7cc8b92ff12c298645790012cb4b8602c4285812\u003cbr\u003e Total: 5,000,000.0\u003cbr\u003e Time: 2019-01-18 14:43:53", "to": 6613, "value": 5000000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 2d047046176bbfbbfadb51aba9758cd49653fbb211f6f9cf2faf1181c28fe221\u003cbr\u003e Total: 4,114,088.0\u003cbr\u003e Time: 2019-01-17 11:10:27", "to": 7221, "value": 4114088.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 4c2d058cccfd717337aed2d292c844d2f3cb22b1f02fa0f11d281401ae7faef1\u003cbr\u003e Total: 1,098,900.0\u003cbr\u003e Time: 2019-01-17 11:10:27", "to": 6588, "value": 1098900.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 01756acccd1fca4de55d5fe52f8b5cadbd7683f1cc3e453b92c17f759ff93034\u003cbr\u003e Total: 1,065,889.0\u003cbr\u003e Time: 2019-01-15 12:10:19", "to": 7200, "value": 1065889.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 619fa14d9a5d81ab788f03a25518475ed529b1296acd2f5ebbc0c6b3963462bc\u003cbr\u003e Total: 1,998,000.0\u003cbr\u003e Time: 2019-01-15 01:32:40", "to": 7223, "value": 1998000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 640a454da464bbf104b00176f895d9fba971cb3a4756d0b70eca1df10ffd1cbf\u003cbr\u003e Total: 14,985,000.0\u003cbr\u003e Time: 2019-01-15 01:32:40", "to": 6304, "value": 14985000.0}, {"arrowStrikeThrough": false, "from": 7026, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 52bbab662fa36ec199fe0ce1fe1373c46fad93602d9b8d0ead052dba514fac2b\u003cbr\u003e Total: 6,199,472.0\u003cbr\u003e Time: 2019-01-14 11:50:40", "to": 7221, "value": 6199472.0}, {"arrowStrikeThrough": false, "from": 7222, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: c446fe3bc5ed50f271206320a6580b9caf0725fc160327f8f1d0298b6233d555\u003cbr\u003e Total: 6,199,492.0\u003cbr\u003e Time: 2019-01-14 10:20:52", "to": 7026, "value": 6199492.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 6d6e7a897d6c1b534f3b54d41736cf3d550bf83b9cb9650a4b0a8734c2fef2c7\u003cbr\u003e Total: 6,199,492.0\u003cbr\u003e Time: 2019-01-14 09:56:40", "to": 7222, "value": 6199492.0}, {"arrowStrikeThrough": false, "from": 6634, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 447533dc92fce8ae9b35c351d1a5afcee363a81459dce7db325cf4f4d8c8a8e8\u003cbr\u003e Total: 1,133,339.4\u003cbr\u003e Time: 2019-01-12 14:29:15", "to": 7026, "value": 1133339.4}, {"arrowStrikeThrough": false, "from": 6302, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 6fa3fcd52422ab3d641469cc45e6df57e6396c6f3955152f08f4cd70372f5865\u003cbr\u003e Total: 1,998,000.0\u003cbr\u003e Time: 2019-01-11 12:51:13", "to": 7026, "value": 1998000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: c5f4d1e60dd127011f3d87812bddfd733d7e224ba89feb950d799de34c9a1824\u003cbr\u003e Total: 1,998,000.0\u003cbr\u003e Time: 2019-01-11 12:30:00", "to": 6302, "value": 1998000.0}, {"arrowStrikeThrough": false, "from": 6615, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: f62f2a23ec8dcbd97d9b1a380ec50fddc5cfb55efcf20882ad0f022be1853b02\u003cbr\u003e Total: 1,000,000.0\u003cbr\u003e Time: 2019-01-10 09:27:12", "to": 7026, "value": 1000000.0}, {"arrowStrikeThrough": false, "from": 7026, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: a6865096eb48d091f6138855af4b495db5b216f293eac7ca606e8c4eae2870bf\u003cbr\u003e Total: 1,345,648.76735916\u003cbr\u003e Time: 2019-01-10 03:40:50", "to": 6648, "value": 1345648.76735916}, {"arrowStrikeThrough": false, "from": 6616, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 1cd6dcf9a3fc3d34c2b6041c0c5294574b2f8d1af2b16f592417f53961e13a9e\u003cbr\u003e Total: 3,830,764.5\u003cbr\u003e Time: 2019-01-10 02:41:08", "to": 7026, "value": 3830764.5}, {"arrowStrikeThrough": false, "from": 6649, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: dd0e9b86aeb4e69e4696df47111bae06a113c34538a1f39b875730286fb50253\u003cbr\u003e Total: 2,830,559.8982\u003cbr\u003e Time: 2019-01-10 02:41:08", "to": 7026, "value": 2830559.8982}, {"arrowStrikeThrough": false, "from": 7026, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: dbc84c3f476d87c033035e4d433fdc356b558fd19d6034850f9085bb283311a9\u003cbr\u003e Total: 1,999,980.0\u003cbr\u003e Time: 2019-01-06 17:29:05", "to": 6613, "value": 1999980.0}, {"arrowStrikeThrough": false, "from": 6650, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 593eb061702f7c73d1ca7ea02c35dd3d673ce6393c64f81c919c48a527ea4f08\u003cbr\u003e Total: 1,249,998.0\u003cbr\u003e Time: 2019-01-04 10:28:34", "to": 7026, "value": 1249998.0}, {"arrowStrikeThrough": false, "from": 6628, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 35d1611bfcfbd210e569bd8ab30c10a5af170d78c5f8effc520cb41208d63f57\u003cbr\u003e Total: 17,203,588.04847145\u003cbr\u003e Time: 2019-01-01 23:14:35", "to": 7026, "value": 17203588.04847145}, {"arrowStrikeThrough": false, "from": 6629, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: f9e7c3f6ab74e8e73a79aa82416832582f1ee6f40cf49582c0d0052190a3b506\u003cbr\u003e Total: 5,999,995.0066\u003cbr\u003e Time: 2018-12-31 06:20:42", "to": 7026, "value": 5999995.0066}, {"arrowStrikeThrough": false, "from": 7108, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 8705b9918dee29ba49e0f81c0ab1455aa2f1fe66d9d9788feafac2d2f756a5c7\u003cbr\u003e Total: 1,000,000.0\u003cbr\u003e Time: 2018-12-28 14:15:09", "to": 7026, "value": 1000000.0}, {"arrowStrikeThrough": false, "from": 6651, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 5091e4dc68339fc0dcd1f4c9b1bb695ba6a11753ecc619ed6dbfe9d435123af7\u003cbr\u003e Total: 1,364,014.27\u003cbr\u003e Time: 2018-12-22 10:28:47", "to": 7026, "value": 1364014.27}, {"arrowStrikeThrough": false, "from": 6589, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 2f99581664f4dba99d3e98d11f070747da8276f90f54a89181b078abe790ddf4\u003cbr\u003e Total: 2,898,625.5\u003cbr\u003e Time: 2018-12-20 05:57:48", "to": 7026, "value": 2898625.5}, {"arrowStrikeThrough": false, "from": 7026, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 98cf961aa4e096c055165eb09a793baf812bf1c32fe4694785bdfdecf96da123\u003cbr\u003e Total: 1,527,980.0\u003cbr\u003e Time: 2018-12-17 17:02:15", "to": 7109, "value": 1527980.0}, {"arrowStrikeThrough": false, "from": 7150, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: c1e0c6962982bde2478345ca8e1090d0d1b8c840a4a35a485aa08a9750fd0dbb\u003cbr\u003e Total: 1,660,004.50458154\u003cbr\u003e Time: 2018-12-13 18:10:37", "to": 7026, "value": 1660004.50458154}, {"arrowStrikeThrough": false, "from": 7110, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: cc7eebc66bff1d0e2b36833cd6f4642830d45e11009d411ac98112c04c7adea8\u003cbr\u003e Total: 1,000,000.0\u003cbr\u003e Time: 2018-12-11 00:18:03", "to": 7026, "value": 1000000.0}, {"arrowStrikeThrough": false, "from": 6652, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 9ddf821ff15d07b474519666ad08eb62ca65614603ad76c190e13d21cbc78c5f\u003cbr\u003e Total: 1,100,000.0\u003cbr\u003e Time: 2018-12-05 21:22:52", "to": 7026, "value": 1100000.0}, {"arrowStrikeThrough": false, "from": 6668, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: f91a620b51c3fa51387d1f073aac34e5ac39d739c2d048cd613dcfd71a72216e\u003cbr\u003e Total: 2,000,000.0\u003cbr\u003e Time: 2018-11-28 05:02:48", "to": 7026, "value": 2000000.0}, {"arrowStrikeThrough": false, "from": 7151, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 06dd34cb8cb98bb2556babbbae50f0226204400ec0787fb9d3479a5b91b7432a\u003cbr\u003e Total: 1,000,000.0\u003cbr\u003e Time: 2018-11-27 02:33:25", "to": 7026, "value": 1000000.0}, {"arrowStrikeThrough": false, "from": 7026, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 5a6de49ceb28f4d99a08bf09fa8c7522401150797b3349aa6b057f9b44b0cd6c\u003cbr\u003e Total: 1,500,000.0\u003cbr\u003e Time: 2018-11-26 15:55:59", "to": 7155, "value": 1500000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: fc4973d9b59deba3fa20045fd10c891212d85c50a038131266584eb7f8c32212\u003cbr\u003e Total: 50,000,000.0\u003cbr\u003e Time: 2018-11-25 11:22:23", "to": 7026, "value": 50000000.0}, {"arrowStrikeThrough": false, "from": 7026, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 658c85626c21ed8f300c6c897b65526588fa2d4d163324f8b31c1a4e2e6bc6dd\u003cbr\u003e Total: 6,441,400.40400139\u003cbr\u003e Time: 2018-11-25 04:55:04", "to": 7240, "value": 6441400.40400139}, {"arrowStrikeThrough": false, "from": 7260, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 905e90876fcfe59d038e87c053f8c96e6945b33883182d5734a0ed4872f8e0a3\u003cbr\u003e Total: 1,002,000.0\u003cbr\u003e Time: 2018-11-25 04:55:04", "to": 7026, "value": 1002000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 3463540ccfb95ed725d41c4d26697a8be2da1734afc90560db4a8f2ba0753b54\u003cbr\u003e Total: 500,000,000.0\u003cbr\u003e Time: 2018-10-24 11:40:47", "to": 6303, "value": 500000000.0}, {"arrowStrikeThrough": false, "from": 7025, "physics": true, "title": "Collapsed: False\u003cbr\u003e Txid: 1e0de0668927b70005a188803bbbae29ece0c7ecc71047073c2d1db2254aca5d\u003cbr\u003e Total: 200,000,000.0\u003cbr\u003e Time: 2018-01-31 02:49:07", "to": 6614, "value": 200000000.0}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "nodes",
+            "edges",
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": false,
+            "type": "continuous"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        // default to using dot shape for nodes
+        options.nodes = {
+            shape: "dot"
+        }
+        
+        // if this network requires displaying the configure window,
+        // put it in its div
+        options.configure["container"] = document.getElementById("config");
+        
+
+        network = new vis.Network(container, data, options);
+
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>
