@@ -136,7 +136,7 @@ class Search:
 						obj = self.usdtRequest(addrObj['addr'], currPage, threadNum)
 			for tx in obj['transactions']:
 				if addrObj['lastTxTime'] > tx['blocktime'] or time.time() - tx['blocktime'] > addrObj['maxTime'] or tx['txid'] == lastTxid:
-					if tx['txid'] == lastTxid:
+					if tx['txid'] == lastTxid or addrObj['lastTxTime'] > tx['blocktime']:
 						print("No New Transactions")
 					self.mutex.acquire()
 					self.done = True
@@ -152,8 +152,11 @@ class Search:
 				sortedTx = {'addr': addrObj['addr'], 'txid': tx['txid'], 'time': tx['blocktime'], 'inputs': {inName: float(tx['amount'])}, 'outputs': {outName: (float(tx['amount']) - float(tx['fee']))}, 'amount': tx['amount']}
 				#print("Here {}".format(sortedTx['txid']))
 				self.queue.put(sortedTx)
-			if self.page == obj['pages']:
-				print("No More Transactions Left")
+			if self.page == obj['pages'] or self.page > 1500:
+				if self.page > 1500:
+					print("Transactions Checked Exceeded 1500 Pages, Moving On...")
+				else:
+					print("No More Transactions Left")
 				self.mutex.acquire()
 				self.done = True
 				self.mutex.release()
@@ -315,7 +318,8 @@ class Search:
 					lastTime = session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
 											"WITH a, a.epoch as lastTime "
 											"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} "
-											"RETURN lastTime", addr = addrObj['addr'], balance = addrObj['balance'], 
+											"RETURN CASE lastTime WHEN NULL THEN 0 ELSE lastTime END", 
+											addr = addrObj['addr'], balance = addrObj['balance'], 
 											lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 					lastTime = lastTime.single()
 					lastTime = lastTime[0]
@@ -339,7 +343,9 @@ class Search:
 							lastTime = session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
 													"WITH a, a.epoch as lastTime "
 													"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} "
-													"RETURN lastTime", addr = addrObj['addr'], balance = addrObj['balance'], lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+													"RETURN CASE lastTime WHEN NULL THEN 0 ELSE lastTime END", 
+													addr = addrObj['addr'], balance = addrObj['balance'], 
+													lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 							lastTime = lastTime.single()
 							lastTime = lastTime[0]
 							break
