@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, render
 from neo4j.v1 import GraphDatabase
 import pprint
 import json
+import math
 from pyvis.network import Network
 from . import constants
 
@@ -17,7 +18,7 @@ def numWithCommas(num):
 	return ("{:,}".format(num))
 
 def search(request, id):
-	net = Network()
+	#net = Network()
 	with driver.session() as session:
 		if id == '0':
 			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal "
@@ -50,20 +51,20 @@ def search(request, id):
 			"id": aNode.id,
 			"color": "green",
 			"label": aNode['name'],
-			"value": 10.0 + float(aNode['balance'])/100000000,
+			"value": 10.0 + float(aNode['balance'] or "0")/100000000,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
-						"Last Updated: {}").format(aNode['addr'], numWithCommas(float(aNode['balance']) or 0), aNode['lastUpdate'])
+						"Last Updated: {}").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")), aNode['lastUpdate'])
 		}
 		bNode = nodes.get('b')
 		bNode = {
 			"id": bNode.id,
 			"color": "green",
 			"label": bNode['name'],
-			"value": 10.0 + float(bNode['balance'])/100000000,
+			"value": 10.0 + float(bNode['balance'] or "0")/100000000,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
-						"Last Updated: {}").format(bNode['addr'], numWithCommas(float(bNode['balance']) or 0), bNode['lastUpdate'])
+						"Last Updated: {}").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0") ), bNode['lastUpdate'])
 		}
 		rel   = nodes.get('r')
 		rel2  = rel
@@ -71,6 +72,9 @@ def search(request, id):
 			"from": aNode['id'],
 			"to": bNode['id'],
 			"value": float(rel['amount']),
+			"source": aNode['label'],
+			"target": bNode['label'],
+			"amount": numWithCommas(float(rel['amount'] or "0"))
 			#"title": ("Collapsed: True<br> "
 			#			"# of Txs: {}<br> "
 			#			"Total: {}<br> "
@@ -112,16 +116,29 @@ def search(request, id):
 		aNode = nodes.get('a')
 		aNode = {
 			"id": aNode.id,
+			"label": aNode['name'],
+			"isKnown": True if aNode['minTx'] is not None else False
 		}
 		bNode = nodes.get('b')
 		bNode = {
-			"id": bNode.id
+			"id": bNode.id,
+			"label": bNode['name'],
+			"isKnown": True if bNode['minTx'] is not None else False
 		}
 		rel   = nodes.get('r')
 		rel   = {
 			"from": aNode['id'],
 			"to": bNode['id'],
 			"value": float(rel['amount']),
+			"source": aNode['label'],
+			"target": bNode['label'],
+			"amount": numWithCommas(float(rel['amount'] or "0")),
+			"time": rel['time'],
+			"txid": rel['txid'],
+			"sourceUrl": "/usdt/search/{}".format(aNode['label']) if aNode['isKnown'] 
+						else "https://omniexplorer.info/address/{}".format(aNode['label']),
+			"targetUrl": "/usdt/search/{}".format(bNode['label']) if bNode['isKnown'] 
+						else "https://omniexplorer.info/address/{}".format(bNode['label']),
 			"title": ("Collapsed: False<br> "
 						"Txid: {}<br> "
 						"Total: {}<br> "
@@ -131,16 +148,16 @@ def search(request, id):
 	#net.show_buttons(filter_=['nodes', 'edges', 'physics'])
 	#net.save_graph('graph.html')
 	#net.add_nodes(nodes['ids'], value = nodes['values'], title = nodes['titles'], label = nodes['labels'], color = nodes['colors'])
-	return render(request, 'usdt/test.html', {'search': id, 'nodes': json.dumps(data['nodes']), 'edges': json.dumps(data['edges'])})
+	return render(request, 'usdt/test.html', {'search': id, 'nodes': data['nodes'], 'edges': data['edges']})
 
 def home(request):
 	x = []
-	print('here')
+	#print('here')
 	with driver.session() as session:
 		results = session.run("MATCH (a:USDT) WHERE a.minTx IS NOT NULL RETURN a.name")
 		for record in results:
 			x.append(record['a.name'])
-		print(x)
+		#print(x)
 	search = {'search': x}
 	return render(request, 'usdt/index.html', search)
 

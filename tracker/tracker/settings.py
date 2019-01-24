@@ -63,6 +63,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+        'libraries':{
+            'usdt_extras': 'usdt.templatetags.usdt_extras',
+            }
         },
     },
 ]
