@@ -5,3 +5,7 @@ register = template.Library()
 @register.filter(name='times')
 def times(number):
     return range(1, number)
+
+@register.filter(name='numCommas')
+def numCommas(num):
+    return ("{:,}".format(num))

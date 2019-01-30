@@ -5,6 +5,7 @@ import pprint
 from urllib.parse import parse_qs as pq
 from neo4j.v1 import GraphDatabase
 from constants import *
+from random import randint
 from traceback import print_exc
 from threading import Thread, Lock
 import queue
@@ -32,7 +33,11 @@ class Search:
 			proxy = 'None' if proxies[num] is None else str(proxies[num]['https'])
 			print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
 			obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
-			return obj
+			if obj is None or ('error' in obj and obj['error']):
+
+				return self.usdtRequest(addr, page, randint(0, 13))
+			else: 
+				return obj
 		except Exception as e:
 			print(e)
 			print_exc(file=open("log.txt", "a"))
@@ -135,7 +140,9 @@ class Search:
 						wait = False
 						obj = self.usdtRequest(addrObj['addr'], currPage, threadNum)
 			for tx in obj['transactions']:
-				if addrObj['lastTxTime'] > tx['blocktime'] or time.time() - tx['blocktime'] > addrObj['maxTime'] or tx['txid'] == lastTxid:
+				if tx['txid'] == lastTxid:
+					continue
+				if addrObj['lastTxTime'] > tx['blocktime'] or time.time() - tx['blocktime'] > addrObj['maxTime']:
 					if tx['txid'] == lastTxid or addrObj['lastTxTime'] > tx['blocktime']:
 						print("No New Transactions")
 					self.mutex.acquire()
@@ -152,7 +159,7 @@ class Search:
 				sortedTx = {'addr': addrObj['addr'], 'txid': tx['txid'], 'time': tx['blocktime'], 'inputs': {inName: float(tx['amount'])}, 'outputs': {outName: (float(tx['amount']) - float(tx['fee']))}, 'amount': tx['amount']}
 				#print("Here {}".format(sortedTx['txid']))
 				self.queue.put(sortedTx)
-			if self.page == obj['pages'] or self.page > 1500:
+			if self.page >= obj['pages'] or self.page > 1500:
 				if self.page > 1500:
 					print("Transactions Checked Exceeded 1500 Pages, Moving On...")
 				else:
@@ -308,6 +315,7 @@ class Search:
 
 	def refresh(self):
 		#set lastTxId
+		print("Refreshing Addresses")
 		with self.driver.session() as session:
 			nodes = session.run("MATCH (n:BTC) RETURN n")
 			if nodes is not None:
@@ -322,7 +330,10 @@ class Search:
 											addr = addrObj['addr'], balance = addrObj['balance'], 
 											lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 					lastTime = lastTime.single()
-					lastTime = lastTime[0]
+					if lastTime is None:
+						lastTime = 0
+					else:
+						lastTime = lastTime[0]
 					if "minTx" in node and "maxTime" in node:
 						self.done = False
 						self.page = 0
@@ -334,9 +345,9 @@ class Search:
 			if nodes is not None:
 				for node in nodes:
 					node = node.get(node.keys()[0])
-					obj = self.usdtRequest(node['addr'], 1, 0)
+					obj = self.usdtRequest(node['addr'], 1, randint(0, 13))
 					if obj is None or 'error' in obj and obj['error']:
-						return
+						continue
 					for coin in obj['balance']:
 						if int(coin['id']) == 31:
 							addrObj = { 'addr': obj['address'], 'balance': float(coin['value'])/satoshi}
@@ -347,7 +358,10 @@ class Search:
 													addr = addrObj['addr'], balance = addrObj['balance'], 
 													lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 							lastTime = lastTime.single()
-							lastTime = lastTime[0]
+							if lastTime is None:
+								lastTime = 0
+							else:
+								lastTime = lastTime[0]
 							break
 					if "minTx" in node and "maxTime" in node:
 						self.done = False
@@ -356,7 +370,7 @@ class Search:
 									'maxTime': node['maxTime'], 'lastTxTime': lastTime, 'txs': []}
 						self.addrObj = addrObj
 						self.threadsUSDT(addrObj, )
-			print("Addresses Updated")
+			print("Addresses Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
 
 	def collapse(self):
 		with self.driver.session() as session:
@@ -378,7 +392,7 @@ class Search:
 								"ON MATCH SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.TxsNum = {TxsNum} ",
 								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, avgTxTotal = avgTotal, TxsNum = TxsNum,
 								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
-		print("Total Transactions Updated")
+		print("Total Transactions Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
 
 	def close(self):
 		self.driver.close()
