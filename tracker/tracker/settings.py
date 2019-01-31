@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '2vy=19j$1dfax7-fm!w!qemx!wxj97
 #DEBUG = True
 DEBUG = True
 
-ALLOWED_HOSTS = ["61a6a30a.ngrok.io", "localhost"]
+ALLOWED_HOSTS = ["6962386e.ngrok.io", "localhost"]
 
 
 # Application definition
@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'usdt',
+    'btc'
 ]
 
 MIDDLEWARE = [

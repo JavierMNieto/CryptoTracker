@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Book
+from .models import Node
 
-class BookAdmin(admin.ModelAdmin):
-    list_display = ['title', 'publication_date', 'author', 'price', 'book_type']
-
-admin.site.register(Book, BookAdmin)
+class NodeAdmin(admin.ModelAdmin):
+    def delete_queryset(self, request, queryset):
+        for e in queryset:
+            e.delete()
+admin.site.register(Node, NodeAdmin)
