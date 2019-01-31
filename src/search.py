@@ -62,7 +62,7 @@ class Search:
 				return 0
 			i = 0
 			for tx in obj['txs']:
-				if addrObj['lastTxTime'] > tx['time'] or time.time() - tx['time'] > int(addrObj['maxTime']) or tx['hash'] == lastTxid:
+				if addrObj['lastTxTime'] > tx['time'] or addrObj['tx_since'] > tx['time'] or tx['hash'] == lastTxid:
 					if tx['hash'] == lastTxid:
 						print("No New Transactions") 
 					self.mutex.acquire()
@@ -142,7 +142,7 @@ class Search:
 			for tx in obj['transactions']:
 				if tx['txid'] == lastTxid:
 					continue
-				if addrObj['lastTxTime'] > tx['blocktime'] or time.time() - tx['blocktime'] > addrObj['maxTime']:
+				if addrObj['lastTxTime'] > tx['blocktime'] or addrObj['tx_since'] > tx['blocktime']:
 					if tx['txid'] == lastTxid or addrObj['lastTxTime'] > tx['blocktime']:
 						print("No New Transactions")
 					self.mutex.acquire()
@@ -207,23 +207,23 @@ class Search:
 		queryString = pq(environ["QUERY_STRING"])
 		addr    = queryString['addr'][0]
 		name	= queryString['name'][0] if 'name' in queryString and queryString['name'][0] is not '' else addr
-		maxTime = int(queryString['time'][0]) if 'time' in queryString else -1
+		tx_since = int(queryString['time'][0]) if 'time' in queryString else -1
 		minTx	= float(queryString['minTx'][0]) if 'minTx' in queryString else -1
 		obj = self.usdtRequest(addr, 1, 0)
 		if obj is None:
 			print("Address Does Not Exist")
 			return "Error Getting {}".format(addr)
-		addrObj = {'name': name, 'type': 'USDT', 'addr': obj['address'], 'minTx': minTx, 'maxTime': maxTime, 'txs': []}
+		addrObj = {'name': name, 'type': 'USDT', 'addr': obj['address'], 'minTx': minTx, 'tx_since': tx_since, 'txs': []}
 		self.addrObj = addrObj
 		with self.driver.session() as session:
 			lastTime = session.run("MERGE (a:USDT {addr:$addr}) "
-									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
+									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
+									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
+									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], tx_since = tx_since)
 			lastTime = lastTime.single()
 			lastTime = lastTime[0]
 		addrObj['lastTxTime'] = float(lastTime)
-		if maxTime < 0 or maxTime is None: 
+		if tx_since < 0 or tx_since is None: 
 			return addrObj
 		else:
 			return self.threadsUSDT(addrObj, )
@@ -263,7 +263,7 @@ class Search:
 		queryString = pq(environ["QUERY_STRING"])
 		addr    = queryString['addr'][0]
 		name	= queryString['name'][0] if 'name' in queryString and queryString['name'][0] is not '' else addr
-		maxTime = int(queryString['time'][0]) if 'time' in queryString else -1
+		tx_since = int(queryString['time'][0]) if 'time' in queryString else -1
 		minTx	= float(queryString['minTx'][0]) if 'minTx' in queryString else -1
 		obj = None
 		try: 
@@ -274,17 +274,17 @@ class Search:
 		if obj is None:
 			print("Address Does Not Exist")
 			return "Error Getting {}".format(addr)
-		addrObj = {'name': name, 'type': 'BTC', 'addr': obj['address'], 'n_txs': obj['n_tx'], 'minTx': minTx, 'maxTime': maxTime, 'txs': []}
+		addrObj = {'name': name, 'type': 'BTC', 'addr': obj['address'], 'n_txs': obj['n_tx'], 'minTx': minTx, 'tx_since': tx_since, 'txs': []}
 		self.addrObj = addrObj
 		with self.driver.session() as session:
 			lastTime = session.run("MERGE (a:BTC {addr:$addr}) "
-									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = maxTime)
+									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
+									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
+									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], tx_since = tx_since)
 			lastTime = lastTime.single()
 			lastTime = lastTime[0]
 		addrObj['lastTxTime'] = float(lastTime)
-		if maxTime < 0 or maxTime is None: 
+		if tx_since < 0 or tx_since is None: 
 			return addrObj
 		else:
 			return self.threadsBTC(addrObj, )
@@ -334,11 +334,11 @@ class Search:
 						lastTime = 0
 					else:
 						lastTime = lastTime[0]
-					if "minTx" in node and "maxTime" in node:
+					if "minTx" in node and "tx_since" in node:
 						self.done = False
 						self.page = 0
 						addrObj = { 'addr': obj['address'], 'type': 'BTC', 'n_txs': obj['n_tx'], 
-									'minTx': node['minTx'], 'maxTime': node['maxTime'], 'lastTxTime': lastTime, 'txs': []}
+									'minTx': node['minTx'], 'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
 						self.addrObj = addrObj
 						self.threadsBTC(addrObj, )
 			nodes = session.run("MATCH (n:USDT) RETURN n")
@@ -363,11 +363,11 @@ class Search:
 							else:
 								lastTime = lastTime[0]
 							break
-					if "minTx" in node and "maxTime" in node:
+					if "minTx" in node and "tx_since" in node:
 						self.done = False
 						self.page = 1
 						addrObj = { 'addr': obj['address'], 'type': 'USDT', 'minTx': node['minTx'],
-									'maxTime': node['maxTime'], 'lastTxTime': lastTime, 'txs': []}
+									'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
 						self.addrObj = addrObj
 						self.threadsUSDT(addrObj, )
 			print("Addresses Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
@@ -384,13 +384,13 @@ class Search:
 					total = float(node.get(node.keys()[2])) 
 					aType = node.get(node.keys()[3]) 
 					bType = node.get(node.keys()[4])
-					TxsNum = float(node.get(node.keys()[5]))
-					avgTotal = total/TxsNum
+					txsNum = float(node.get(node.keys()[5]))
+					avgTotal = total/txsNum
 					session.run("MATCH (a:"+ aType + " {addr:$aAddr}), (b:" + bType + " {addr:$bAddr}) "
 								"MERGE (a)-[r:" + aType + "TX {isTotal:$isTotal}]->(b) "
-								"ON CREATE SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.TxsNum = {TxsNum} "
-								"ON MATCH SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.TxsNum = {TxsNum} ",
-								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, avgTxTotal = avgTotal, TxsNum = TxsNum,
+								"ON CREATE SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.txsNum = {txsNum} "
+								"ON MATCH SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.txsNum = {txsNum} ",
+								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, avgTxTotal = avgTotal, txsNum = txsNum,
 								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 		print("Total Transactions Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
 

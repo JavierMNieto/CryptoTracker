@@ -10,8 +10,7 @@ import time
 from pyvis.network import Network
 from . import constants
 
-driver = GraphDatabase.driver(constants.neo4j['url'], auth=(
-    constants.neo4j['user'], constants.neo4j['pass']))
+driver = GraphDatabase.driver(constants.neo4j['url'], auth=(constants.neo4j['user'], constants.neo4j['pass']))
 
 # Create your views here.
 
@@ -116,13 +115,13 @@ def search(request, id):
 			if mainAddr == None and aNode['label'] == id:
 				mainAddr = aNode
 				mainAddr['minTx'] = nodes.get('a')['minTx']
-				mainAddr['maxTime'] = nodes.get('a')['maxTime']
+				mainAddr['tx_since'] = nodes.get('a')['tx_since']
 			data['nodes'].append(aNode)
 		if not bExists:
 			if mainAddr == None and bNode['label'] == id:
 				mainAddr = bNode
 				mainAddr['minTx'] = nodes.get('b')['minTx']
-				mainAddr['maxTime'] = nodes.get('b')['maxTime']
+				mainAddr['tx_since'] = nodes.get('b')['tx_since']
 			data['nodes'].append(bNode)
 		data['edges']['collapsed'].append(rel)
 	for nodes in txs:

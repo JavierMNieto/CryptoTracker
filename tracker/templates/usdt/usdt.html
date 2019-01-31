@@ -5,7 +5,8 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Javier&#x27;s First Project</title>
+	<title>USDT Market Tracker</title>
+	<link rel="shortcut icon" href="{% static 'images/usdt.png' %}">
 	<meta content="width=device-width, initial-scale=1" name="viewport">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
@@ -63,6 +64,9 @@
 			cursor: pointer;
 		}
 	</style>
+{%if search == null %}
+	<div class="h1 text-center">No Transactions Yet</div>
+{% else %}
 	<script>
 		// initialize global variables.
 		var allEdges = {{edges|safe}}
@@ -112,7 +116,9 @@
 
 					
 					$(function () {
-						$('[data-toggle="tooltip"]').tooltip();
+						$('[data-toggle="tooltip"]').tooltip({
+							trigger : 'hover'
+						});  
 					});
 				}
 
@@ -160,7 +166,11 @@
 						vm.isCollapsed = false;
 						vm.collapseText = 'Collapse Transactions';
 						$(function () {
-							$('[data-toggle="tooltip"]').tooltip();
+							$(function () {
+								$('[data-toggle="tooltip"]').tooltip({
+									trigger : 'hover'
+								});  
+							});
 							$('input[name="minTime"]').daterangepicker({
 								singleDatePicker: true,
 								timePicker: true,
@@ -240,9 +250,9 @@
 				vm.maxTx = txInc[vm.txs.length - 1].amount;
 				vm.maxTotalTx = orderBy(allEdges.collapsed, 'amount', true)[0].amount;
 				vm.maxBal = orderBy(allNodes, 'balance', true)[0].balance;
-				vm.lastTx = orderBy(vm.txs, 'time', false)[0].time;
 				vm.maxAvgTx = orderBy(allEdges.collapsed, 'avgTx', true)[0].avgTx;
 				vm.minTime = timeInc[0].time;
+				vm.lastTx = vm.minTime;
 				vm.maxTime = timeInc[vm.txs.length - 1].time;
 				vm.maxTxsNum = orderBy(allEdges.collapsed, 'txsNum', true)[0].txsNum;
 
@@ -401,7 +411,9 @@
 							data: node
 						}
 						$(function () {
-							$('[data-toggle="tooltip"]').tooltip();
+							$('[data-toggle="tooltip"]').tooltip({
+								trigger : 'hover'
+							});  
 						});
 						return;
 					}
@@ -414,7 +426,9 @@
 									data: vm.txs[i]
 								}
 								$(function () {
-									$('[data-toggle="tooltip"]').tooltip();
+									$('[data-toggle="tooltip"]').tooltip({
+										trigger : 'hover'
+									});  
 								});
 								return;
 							}
@@ -429,7 +443,9 @@
 								data: allEdges.collapsed[i]
 							}
 							$(function () {
-								$('[data-toggle="tooltip"]').tooltip();
+								$('[data-toggle="tooltip"]').tooltip({
+									trigger : 'hover'
+								});  
 							});
 							return;
 						}
@@ -589,8 +605,8 @@
 				</div>
 			</div>
 			<div class="btn-group p-1">
-				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Total Tx" data-toggle="tooltip" data-placement="top" title="Minimum Total Transaction" ng-model="vm.graphFilters.edge.amount.min" ng-model-options="{ allowInvalid: true}">
-				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" id="maxTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Total Tx" data-toggle="tooltip" data-placement="top" title="Maximum Total Transaction" ng-model="vm.graphFilters.edge.amount.max" ng-model-options="{ allowInvalid: true}">
+				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Tx" data-toggle="tooltip" data-placement="top" title="Minimum Transaction" ng-model="vm.graphFilters.edge.amount.min" ng-model-options="{ allowInvalid: true}">
+				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" id="maxTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Tx" data-toggle="tooltip" data-placement="top" title="Maximum Transaction" ng-model="vm.graphFilters.edge.amount.max" ng-model-options="{ allowInvalid: true}">
 				<button type="button" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					<span class="sr-only">Toggle Dropdown</span>
 				</button>
@@ -933,7 +949,7 @@
 						
 				</div>
 				<div class="row align-items-end justify-content-center">
-					<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
+					<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" class="font-italic text-truncate" style="font-size: 65%">
 						{% verbatim %}{{ tx.txid }}{% endverbatim %}
 					</a>
 					<button width="16" height="16" ng-click="vm.highlight(tx.id, false)" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" title="Highlight on Graph">
@@ -1088,5 +1104,5 @@
 		}
 	</script>
 </body>
-
+{% endif %}
 </html>

@@ -48,9 +48,9 @@ def getUSDT(addrObj):
 		return "Error Getting {}".format(addrObj['addr'])
 	with driver.session() as session:
 		session.run("MERGE (a:USDT {addr:$addr}) "
-					"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.maxTime = {maxTime} "
-					"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.maxTime = {maxTime} ", 
-					name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], maxTime = addrObj['maxTime'])
+					"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
+					"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since} ", 
+					name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], tx_since = addrObj['maxTime'])
 
 for addr in addrs:
 	getUSDT(addr)
