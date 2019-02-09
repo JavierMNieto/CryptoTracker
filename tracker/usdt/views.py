@@ -7,10 +7,12 @@ import pprint
 import json
 import math
 import time
+from urllib.parse import unquote
 from pyvis.network import Network
 from . import constants
 
 driver = GraphDatabase.driver(constants.neo4j['url'], auth=(constants.neo4j['user'], constants.neo4j['pass']))
+img = "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"
 
 # Create your views here.
 
@@ -19,7 +21,8 @@ def numWithCommas(num):
 
 def search(request, id):
 	mainAddr = None
-
+	id = unquote(id)
+	
 	with driver.session() as session:
 		if id == '0':
 			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal "
@@ -33,7 +36,27 @@ def search(request, id):
 				"label": "All Addresses",
 				"balance": 0
 			}
-
+		elif '[' in id:
+			id = json.loads(id)
+			addrsText = "-"
+			label = "-"
+			for addr in id:
+				addrsText += " OR (a.name = '{}' OR  b.name = '{}')".format(addr, addr)
+				label += ", {}".format(addr)
+			addrsText = addrsText.split('- OR', 1)[1]
+			label = label.split('-, ', 1)[1]
+			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + addrsText + ") AND NOT r.isTotal "
+								"RETURN a,b,r ORDER BY r.epoch DESC")
+			addrs = session.run("MATCH (a:USDT)-[r]->(b:USDT) "
+								"WHERE(" + addrsText + ") "
+								"WITH DISTINCT a,b, count(r) AS sstcount "
+								"MATCH p=(a)-[r]->(b) "
+								"WHERE sstcount = 1 OR r.isTotal = True "
+								"RETURN a, b, r")
+			mainAddr = {
+				"label": label,
+				"balance": 0
+			}
 		else:
 			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal "
 								"RETURN a,b,r ORDER BY r.epoch DESC", name = id)
@@ -58,9 +81,11 @@ def search(request, id):
 			"label": aNode['name'],
 			"address": aNode['addr'],
 			"balance": float(aNode['balance'] or 0),
+			"group": aNode['wallet'] or 'usdt',
 			"lastUpdate": aNode['epoch'] or time.time(),
-			"url": "/usdt/search/{}".format(aNode['name']) if aNode['minTx'] is not None else '',
+			"url": "/usdt/search/{}".format(aNode['name']) if aNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(aNode['addr']),
 			"value": 10.0 + float(aNode['balance'] or 0)/100000000,
+			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
 						"Last Updated: {}").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")), aNode['lastUpdate'])
@@ -71,9 +96,11 @@ def search(request, id):
 			"label": bNode['name'],
 			"address": bNode['addr'],
 			"balance": float(bNode['balance'] or 0),
+			"group": bNode['wallet'] or 'usdt',
 			"lastUpdate": bNode['epoch'] or time.time(),
-			"url": "/usdt/search/{}".format(bNode['name']) if bNode['minTx'] is not None else '',
+			"url": "/usdt/search/{}".format(bNode['name']) if bNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(bNode['addr']),
 			"value": 10.0 + float(bNode['balance'] or 0)/100000000,
+			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
 						"Last Updated: {}").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0") ), bNode['lastUpdate'])
@@ -87,9 +114,13 @@ def search(request, id):
 			"source": aNode['label'],
 			"target": bNode['label'],
 			"amount": float(rel['amount'] or 0),
-			"txsNum": int(rel['TxsNum'] or 1.0),
+			"txsNum": int(rel['txsNum'] or 1.0),
 			"lastUpdate": rel['epoch'] or rel['time'] or time.time(),
 			"avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
+			"img": img,
+			"color": {
+				"color": "#26A17B"
+			},
 			"sourceUrl": "/usdt/search/{}".format(aNode['label']) if aNode['url'] != ''
 						else "https://omniexplorer.info/address/{}".format(aNode['label']),
 			"targetUrl": "/usdt/search/{}".format(bNode['label']) if aNode['url'] != ''
@@ -98,7 +129,7 @@ def search(request, id):
 						"# of Txs: {}<br> "
 						"Total: {}<br> "
 						"Average Tx Amount: {}<br> "
-						"Last Updated: {}").format(numWithCommas(rel['TxsNum'] or 1.0), numWithCommas(rel['amount']), 
+						"Last Updated: {}").format(numWithCommas(rel['txsNum'] or 1.0), numWithCommas(rel['amount']), 
 										numWithCommas(rel['avgTxAmt'] or rel['amount']), rel['lastUpdate'] or rel['time'])
 		}
 
@@ -116,12 +147,14 @@ def search(request, id):
 				mainAddr = aNode
 				mainAddr['minTx'] = nodes.get('a')['minTx']
 				mainAddr['tx_since'] = nodes.get('a')['tx_since']
+				mainAddr['url'] = "https://omniexplorer.info/address/{}".format(mainAddr['address'])
 			data['nodes'].append(aNode)
 		if not bExists:
 			if mainAddr == None and bNode['label'] == id:
 				mainAddr = bNode
 				mainAddr['minTx'] = nodes.get('b')['minTx']
 				mainAddr['tx_since'] = nodes.get('b')['tx_since']
+				mainAddr['url'] = "https://omniexplorer.info/address/{}".format(mainAddr['address'])
 			data['nodes'].append(bNode)
 		data['edges']['collapsed'].append(rel)
 	for nodes in txs:
@@ -148,6 +181,11 @@ def search(request, id):
 			"amount": float(rel['amount'] or "0"),
 			"time": rel['epoch'],
 			"txid": rel['txid'],
+			"img": img,
+			"color": {
+				"color": "#26A17B"
+			},
+			"txidUrl": "https://omniexplorer.info/tx/{}".format(rel['txid']),
 			"sourceUrl": "/usdt/search/{}".format(aNode['label']) if aNode['isKnown'] 
 						else "https://omniexplorer.info/address/{}".format(aNode['label']),
 			"targetUrl": "/usdt/search/{}".format(bNode['label']) if bNode['isKnown'] 
@@ -158,18 +196,6 @@ def search(request, id):
 						"Time: {}").format(rel['txid'], numWithCommas(float(rel['amount'])), rel['time'])
 		}
 		data['edges']['all'].append(rel)
-	return render(request, 'usdt/usdt.html', {'search': mainAddr, 'nodes': data['nodes'], 'edges': data['edges']})
-
-def home(request):
-	x = []
-	#print('here')
-	with driver.session() as session:
-		results = session.run("MATCH (a:USDT) WHERE a.minTx IS NOT NULL RETURN a.name")
-		for record in results:
-			x.append(record['a.name'])
-		#print(x)
-	search = {'search': x}
-	return render(request, 'usdt/index.html', search)
-
-def nav(request):
-    return render(request, 'usdt/navbar.html')
+	if len(data['edges']['collapsed']) < 1:
+		mainAddr = None
+	return render(request, 'coin/coin.html', {'search': mainAddr, 'nodes': data['nodes'], 'edges': data['edges']})
