@@ -35,7 +35,7 @@ class Node(models.Model):
     USDT_Address = models.CharField(max_length=250)
     minTx = models.IntegerField(default=1000000)
     tx_Since = models.DateField(default=subtract_years(date.today(), 1))
-    
+
     def save(self, force_insert=False, force_update=False):
         addrObj = {
             'addr': self.USDT_Address,
@@ -45,23 +45,27 @@ class Node(models.Model):
         }
         obj = usdtRequest(addrObj['addr'], 1)
         if obj is None or ('error' in obj['balance'][0] and obj['balance'][0]['error']):
-            print(obj)
             print("{} Does Not Exist".format(addrObj['addr']))
             return "Error Getting {}".format(addrObj['addr'])
         with driver.session() as session:
             session.run("MERGE (a:USDT {addr:$addr}) "
-                        "ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
-                        "ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since} ", 
+                        "ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since}, a.epoch = 0 "
+                        "ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since}, a.epoch = 0 ", 
                         name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], tx_since = addrObj['tx_since'])
-            print("Successfully Added {}".format(addrObj['name']))
+            print("Successfully Added USDT Node {}".format(addrObj['name']))
         super(Node, self).save(force_insert, force_update)
 
-    def delete(self, keep_parents=False):
+    def delete(self, keep_parents=False, allNodes=False):
         with driver.session() as session:
-            session.run("MATCH (a:USDT {addr:$addr}) "
-                        "DETACH DELETE a ", addr = self.USDT_Address)
-            print("Successfully Deleted {}".format(self.name))
-        super(Node, self).delete(keep_parents)
+            if not allNodes:
+                session.run("MATCH (a:USDT {addr:$addr}) "
+                            "DETACH DELETE a ", addr = self.USDT_Address)
+                print("Successfully Deleted USDT Node {}".format(self.name))
+                super(Node, self).delete(keep_parents)
+            else: 
+                session.run("MATCH (a:USDT) "
+                            "DETACH DELETE a")
+                print("Successfully Deleted All USDT Nodes")
 
     def __str__(self):
         return self.name + ' - ' + self.USDT_Address

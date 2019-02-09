@@ -1,0 +1,258 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html ng-app="main">
+
+<head>
+	<meta charset="utf-8">
+	<title>USDT/BTC Market Tracker</title>
+	<link rel="shortcut icon" href="{% static 'images/tracking.png' %}">
+	<link rel="stylesheet" href="{% static 'navbar.css' %}">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+	 crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+	 crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+	 crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+	 crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+	 crossorigin="anonymous"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
+	<style type="text/css">
+		body {
+			padding-top: 56px;
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+		}
+
+		#iframe1 {
+			position: absolute;
+			left: 0px;
+			width: 100%;
+			top: 0px;
+			height: 100%;
+			padding-bottom: 50px;
+		}
+
+		::-webkit-scrollbar {
+			display: none;
+		}
+	</style>
+	<script>
+		var main = angular
+						.module('main', [])
+						.controller('mainController', [mainController]);
+		function mainController() {
+			vm = this
+			vm.isCustom = false;
+			vm.addrs = []
+			{% for x in search %}
+				vm.addrs.push('');
+			{% endfor %}
+
+
+			vm.customGraph = function() {
+				vm.isCustom = true;
+				$('#searchBar').val('');
+			}
+
+			vm.customOff = function() {
+				vm.isCustom = false;
+				for (var i = 0; i < vm.addrs.length; i++) {
+					vm.addrs[i] = '';
+				}
+			}
+
+			vm.makeGraph = function() {
+				let tempAddrs = [];
+				for (var i = 0; i < vm.addrs.length; i++) {
+					if (vm.addrs[i] !== '') {
+						tempAddrs.push(vm.addrs[i]);
+					}
+				}
+				if (tempAddrs.length <= 1) return;
+				var url = "{{homeUrl}}".replace(/0/, JSON.stringify(tempAddrs))
+				$('#iframe1').attr('src', url);
+			}
+
+			vm.toggle = function(id) {
+				if ($(`#${id}`).css('color') == 'rgb(255, 255, 255)') {
+					$(`#${id}`).css("color", '#495057');
+				} else {
+					$(`#${id}`).css("color", 'rgb(255, 255, 255)');
+				}	
+			}
+		}
+	</script>
+</head>
+
+<body>
+	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top">
+		<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+			aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="navbar-header">
+			<ul class="nav navbar-nav">
+				<li class="dropdown">
+					<a class="navbar-brand dropdown nav-link dropdown-toggle" style="cursor: pointer;" data-toggle="dropdown" id="navbarDropdownMenuLink" aria-haspopup="true" aria-expanded="false">
+					{% if coin == 'home' %}
+						<img src="{% static 'images/tracking.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+						<span class="menu-collapsed">Home</span><span class="caret"></span>
+					{% elif coin == 'usdt' %}
+						<img src="{% static 'images/usdt.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+						<span class="menu-collapsed">USDT</span><span class="caret"></span>
+					{% elif coin == 'btc' %}
+						<img src="{% static 'images/btc.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+						<span class="menu-collapsed">BTC</span><span class="caret"></span>
+					{% endif %}
+					</a>
+					<ul class="dropdown-menu" id="BrandDropdown" role="menu">
+						<li class="dropdown-item">
+							<a href="{% url 'home' %}" id='home'>
+								<img src="{% static 'images/tracking.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+								<span class="menu-collapsed">Home</span><span class="caret"></span>
+							</a>
+						</li>
+						<li class="dropdown-item">
+							<a href="{% url 'usdt' %}" id='usdt'>
+								<img src="{% static 'images/usdt.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+								<span class="menu-collapsed">USDT</span><span class="caret"></span>
+							</a>
+						</li>
+						<li class="dropdown-item">
+							<a href="{% url 'btc' %}" id='btc'>
+								<img src="{% static 'images/btc.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+								<span class="menu-collapsed">BTC</span><span class="caret"></span>
+							</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</nav>
+
+	<!-- Bootstrap row -->
+	<div class="row" id="body-row" ng-controller="mainController as vm">
+		<!-- Sidebar -->
+		<div id="sidebar-container" class="sidebar-expanded d-none d-md-block col-2 pre-scrollable">
+			<!-- d-* hiddens the Sidebar in smaller devices. Its itens can be kept on the Navbar 'Menu' -->
+			<!-- Bootstrap List Group -->
+			<div class="dropdown btn-group" style="width: 100%">
+				<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" id="graphDrop" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					<span class="sr-only">Toggle Dropdown</span>
+				</button>
+				<div class="dropdown-menu keep-open" style="z-index: 10000; width: 100%">
+					<div ng-switch on="vm.isCustom">
+						<div ng-switch-when="true">
+							<div class="text-center text-truncate">
+								<button class="btn d-inline-block" ng-click="vm.makeGraph()">&#9745;</button>
+								<button class="btn d-inline-block" onclick="toggleDrop()">&#10060;</button>
+							</div>
+						</div>
+						<div ng-switch-default class="row">
+							<a class="btn btn-primary text-truncate mx-auto" id="graphBtn" ng-click="vm.customGraph()">Make Custom Graph?</a>
+						</div>
+					</div>
+				</div>
+				<input class="form-control" id="searchBar" type="text" placeholder="Search...">
+			</div>
+			<div ng-switch on="vm.isCustom" class="ng-cloak">
+				<div ng-switch-when="true">
+					<div href="{{homeUrl}}" id="home" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white">Home</div>
+				</div>
+				<div ng-switch-default>
+					<a href="{{homeUrl}}" id="home" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white">Home</a>
+				</div>
+			</div>
+			<ul class="list-group sticky-top sticky-offset ng-cloak" id="addresses">
+				{% for x in search %}
+				<div ng-switch on="vm.isCustom">
+					<div ng-switch-when="true">
+						<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
+							<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
+								<span class="menu-collapsed" id="{{x.addr}}">{{x.addr}}</span>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline float-right">
+								<input type="checkbox" id="customRadioInline{{forloop.counter0}}" class="custom-control-input" ng-click="vm.toggle('{{x.addr}}')" ng-model="vm.addrs[{{forloop.counter0}}]" ng-true-value="'{{x.addr}}'" ng-false-value="">
+								<label class="custom-control-label" for="customRadioInline{{forloop.counter0}}" style='cursor: pointer;'></label>
+							</div>
+						</div>
+					</div>
+					<a ng-switch-default href="{{x.url}}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
+						<div class="d-inline-block w-100 justify-content-start align-items-center text-truncate">
+							<span class="menu-collapsed">{{x.addr}}</span>
+						</div>
+					</a>
+				</div>
+				{% endfor %}
+			</ul>
+			<!-- List Group END-->
+		</div>
+		<!-- sidebar-container END -->
+
+		<!-- MAIN -->
+		<div class="col">
+			<iframe id="iframe1" src="{{homeUrl}}" frameborder="0" name="iframe_a" width="100%" height="100%"></iframe>
+		</div>
+		<!-- Main Col END -->
+
+	</div>
+</body>
+
+<script>
+	function toggleDrop() {
+		let vm = angular.element($('#body-row')).scope();
+		vm.$apply('vm.customOff()');
+		$('#graphDrop').next().toggle();
+	}
+
+	jQuery('#graphDrop').on('click', toggleDrop);
+	jQuery('.dropdown-menu').click(function(e) {
+		e.stopPropagation();
+	}); 
+
+	$(document).ready(function(){
+		$("#searchBar").on("keyup", function() {
+			var value = $(this).val().toLowerCase();
+			$("#addresses .list-group-item").filter(function() {
+				$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+			});
+		});
+	});
+
+	// Hide submenus
+	$('#body-row .collapse').collapse('hide');
+
+	// Collapse/Expand icon
+	$('#collapse-icon').addClass('fa-angle-double-left');
+
+	// Collapse click
+	$('[data-toggle=sidebar-colapse]').click(function () {
+		SidebarCollapse();
+	});
+
+	function SidebarCollapse() {
+		$('.menu-collapsed').toggleClass('d-none');
+		$('.sidebar-submenu').toggleClass('d-none');
+		$('.submenu-icon').toggleClass('d-none');
+		$('#sidebar-container').toggleClass('sidebar-expanded sidebar-collapsed');
+
+		// Treating d-flex/d-none on separators with title
+		var SeparatorTitle = $('.sidebar-separator-title');
+		if (SeparatorTitle.hasClass('d-flex')) {
+			SeparatorTitle.removeClass('d-flex');
+		} else {
+			SeparatorTitle.addClass('d-flex');
+		}
+
+		// Collapse/Expand icon
+		$('#collapse-icon').toggleClass('fa-angle-double-left fa-angle-double-right');
+	}
+</script>
+
+</html>
+<!-- body-row END -->

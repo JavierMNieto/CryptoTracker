@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '2vy=19j$1dfax7-fm!w!qemx!wxj97
 #DEBUG = True
 DEBUG = True
 
-ALLOWED_HOSTS = ["6962386e.ngrok.io", "localhost"]
+ALLOWED_HOSTS = ["a9a960b4.ngrok.io", "localhost"]
 
 
 # Application definition
@@ -68,7 +68,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
         'libraries':{
-            'usdt_extras': 'usdt.templatetags.usdt_extras',
+            'coin_extras': 'tracker.templatetags.coin_extras'
             }
         },
     },
@@ -128,5 +128,3 @@ STATIC_URL = '/static/'
 STATIC_ROOT = ""
 
 STATICFILES_DIRS = ( os.path.join('static'), )
-
-

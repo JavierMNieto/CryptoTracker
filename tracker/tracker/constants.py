@@ -17,8 +17,8 @@ def logPrint(*args, **kwargs):
 
 proxies = [
 	{
-		'http':'http://lum-customer-hl_4856a1e8-zone-zone9-country-us:ea7mixw0ykwb@zproxy.lum-superproxy.io:22225',
-		'https':'https://lum-customer-hl_4856a1e8-zone-zone9-country-us:ea7mixw0ykwb@zproxy.lum-superproxy.io:22225'
+		'http':'socks5://x3234593:ZpSMx9ktPg@proxy-nl.privateinternetaccess.com:1080',
+		'https':'socks5://x3234593:ZpSMx9ktPg@proxy-nl.privateinternetaccess.com:1080'
 	},
 	{
 
@@ -54,23 +54,7 @@ proxies = [
 		'https':'https://lum-customer-hl_4856a1e8-zone-zone7-country-us:ymbfcmpyg5pl@zproxy.lum-superproxy.io:22225'
 	},
 	{
-		'http':'http://lum-customer-hl_4856a1e8-zone-zone10-country-us:cg12knaug33b@zproxy.lum-superproxy.io:22225',
-		'https':'https://lum-customer-hl_4856a1e8-zone-zone10-country-us:cg12knaug33b@zproxy.lum-superproxy.io:22225'
-	},
-	{
-		'http':'http://lum-customer-hl_4856a1e8-zone-zone11-country-us:9w80w1libs7y@zproxy.lum-superproxy.io:22225',
-		'https':'https://lum-customer-hl_4856a1e8-zone-zone11-country-us:9w80w1libs7y@zproxy.lum-superproxy.io:22225'
-	},
-	{
-		'http':'http://lum-customer-hl_4856a1e8-zone-zone12-country-us:awrvjtb5ha43@zproxy.lum-superproxy.io:22225',
-		'https':'https://lum-customer-hl_4856a1e8-zone-zone12-country-us:awrvjtb5ha43@zproxy.lum-superproxy.io:22225'
-	},
-	{
-		'http':'http://lum-customer-hl_4856a1e8-zone-zone13-country-us:1s6pjtj7q0b3@zproxy.lum-superproxy.io:22225',
-		'https':'https://lum-customer-hl_4856a1e8-zone-zone13-country-us:1s6pjtj7q0b3@zproxy.lum-superproxy.io:22225'
-	},
-	{
-		'http':'http://lum-customer-hl_4856a1e8-zone-zone14-country-us:8ofd81pbv0qf@zproxy.lum-superproxy.io:22225',
-		'https':'https://lum-customer-hl_4856a1e8-zone-zone14-country-us:8ofd81pbv0qf@zproxy.lum-superproxy.io:22225'
+		'http':'http://lum-customer-hl_4856a1e8-zone-zone8-country-us:fe7wys4boaqp@zproxy.lum-superproxy.io:22225',
+		'https':'https://lum-customer-hl_4856a1e8-zone-zone8-country-us:fe7wys4boaqp@zproxy.lum-superproxy.io:22225'
 	}
 ]

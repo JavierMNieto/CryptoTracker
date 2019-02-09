@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 {% load static %}
-{% load usdt_extras %}
+{% load coin_extras %}
 <html ng-app="txs">
 
 <head>
 	<meta charset="utf-8">
-	<title>USDT Market Tracker</title>
-	<link rel="shortcut icon" href="{% static 'images/usdt.png' %}">
+	<title>USDT/BTC Market Tracker</title>
+	<link rel="shortcut icon" href="{% static 'images/tracking.png' %}">
 	<meta content="width=device-width, initial-scale=1" name="viewport">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
@@ -126,6 +126,9 @@
 					if (txs == undefined) {
 						txs = vm.prevTxs;
 					}
+					
+					vm.txs = txs;
+					/*
 					vm.txs = [];
 					for (var i = 0; i < txs.length; i++) {
 						vm.txs.push({
@@ -137,11 +140,12 @@
 							id: txs[i].id,
 							time: txs[i].time,
 							txid: txs[i].txid,
-							txidUrl: `https://omniexplorer.info/tx/${txs[i].txid}`,
+							txidUrl: txs[i].txidUrl,
 							sourceUrl: txs[i].sourceUrl,
 							targetUrl: txs[i].targetUrl
 						});
 					}
+					*/
 
 					if (vm.dropText === 'Most Recent') {
 						vm.txs = orderBy(vm.txs, 'time', true);
@@ -557,7 +561,7 @@
 	</div>
 	
 	<div class="row justify-content-center">
-	{% if search.label != 'All Addresses' %}
+	{% if search.label != 'All Addresses' and ',' not in search.label %}
 		<div class="h5 block">
 			Balance: {{search.balance|numCommas}}
 			<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
@@ -568,7 +572,7 @@
 		</div>
 		<div class="col-sm-6 text-center block h5">
 			Address:&nbsp   
-				<a href="https://omniexplorer.info/address/{{search.address}}">
+				<a href="{{search.url}}">
 					{{search.address}}
 				</a>
 			<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.address }}" data-toggle="tooltip" data-placement="top" title="Copy Address">
@@ -678,9 +682,20 @@
 					</button>
 				</div>
 			</div>
+			<div ng-switch="vm.selection.data.group">
+				<div ng-switch-when="usdt">
+
+				</div>
+				<div ng-switch-when="">
+
+				</div>
+				<div ng-switch-default class="text-center">
+					Wallet: <a href="https://www.walletexplorer.com/wallet/{% verbatim %}{{ vm.selection.data.group }}{% endverbatim %}/addresses">{% verbatim %}{{ vm.selection.data.walletName }}{% endverbatim %}</a>
+				</div>
+			</div>
 			<div class="row align-items-start" style="padding-bottom: 1vh;">
 				<div class="col-sm-1">
-					<img src="{% static 'images/usdt.png' %}" width="48" height="48">
+					<img src="{% verbatim %}{{ vm.selection.data.img }}{% endverbatim %}" width="48" height="48">
 				</div>
 				<div class="col-sm-7 h1">
 					{% verbatim %}{{ vm.selection.data.balance | number : fractionSize }}{% endverbatim %}
@@ -693,7 +708,7 @@
 				<div class="col-sm-4 h5 font-italic text-right" data-toggle="tooltip" data-placement="top" title="Last Update">{% verbatim %}{{ vm.selection.data.lastUpdate*1000 | date:'yyyy-MM-dd h:mm:ss a' }}{% endverbatim %}</div>
 			</div>
 			<div class="row align-items-end justify-content-center">
-				<a href="https://omniexplorer.info/address/{% verbatim %}{{ vm.selection.data.address }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
+				<a href="{% verbatim %}{{ vm.selection.data.url }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
 					{% verbatim %}{{ vm.selection.data.address }}{% endverbatim %}
 				</a>
 				<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.data.address }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Address">
@@ -706,7 +721,7 @@
 		<div ng-switch-when="txTotal" class="list-group-item mx-auto container" style="padding-top: 2vh; width: 90%">
 			<div class="row align-items-start" style="padding-bottom: 1vh;">
 				<div class="col-sm-1">
-					<img src="{% static 'images/usdt.png' %}" width="48" height="48">
+					<img src="{% verbatim %}{{ vm.selection.data.img }}{% endverbatim %}" width="48" height="48">
 				</div>
 				<div class="col-sm-7 h1">
 					<span data-toggle="tooltip" data-placement="top" title="Total Transaction Amount">{% verbatim %}{{ vm.selection.data.amount | number : fractionSize }}{% endverbatim %}</span>
@@ -774,7 +789,7 @@
 		<div ng-switch-when="tx" class="list-group-item mx-auto container" style="padding-top: 2vh; width: 90%">
 			<div class="row align-items-start" style="padding-bottom: 1vh;">
 				<div class="col-sm-1">
-					<img src="{% static 'images/usdt.png' %}" width="48" height="48">
+					<img src="{% verbatim %}{{ vm.selection.data.img }}{% endverbatim %}" width="48" height="48">
 				</div>
 				<div class="col-sm-7 h1">
 					{% verbatim %}{{ vm.selection.data.amount | number : fractionSize }}{% endverbatim %}
@@ -890,7 +905,7 @@
 			<div ng-repeat="tx in vm.items" class="list-group-item mx-auto" style="width: 90%">
 				<div class="row align-items-start" style="padding-bottom: 1vh;">
 					<div class="col-sm-1">
-						<img src="{% static 'images/usdt.png' %}" width="48" height="48">
+						<img src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
 					</div>
 					<div class="col-sm-7 h1">
 						{% verbatim %}{{ tx.amount | number : fractionSize }}{% endverbatim %}
@@ -1023,8 +1038,6 @@
 						"color": "#000000"
 					},
 					"color": {
-						"background": "#26A17B",
-						"border": "#1f8766",
 						"highlight": {
 							"border": "#1f8766",
 							"background": "#e5ff00"
@@ -1039,7 +1052,6 @@
 					},
 					"arrowStrikethrough": false,
 					"color": {
-						"color": "#26A17B",
 						"highlight": "#e5ff00",
 						"hover": "#0062ff"
 					},
@@ -1049,6 +1061,15 @@
 					},
 					"font": {
 						"color": "#000000"
+					}
+				},
+				"groups": {
+					"useDefaultGroups": true,
+					"usdt": {
+						"color": {
+							"background": "#26A17B",
+							"border": "#1f8766",
+						}
 					}
 				},
 				"interaction": {
