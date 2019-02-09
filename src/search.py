@@ -5,6 +5,7 @@ import pprint
 from urllib.parse import parse_qs as pq
 from neo4j.v1 import GraphDatabase
 from constants import *
+from lxml import html
 from random import randint
 from traceback import print_exc
 from threading import Thread, Lock
@@ -20,7 +21,6 @@ class Search:
 		self.driver = GraphDatabase.driver(neo4j['url'], auth=(neo4j['user'], neo4j['pass']))
 		self.mutex = Lock()
 		self.done = False
-		self.queue = queue.Queue()
 		self.page = 0
 		self.addrObj = {}
 
@@ -53,9 +53,15 @@ class Search:
 			print("Offset {} with Thread {}".format(offset, threadNum))
 			url = self.btcUrl + addrObj['addr'] + '?&offset=' + str(offset)
 			print('Checking ' + url)
-			obj = (requests.get(url)).json()
-			if len(obj['txs']) == 0:
-				print("No More Transactions Left")
+			try:
+				obj = requests.get(url).json()
+			except:
+				continue
+			if len(obj['txs']) == 0 or offset > 7500:
+				if len(obj['txs']) == 0:
+					print("No More Transactions Left")
+				else:
+					print("Offset Exceeded 7500, moving on...")
 				self.mutex.acquire()
 				self.done = True
 				self.mutex.release()
@@ -112,7 +118,7 @@ class Search:
 				
 				if amount is not None and amount > addrObj['minTx']:
 					sortedTx = {'addr': addrObj['addr'], 'txid': tx['hash'], 'time': tx['time'], 'inputs': inputs, 'outputs': outputs, 'amount': amount}
-					self.queue.put(sortedTx)
+					self.upTx(sortedTx, )
 			if self.done:
 				print("All Transactions Collected for thread {}".format(threadNum))
 				return 0
@@ -157,8 +163,7 @@ class Search:
 				inName = tx['sendingaddress']
 				outName = tx['referenceaddress']
 				sortedTx = {'addr': addrObj['addr'], 'txid': tx['txid'], 'time': tx['blocktime'], 'inputs': {inName: float(tx['amount'])}, 'outputs': {outName: (float(tx['amount']) - float(tx['fee']))}, 'amount': tx['amount']}
-				#print("Here {}".format(sortedTx['txid']))
-				self.queue.put(sortedTx)
+				self.upTx(sortedTx, )
 			if self.page >= obj['pages'] or self.page > 1500:
 				if self.page > 1500:
 					print("Transactions Checked Exceeded 1500 Pages, Moving On...")
@@ -172,34 +177,64 @@ class Search:
 				return 0
 		return 0
 
-	def databaseThread(self, addrObj):
-		tx = self.queue.get(block = True, timeout = None)
-		if tx is not None:
-			self.addrObj['txs'].append(tx)
-		while tx:
-			for inName, inValue in tx['inputs'].items():
-				for outName, outValue in tx['outputs'].items():
-					if inName == outName:
-						continue
-					val = 0
-					if inName == tx['addr'] and len(tx['inputs']) == 1:
-						val = outValue
-					else:
-						val = inValue
-					if float(val) <= minVal:
-						continue
-					with self.driver.session() as session:
-						session.run("MERGE (a:" + addrObj['type'] + " {addr:$addr}) "
-									"ON CREATE SET a.name = {addr}", addr = inName if outName == tx['addr'] else outName)
-						session.run("MATCH (a:" + addrObj['type'] + "), (b:" + addrObj['type'] + ") WHERE a.addr = {aAddr} AND b.addr = {bAddr} "
-									"CREATE (a)-[:" + addrObj['type'] + "TX {txid:$txid, time:$time, amount:$amount, epoch:$epoch, isTotal:$isTotal}]->(b)",
-									aAddr = inName, bAddr = outName, txid = tx['txid'], time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time'])), 
-									amount = tx['amount'], epoch = tx['time'], isTotal = False)
-			tx = self.queue.get(block=True, timeout=None)
-			if tx is not None:
-				self.addrObj['txs'].append(tx)
-		pprint.pprint(self.addrObj)
-		return 0
+	def upTx(self, tx):
+		addrObj = self.addrObj
+		for inName, inValue in tx['inputs'].items():
+			for outName, outValue in tx['outputs'].items():
+				if inName == outName:
+					continue
+				val = 0
+				if inName == tx['addr'] and len(tx['inputs']) == 1:
+					val = outValue
+				else:
+					val = inValue
+				if float(val) <= minVal:
+					continue
+				newAddr = inName if outName == tx['addr'] else outName
+				with self.driver.session() as session:
+					wallet = session.run("MERGE (a:" + addrObj['type'] + " {addr:$addr}) "
+								"ON CREATE SET a.name = {addr}, a.wallet = '' "
+								"RETURN a.wallet", addr = newAddr)
+					wallet = wallet.single()
+					session.run("MATCH (a:" + addrObj['type'] + "), (b:" + addrObj['type'] + ") WHERE a.addr = {aAddr} AND b.addr = {bAddr} "
+								"CREATE (a)-[:" + addrObj['type'] + "TX {txid:$txid, time:$time, amount:$amount, epoch:$epoch, isTotal:$isTotal}]->(b)",
+								aAddr = inName, bAddr = outName, txid = tx['txid'], time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tx['time'])), 
+								amount = tx['amount'], epoch = tx['time'], isTotal = False)
+					if wallet is None or wallet.value() == '':
+						if addrObj['type'] == 'USDT':
+							session.run("MATCH (a:USDT {addr:$addr}) "
+										"SET a.wallet = 'usdt'", addr = newAddr)
+						elif addrObj['type'] == 'BTC':
+							try:
+								wallet = (requests.get("https://www.walletexplorer.com/address/" + newAddr)) # get page
+								wallet = html.fromstring(wallet.content) # get html
+								wallet = wallet.xpath('//div[@class="walletnote"]//a')
+							except:
+								wallet = None
+
+							if wallet is None or len(wallet) < 1:
+								wallet = ''
+							else: 
+								wallet = wallet[0].get('href') # get wallet text
+								wallet = wallet.replace('/wallet/', '')
+							
+							try:
+								walletName = (requests.get("https://bitinfocharts.com/bitcoin/address/" + newAddr)) # get page
+								walletName = html.fromstring(walletName.content) # get html
+								walletName = walletName.xpath('//table[@class="table table-striped table-condensed"]//a')
+							except:
+								walletName = None
+
+							if walletName is None or len(walletName) < 1:
+								walletName = wallet
+							else:
+								walletName = walletName[0].get('href') # get wallet text
+								walletName = walletName.replace('../wallet/', '')
+
+							session.run("MATCH (a:BTC {addr:$addr}) "
+										"SET a.wallet = {wallet}, a.walletName = {walletName}", addr = newAddr, wallet = wallet, walletName = walletName)
+							self.addrObj['txs'].append(tx)
+		#print("Added {} Transactions to {}".format(len(self.addrObj['txs']), self.addrObj['name']))
 
 	def getUSDT(self, environ):
 		if not self.checkParams(environ):
@@ -241,20 +276,13 @@ class Search:
 		else:
 			lastTxid = '' 
 		print(lastTxid)
-		try:
-			dataThread = Thread(target=self.databaseThread, args=(addrObj, ))
-			dataThread.start()
-		except Exception as e:
-			print(e)
-			print_exc(file=open("log.txt", "a"))
 		for x in range(0, len(proxies)):
 			threads.append(Thread(target=self.getUTxs, args = (x, addrObj, lastTxid)))
 			threads[x].start()
 		for x in range(0, len(proxies)):
 			threads[x].join()
-		self.queue.put(None)
-		dataThread.join()
 		print("Done with all Threads")
+		print("Added {} Transactions to {}".format(len(self.addrObj['txs']), self.addrObj['addr']))
 		return str(self.addrObj)
 
 	def getBTC(self, environ):
@@ -301,16 +329,13 @@ class Search:
 			lastTxid = lastTxid[0]
 		else:
 			lastTxid = ''
-		dataThread = Thread(target=self.databaseThread, args=(addrObj, ))
-		dataThread.start()
 		for x in range(0, len(proxies)):
 			threads.append(Thread(target=self.getTxs, args = (x, addrObj, lastTxid)))
 			threads[x].start()
 		for x in range(0, len(proxies)):
 			threads[x].join()
-		self.queue.put(None)
-		dataThread.join()
 		print("Done with all Threads")
+		print("Added {} Transactions to {}".format(len(self.addrObj['txs']), self.addrObj['addr']))
 		return str(self.addrObj)
 
 	def refresh(self):
@@ -328,7 +353,8 @@ class Search:
 											"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} "
 											"RETURN CASE lastTime WHEN NULL THEN 0 ELSE lastTime END", 
 											addr = addrObj['addr'], balance = addrObj['balance'], 
-											lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+											lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), 
+											epoch = time.time())
 					lastTime = lastTime.single()
 					if lastTime is None:
 						lastTime = 0
