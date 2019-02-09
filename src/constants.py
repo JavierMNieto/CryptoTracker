@@ -72,5 +72,25 @@ proxies = [
 	{
 		'http':'http://lum-customer-hl_4856a1e8-zone-zone14-country-us:8ofd81pbv0qf@zproxy.lum-superproxy.io:22225',
 		'https':'https://lum-customer-hl_4856a1e8-zone-zone14-country-us:8ofd81pbv0qf@zproxy.lum-superproxy.io:22225'
+	},
+	{
+		'http':'http://lum-customer-hl_4856a1e8-zone-zone15-country-us:b63yyjm1rrjy@zproxy.lum-superproxy.io:22225',
+		'https':'https://lum-customer-hl_4856a1e8-zone-zone15-country-us:b63yyjm1rrjy@zproxy.lum-superproxy.io:22225'
+	},
+	{
+		'http':'http://lum-customer-hl_4856a1e8-zone-zone16-country-us:tsweyd5m8dpk@zproxy.lum-superproxy.io:22225',
+		'https':'https://lum-customer-hl_4856a1e8-zone-zone16-country-us:tsweyd5m8dpk@zproxy.lum-superproxy.io:22225'
+	},
+	{
+		'http':'http://lum-customer-hl_4856a1e8-zone-zone17-country-us:n1zhc0icwmz2@zproxy.lum-superproxy.io:22225',
+		'https':'https://lum-customer-hl_4856a1e8-zone-zone17-country-us:n1zhc0icwmz2@zproxy.lum-superproxy.io:22225'
+	},
+	{
+		'http':'http://lum-customer-hl_4856a1e8-zone-zone18-country-us:f13svmrin4nw@zproxy.lum-superproxy.io:22225',
+		'https':'https://lum-customer-hl_4856a1e8-zone-zone18-country-us:f13svmrin4nw@zproxy.lum-superproxy.io:22225'
+	},
+	{
+		'http':'http://lum-customer-hl_4856a1e8-zone-zone19-country-us:4rey9lk1py27@zproxy.lum-superproxy.io:22225',
+		'https':'https://lum-customer-hl_4856a1e8-zone-zone19-country-us:4rey9lk1py27@zproxy.lum-superproxy.io:22225'
 	}
 ]

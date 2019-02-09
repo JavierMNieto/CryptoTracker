@@ -31,7 +31,7 @@ class Search:
 	def usdtRequest(self, addr, page, num):
 		try: 
 			proxy = 'None' if proxies[num] is None else str(proxies[num]['https'])
-			print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
+			print('Checking USDT ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
 			obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
 			if obj is None or ('error' in obj and obj['error']):
 
@@ -50,9 +50,8 @@ class Search:
 			offset = self.page
 			self.page += 50
 			self.mutex.release()
-			print("Offset {} with Thread {}".format(offset, threadNum))
+			print('Checking BTC {} at Offset {} with Thread {}'.format(addrObj['addr'], offset, threadNum))
 			url = self.btcUrl + addrObj['addr'] + '?&offset=' + str(offset)
-			print('Checking ' + url)
 			try:
 				obj = requests.get(url).json()
 			except:
@@ -342,7 +341,7 @@ class Search:
 		#set lastTxId
 		print("Refreshing Addresses")
 		with self.driver.session() as session:
-			nodes = session.run("MATCH (n:BTC) RETURN n")
+			nodes = session.run("MATCH (n:BTC) WHERE n.minTx IS NOT NULL RETURN n")
 			if nodes is not None:
 				for node in nodes:
 					node = node.get(node.keys()[0])
@@ -360,14 +359,13 @@ class Search:
 						lastTime = 0
 					else:
 						lastTime = lastTime[0]
-					if "minTx" in node and "tx_since" in node:
-						self.done = False
-						self.page = 0
-						addrObj = { 'addr': obj['address'], 'type': 'BTC', 'n_txs': obj['n_tx'], 
-									'minTx': node['minTx'], 'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
-						self.addrObj = addrObj
-						self.threadsBTC(addrObj, )
-			nodes = session.run("MATCH (n:USDT) RETURN n")
+					self.done = False
+					self.page = 0
+					addrObj = { 'addr': obj['address'], 'type': 'BTC', 'n_txs': obj['n_tx'], 
+								'minTx': node['minTx'], 'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
+					self.addrObj = addrObj
+					self.threadsBTC(addrObj, )
+			nodes = session.run("MATCH (n:USDT) WHERE n.minTx IS NOT NULL RETURN n")
 			if nodes is not None:
 				for node in nodes:
 					node = node.get(node.keys()[0])
@@ -389,14 +387,60 @@ class Search:
 							else:
 								lastTime = lastTime[0]
 							break
-					if "minTx" in node and "tx_since" in node:
-						self.done = False
-						self.page = 1
-						addrObj = { 'addr': obj['address'], 'type': 'USDT', 'minTx': node['minTx'],
-									'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
-						self.addrObj = addrObj
-						self.threadsUSDT(addrObj, )
+					self.done = False
+					self.page = 1
+					addrObj = { 'addr': obj['address'], 'type': 'USDT', 'minTx': node['minTx'],
+								'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
+					self.addrObj = addrObj
+					self.threadsUSDT(addrObj, )
+			nodes = session.run("MATCH (n) WHERE n.minTx IS NULL RETURN n, labels(n)[0] as t")
+			sAddrsQ = queue.Queue()
+			for node in nodes:
+				node  = node.get('n')
+				label = node.get('t')
+				sAddrsQ.put({
+					'addr': node['addr'],
+					'type': label
+				})
+			threads = []
+			for x in range(0, len(proxies)):
+				threads.append(Thread(target=self.smallRefresh, args = (sAddrsQ, x)))
+				threads[x].start()
+			sAddrsQ.join()
 			print("Addresses Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
+
+
+	def smallRefresh(self, q, threadNum):
+		while not q.empty():
+			with self.driver.session() as session:
+				addrObj = q.get()
+				if addrObj['type'] == 'BTC':
+					print('Checking BTC {} with Thread {}'.format(addrObj['addr'], threadNum))
+					obj = requests.get(self.btcUrl + addrObj['addr']).json()
+					addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
+					session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
+								"WITH a, a.epoch as lastTime "
+								"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} ", 
+								addr = addrObj['addr'], balance = addrObj['balance'], 
+								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), 
+								epoch = time.time())
+				else:
+					obj = self.usdtRequest(addrObj['addr'], 1, threadNum)
+					if obj is None or 'error' in obj and obj['error']:
+						continue
+					for coin in obj['balance']:
+						if int(coin['id']) == 31:
+							addrObj = { 'addr': obj['address'], 'balance': float(coin['value'])/satoshi}
+							session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
+										"WITH a, a.epoch as lastTime "
+										"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} ", 
+										addr = addrObj['addr'], balance = addrObj['balance'], 
+										lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+							break
+				if q.unfinished_tasks % 100 == 0:
+					print("{} Addresses Left".format(q.unfinished_tasks))
+				q.task_done()
+		return 0
 
 	def collapse(self):
 		with self.driver.session() as session:
