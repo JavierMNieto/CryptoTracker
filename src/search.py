@@ -437,6 +437,8 @@ class Search:
 										addr = addrObj['addr'], balance = addrObj['balance'], 
 										lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
 							break
+				if q.unfinished_tasks % 100 == 0:
+					print("{} Addresses Left".format(q.unfinished_tasks))
 				q.task_done()
 		return 0
 
