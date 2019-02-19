@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '2vy=19j$1dfax7-fm!w!qemx!wxj97
 #DEBUG = True
 DEBUG = True
 
-ALLOWED_HOSTS = ["a9a960b4.ngrok.io", "localhost"]
+ALLOWED_HOSTS = ["d271b711.ngrok.io", "localhost"]
 
 
 # Application definition

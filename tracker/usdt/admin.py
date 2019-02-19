@@ -9,4 +9,10 @@ class NodeAdmin(admin.ModelAdmin):
         else:
             for e in queryset:
                 e.delete()
+    def refresh(self, request, queryset):
+        for e in queryset:
+            e.refresh()
+    refresh.short_description = 'Refresh Selected Nodes'
+    list_display = ['name', 'USDT_Address', 'minTx', 'tx_Since', 'category']
+    actions = ['refresh']
 admin.site.register(Node, NodeAdmin)

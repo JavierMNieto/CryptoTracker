@@ -10,23 +10,23 @@
 	<meta content="width=device-width, initial-scale=1" name="viewport">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
-	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-	 crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 	<script src="https://unpkg.com/popper.js/dist/umd/popper.min.js"></script>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
 	<script src="https://morgul.github.io/ui-bootstrap4/ui-bootstrap-tpls-3.0.6.min.js"></script>
 	<script src="{% static 'js/clipboard.min.js' %}"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 	<style type="text/css">
 		#graph {
 			width: 95%;
 			height: 75vh;
+			margin-left: 2.3vw;
 			background-color: #ffffff;
 			border: 1px solid rgb(0, 0, 0);
 			position: relative;
@@ -60,22 +60,63 @@
 			background-color: rgba(86, 166, 252, 0.75)
 		}
 
+		body::-webkit-scrollbar-track {
+			-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+			border-radius: 10px;
+			background-color: #333;
+		}
+
+		body::-webkit-scrollbar {
+			width: 12px;
+			background-color: rgba(86, 166, 252, 0.75);
+		}
+
+		body::-webkit-scrollbar-thumb {
+			border-radius: 10px;
+			-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+			background-color: #6c757d;
+		}
+
+
 		a {
 			cursor: pointer;
 		}
+
+		.loader {
+			border: 16px solid #f3f3f3;
+			border-radius: 50%;
+			border-top: 16px solid #3498db;
+			width: 16px;
+			height: 16px;
+			-webkit-animation: spin 2s linear infinite; /* Safari */
+			animation: spin 2s linear infinite;
+		}
+
+		/* Safari */
+		@-webkit-keyframes spin {
+			0% { -webkit-transform: rotate(0deg); }
+			100% { -webkit-transform: rotate(360deg); }
+		}
+
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
 	</style>
-{%if search == null %}
+{%if edges == null %}
+	<div class="h2 text-center mx-auto">{{search.address}}</div>
 	<div class="h1 text-center">No Transactions Yet</div>
 {% else %}
 	<script>
 		// initialize global variables.
 		var allEdges = {{edges|safe}}
 		var allNodes = {{nodes|safe}}
-		var nodes = new vis.DataSet(allNodes);
-		var	edges = new vis.DataSet(allEdges.collapsed);
+		var nodes = allNodes;
+		var edges = allEdges.collapsed;
 		var network;
 		var container;
 		var options, data;
+		var satoshi = 100000000.0;
 	</script>
 	<script>
 		(function () {
@@ -170,11 +211,6 @@
 						vm.isCollapsed = false;
 						vm.collapseText = 'Collapse Transactions';
 						$(function () {
-							$(function () {
-								$('[data-toggle="tooltip"]').tooltip({
-									trigger : 'hover'
-								});  
-							});
 							$('input[name="minTime"]').daterangepicker({
 								singleDatePicker: true,
 								timePicker: true,
@@ -196,6 +232,8 @@
 								}
 							});
 						});
+						var d = new Date();
+						d.setDate(d.getDate() - 30);
 						vm.graphFilters = {
 							node: {
 								'balance': {
@@ -207,17 +245,17 @@
 									min: 0,
 									max: vm.maxTx
 								}, 'time': {
-									min: moment.unix(vm.minTime).format('M, DD, YY h:mm:ss A'),
+									min: moment.unix(d.getTime()/1000).format('M, DD, YY h:mm:ss A'),
 									max: moment.unix(vm.maxTime).format('M, DD, YY h:mm:ss A')
 								}
 							}
 						}
-						edges = new vis.DataSet(allEdges.all);
+						edges = allEdges.all;
 						nodes = allNodes;
 					} else if (!vm.isCollapsed) {
 						vm.isCollapsed = true;
 						vm.collapseText = 'Show All Transactions';
-						edges = new vis.DataSet(allEdges.collapsed);
+						edges = allEdges.collapsed;
 						nodes = allNodes;
 						vm.graphFilters = {
 							node: {
@@ -239,9 +277,15 @@
 							}
 						}
 					}
+					$(function () {
+						$('[data-toggle="tooltip"]').tooltip({
+							trigger : 'hover'
+						});  
+					});
+					vm.currentId = 0;
 					vm.setTxs(allEdges.all);
 					vm.prevTxs = vm.txs;
-					drawGraph(true);
+					vm.setFilters();
 				}
 
 				vm.setTxs(allEdges.all);
@@ -257,8 +301,9 @@
 				vm.maxAvgTx = orderBy(allEdges.collapsed, 'avgTx', true)[0].avgTx;
 				vm.minTime = timeInc[0].time;
 				vm.lastTx = vm.minTime;
-				vm.maxTime = timeInc[vm.txs.length - 1].time;
+				vm.maxTime = moment().unix();
 				vm.maxTxsNum = orderBy(allEdges.collapsed, 'txsNum', true)[0].txsNum;
+				vm.currentId = 0;
 
 				vm.sortBy = function(propertyName, reverse) {
 					if (propertyName == "time") {
@@ -337,14 +382,14 @@
 							filters.edge[edgeFilter].max = moment.unix(filters.edge[edgeFilter].max).format('M/DD/YY hh:mm A');
 						}					
 					}					
-					edges = new vis.DataSet(tempTxs);
-					nodes = new vis.DataSet(tempNodes);
+					edges = tempTxs;
+					nodes = tempNodes;
 
 					if (vm.isCollapsed) {
 						tempTxs = getTxsFromCollapsed(tempTxs);
 					}
 					vm.setTxs(tempTxs);
-					
+					vm.currentId = 0;
 					drawGraph(true);
 				}
 
@@ -379,15 +424,16 @@
 					vm.prevTxs = vm.txs;
 					if (properties.nodes.length > 0) {
 						let id = properties.nodes[0];
-						let node;
+						let node = data.nodes.get(id);
+						/*
 						for (var i = 0; i < allNodes.length; i++) {
 							if (allNodes[i].id == id) {
 								node = allNodes[i];
 								break;
 							}
 						}
+						*/
 						
-
 						if (node.label != "{{search.label}}" && properties.edges.length > 0) {
 							let edges = properties.edges;
 							let tempEdges = [];
@@ -404,7 +450,6 @@
 							}
 							if (vm.isCollapsed) {
 								tempEdges = getTxsFromCollapsed(tempEdges);
-								
 							}
 							vm.setTxs(tempEdges);
 						} else if (node.label == "{{search.label}}") {
@@ -422,6 +467,7 @@
 						return;
 					}
 					let id = properties.edges[0];
+					/*
 					for (var i = 0; i < vm.txs.length; i++) {
 						if (vm.txs[i].id == id) {
 							if (!vm.isCollapsed) {
@@ -438,6 +484,20 @@
 							}
 						}
 					}
+					*/
+					if (!vm.isCollapsed && id != undefined) {
+						let tempEdge = data.edges.get(id);
+						vm.selection = {
+							type: 'tx',
+							data: tempEdge
+						}
+						$(function () {
+							$('[data-toggle="tooltip"]').tooltip({
+								trigger : 'hover'
+							});  
+						});
+						return;
+					}
 					for (var i = 0; i < allEdges.collapsed.length; i++) {
 						if (allEdges.collapsed[i].id == id) {
 							let tempTxs = getTxsFromCollapsed([allEdges.collapsed[i]]);
@@ -453,6 +513,200 @@
 							});
 							return;
 						}
+					}
+				}
+
+				vm.targetBTC = function(txid, from) {
+					if (txid == undefined) {
+						document.getElementById('graph').style = "cursor: wait";
+						network.setOptions({"physics":{"enabled":true}});
+						txid = vm.selection.data.txid;
+						$.get(`https://chain.api.btc.com/v3/tx/${txid}?verbose=3`, response => {
+							response = response.data;
+							let addr = data.nodes.get(vm.selection.data.to).address
+							for (var i = 0; i < response.outputs.length; i++) {
+								if (response.outputs[i].addresses[0] == addr) {
+									txid = response.outputs[i].spent_by_tx;
+									break;
+								}
+							}
+							if (txid == null) {
+								setTimeout(function() {
+									stopPhysics();
+								}, 1000);								
+								return;
+							}
+							setTimeout(function() {
+								console.log("next tx")
+								vm.targetBTC(txid, vm.selection.data.to);
+							}, 500)
+						});
+					} else {
+						var date = new Date();
+						$.get(`https://chain.api.btc.com/v3/tx/${txid}?verbose=3`, response => {
+							response = response.data;
+							console.log(response);
+							txid = response.outputs[0].spent_by_tx;
+							
+							for (var i = 0; i < response.outputs.length; i++) {
+								var to = null;
+								let tempAllNodes = data.nodes.get();
+								for (var j = 0; j < tempAllNodes.length; j++) {
+									if (tempAllNodes[j].address == response.outputs[i].addresses[0]) {
+										to = tempAllNodes[j].id;
+										break;
+									}
+								}
+
+								if (to === null) {
+									vm.currentId++;
+									to = vm.currentId;
+									data.nodes.add({
+										"id": to,
+										"label": response.outputs[i].addresses[0],
+										"address": response.outputs[i].addresses[0],
+										"balance": 0,
+										"group": "",
+										"lastUpdate": date.getTime()/1000,
+										"url": `https://blockexplorer.com/address/${response.outputs[i].addresses[0]}`,
+										"walletName": "none",
+										"value": 25.0,
+										"img": vm.selection.data.img,
+										"title": `Address: ${response.outputs[i].addresses[0]}<br>Balance: ${'None'}<br>Wallet: ${'None'}<br>Last Updated: ${moment().format('YYYY-MM-DD, hh:mm:ss')}`
+									});
+								}
+								vm.currentId++;
+								let fromNode = data.nodes.get(from);
+								let toNode = data.nodes.get(to);
+								data.edges.add({
+									"from": from,
+									"to": to,
+									"id": vm.currentId,
+									"value": response.outputs[i].value/satoshi,
+									"source": fromNode.label,
+									"target": toNode.label,
+									"amount": response.outputs[i].value/satoshi,
+									"time": response.block_time,
+									"txid": response.hash,
+									"img": vm.selection.data.img,
+									"color": {
+										"color": "#F9A540"
+									},
+									"txidUrl": `https://blockexplorer.com/tx/${response.hash}`,
+									"sourceUrl": `https://blockexplorer.com/address/${fromNode.address}`,
+									"targetUrl": `https://blockexplorer.com/address/${toNode.address}`,
+									"title": `Collapsed: False<br>Txid: ${response.hash}<br>Total: ${response.outputs[i].value/satoshi}<br>Time: ${moment.unix(response.block_time).format('YYYY-MM-DD, hh:mm:ss')}`
+								});
+								network.focus(to, {scale: 0.75, locked: true, animation: {duration: 100}});
+							}							
+							if (txid == null || response.outputs_count > 1) {
+								setTimeout(function() {
+									stopPhysics();
+								}, 1000);
+								return;
+							}
+							setTimeout(function() {
+								console.log("next tx")
+								vm.targetBTC(txid, to);
+							}, 750);
+						});
+					}
+				}
+				
+				vm.sourceBTC = function(txid, to) {
+					if (txid == undefined) {
+						document.getElementById('graph').style = "cursor: wait";
+						network.setOptions({"physics":{"enabled":true}});
+						txid = vm.selection.data.txid;
+						$.get(`https://chain.api.btc.com/v3/tx/${txid}?verbose=3`, response => {
+							response = response.data;
+							let addr = data.nodes.get(vm.selection.data.from).address
+							for (var i = 0; i < response.inputs.length; i++) {
+								if (response.inputs[i].prev_addresses[0] == addr) {
+									txid = response.outputs[i].spent_by_tx;
+									break;
+								}
+							}
+							if (txid == null) {
+								setTimeout(function() {
+									stopPhysics();
+								}, 1000);								
+								return;
+							}
+							setTimeout(function() {
+								console.log("next tx")
+								vm.sourceBTC(txid, vm.selection.data.to);
+							}, 500)
+						});
+					} else {
+						var date = new Date();
+						$.get(`https://chain.api.btc.com/v3/tx/${txid}?verbose=3`, response => {
+							response = response.data;
+							console.log(response);
+							txid = response.inputs[0].prev_tx_hash;
+							
+							for (var i = 0; i < response.inputs.length; i++) {
+								var to = null;
+								let tempAllNodes = data.nodes.get();
+								for (var j = 0; j < tempAllNodes.length; j++) {
+									if (tempAllNodes[j].address == response.inputs[i].prev_addresses[0]) {
+										to = tempAllNodes[j].id;
+										break;
+									}
+								}
+
+								if (to === null) {
+									vm.currentId++;
+									to = vm.currentId;
+									data.nodes.add({
+										"id": to,
+										"label": response.inputs[i].prev_addresses[0],
+										"address": response.inputs[i].prev_addresses[0],
+										"balance": 0,
+										"group": "",
+										"lastUpdate": date.getTime()/1000,
+										"url": `https://blockexplorer.com/address/${response.inputs[i].prev_addresses[0]}`,
+										"walletName": "none",
+										"value": 25.0,
+										"img": vm.selection.data.img,
+										"title": `Address: ${response.inputs[i].prev_addresses[0]}<br>Balance: ${'None'}<br>Wallet: ${'None'}<br>Last Updated: ${moment().format('YYYY-MM-DD, hh:mm:ss')}`
+									});
+								}
+								vm.currentId++;
+								let fromNode = data.nodes.get(from);
+								let toNode = data.nodes.get(to);
+								data.edges.add({
+									"from": from,
+									"to": to,
+									"id": vm.currentId,
+									"value": response.inputs[i].prev_value/satoshi,
+									"source": fromNode.label,
+									"target": toNode.label,
+									"amount": response.inputs[i].prev_value/satoshi,
+									"time": response.block_time,
+									"txid": response.hash,
+									"img": vm.selection.data.img,
+									"color": {
+										"color": "#F9A540"
+									},
+									"txidUrl": `https://blockexplorer.com/tx/${response.hash}`,
+									"sourceUrl": `https://blockexplorer.com/address/${fromNode.address}`,
+									"targetUrl": `https://blockexplorer.com/address/${toNode.address}`,
+									"title": `Collapsed: False<br>Txid: ${response.hash}<br>Total: ${response.inputs[i].prev_value/satoshi}<br>Time: ${moment.unix(response.block_time).format('YYYY-MM-DD, hh:mm:ss')}`
+								});
+								network.focus(to, {scale: 0.75, locked: true, animation: {duration: 100}});
+							}							
+							if (txid == null || response.inputs_count > 1) {
+								setTimeout(function() {
+									stopPhysics();
+								}, 1000);
+								return;
+							}
+							setTimeout(function() {
+								console.log("next tx")
+								vm.sourceBTC(txid, to);
+							}, 750);
+						});
 					}
 				}
 
@@ -483,7 +737,11 @@
 					return temp;
 				}
 
-				vm.collapse(false);
+				vm.collapse(vm.maxTxsNum == 1);
+				if (vm.maxTxsNum == 1) {
+					$('#hide').prop('disabled', true);
+					$('#hide').css('background-color', 'grey');
+				}
 			}
 
 			function PagerService() {
@@ -559,7 +817,6 @@
 			</svg>
 		</button>
 	</div>
-	
 	<div class="row justify-content-center">
 	{% if search.label != 'All Addresses' and ',' not in search.label %}
 		<div class="h5 block">
@@ -594,7 +851,6 @@
 			Transactions Since {% verbatim %}{{ vm.lastTx*1000 | date:'yyyy-MM-dd' }}{% endverbatim %}
 		</div>
 	</div>
-
 	<div class="row mx-auto p-1" style="width: 95%">
 		<button ng-click="vm.collapse()" id="hide" class="btn btn-primary block">{% verbatim %}{{ vm.collapseText }}{% endverbatim %}</button>
 		<div class="row mx-auto">
@@ -637,8 +893,8 @@
 						</div>
 					</div>
 					<div class="btn-group p-1">
-						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxNum}}{% endverbatim %}" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Min Txs" data-toggle="tooltip" data-placement="top" title="Minimum # of Transactions" ng-model="vm.graphFilters.edge.txsNum.min" ng-model-options="{ allowInvalid: true}">
-						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxNum}}{% endverbatim %}" id="maxTxsNum" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Max Txs" data-toggle="tooltip" data-placement="top" title="Maximum # of Transactions" ng-model="vm.graphFilters.edge.txsNum.max" ng-model-options="{ allowInvalid: true}">
+						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxsNum}}{% endverbatim %}" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Min Txs" data-toggle="tooltip" data-placement="top" title="Minimum # of Transactions" ng-model="vm.graphFilters.edge.txsNum.min" ng-model-options="{ allowInvalid: true}">
+						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxsNum}}{% endverbatim %}" id="maxTxsNum" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Max Txs" data-toggle="tooltip" data-placement="top" title="Maximum # of Transactions" ng-model="vm.graphFilters.edge.txsNum.max" ng-model-options="{ allowInvalid: true}">
 						<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							<span class="sr-only">Toggle Dropdown</span>
 						</button>
@@ -659,7 +915,21 @@
 			</button>
 		</div>
 	</div>
-	<div id="graph" class="mx-auto" onload="stopPhysics()"></div>
+	<div class="row mx-auto">
+		<div id="graph"></div>
+		<div>
+			<button ngsf-toggle-fullscreen width="1vw" height="1vw" class="btn position-relative btn-sm" onclick="fullGraph()" data-toggle="tooltip" data-placement="top" title="Fullscreen Graph">
+				<svg width="1vw" height="1vw" viewBox="0 0 438.543 438.543">
+					<path d="M407.42,159.029c3.62,3.616,7.898,5.428,12.847,5.428c2.282,0,4.668-0.476,7.139-1.429   c7.426-3.235,11.136-8.853,11.136-16.846V18.276c0-4.949-1.807-9.231-5.428-12.847c-3.61-3.617-7.898-5.424-12.847-5.424H292.36   c-7.991,0-13.607,3.805-16.848,11.419c-3.23,7.423-1.902,13.99,4,19.698l41.111,41.112L219.271,173.589L117.917,72.231   l41.112-41.112c5.901-5.708,7.232-12.275,3.999-19.698C159.789,3.807,154.175,0,146.182,0H18.276C13.324,0,9.041,1.809,5.425,5.426   c-3.617,3.616-5.424,7.898-5.424,12.847v127.907c0,7.996,3.809,13.61,11.419,16.846c2.285,0.948,4.57,1.429,6.855,1.429   c4.948,0,9.229-1.812,12.847-5.427l41.112-41.109l101.354,101.354L72.234,320.622l-41.112-41.113   c-5.711-5.903-12.275-7.231-19.702-4.001c-7.614,3.241-11.419,8.856-11.419,16.854v127.906c0,4.948,1.807,9.229,5.424,12.847   c3.619,3.614,7.902,5.421,12.851,5.421h127.906c7.996,0,13.61-3.806,16.846-11.416c3.234-7.427,1.903-13.99-3.999-19.705   l-41.112-41.106L219.271,264.95l101.353,101.361l-41.114,41.11c-5.899,5.708-7.228,12.279-3.997,19.698   c3.237,7.617,8.856,11.423,16.851,11.423h127.907c4.948,0,9.232-1.813,12.847-5.428c3.613-3.613,5.42-7.898,5.42-12.847V292.362   c0-7.994-3.709-13.613-11.136-16.851c-7.802-3.23-14.462-1.903-19.985,4.004l-41.106,41.106L264.952,219.271L366.31,117.917   L407.42,159.029z"/>
+				</svg>
+			</button>
+			<button width="1vw" height="1vw" class="btn position-absolute btn-sm" onclick="toggleDarkMode()" data-toggle="tooltip" data-placement="top" title="Toggle Graph Dark Mode">
+				<svg width="1vw" height="1vw" viewBox="-12 0 448 448.04455">
+					<path d="m224.023438 448.03125c85.714843.902344 164.011718-48.488281 200.117187-126.230469-22.722656 9.914063-47.332031 14.769531-72.117187 14.230469-97.15625-.109375-175.890626-78.84375-176-176 .972656-65.71875 37.234374-125.832031 94.910156-157.351562-15.554688-1.980469-31.230469-2.867188-46.910156-2.648438-123.714844 0-224.0000005 100.289062-224.0000005 224 0 123.714844 100.2851565 224 224.0000005 224zm0 0"/>
+				</svg>
+			</button>
+		</div>
+	</div>
 	<div ng-switch="vm.selection.type">
 		<div ng-switch-when="node" class="list-group-item mx-auto container" style="padding-top: 2vh; width: 90%">
 			<div ng-switch="vm.selection.data.url">
@@ -708,7 +978,7 @@
 				<div class="col-sm-4 h5 font-italic text-right" data-toggle="tooltip" data-placement="top" title="Last Update">{% verbatim %}{{ vm.selection.data.lastUpdate*1000 | date:'yyyy-MM-dd h:mm:ss a' }}{% endverbatim %}</div>
 			</div>
 			<div class="row align-items-end justify-content-center">
-				<a href="{% verbatim %}{{ vm.selection.data.url }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
+				<a href="{% verbatim %}{{ vm.selection.data.webUrl }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
 					{% verbatim %}{{ vm.selection.data.address }}{% endverbatim %}
 				</a>
 				<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.data.address }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Address">
@@ -785,6 +1055,16 @@
 					</button>	
 				</div>
 			</div>
+			<div class="row font-italic">
+				<div ng-switch="vm.selection.data.txsNum" class="mx-auto">
+					<div ng-switch-when="1">
+						{% verbatim %}{{ vm.selection.data.txsNum }}{% endverbatim %} Transaction
+					</div>
+					<div ng-switch-default>
+						{% verbatim %}{{ vm.selection.data.txsNum }}{% endverbatim %} Transactions
+					</div>
+				</div>
+			</div>
 		</div>
 		<div ng-switch-when="tx" class="list-group-item mx-auto container" style="padding-top: 2vh; width: 90%">
 			<div class="row align-items-start" style="padding-bottom: 1vh;">
@@ -846,10 +1126,7 @@
 					</button>	
 				</div>
 			</div>
-			<div class="row align-items-end justify-content-center">
-				<a href="{% verbatim %}{{ vm.selection.data.txidUrl }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
-					{% verbatim %}{{ vm.selection.data.txid }}{% endverbatim %}
-				</a>
+			<div class="row align-items-end justify-content-center mb-2">
 				<button width="16" height="16" ng-click="vm.highlight(vm.selection.data.id, false)" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" title="Highlight on Graph">
 					<svg width="16" height="16" viewBox="-64 0 479 479.99545">
 						<path d="m68.488281 391.523438-11.765625-6.648438c-.445312-.230469-.855468-.527344-1.210937-.878906l-46.0625 77.039062c-1.28125 2.265625-1.28125 5.039063 0 7.304688 1.394531 2.285156 3.890625 3.675781 6.566406 3.65625h67.433594c2.578125.015625 4.988281-1.277344 6.398437-3.433594l30.640625-47.765625-13.046875-7.3125zm0 0" fill="#ffcc5c"/>
@@ -858,18 +1135,51 @@
 						<path d="m264.488281 46.460938c-3.738281-2.347657-8.671875-1.21875-11.023437 2.519531l-106.238282 169.199219c-1.554687 2.421874-1.6875 5.492187-.351562 8.039062 1.339844 2.546875 3.941406 4.179688 6.816406 4.277344 2.875.09375 5.582032-1.359375 7.085938-3.8125l106.257812-169.199219c2.339844-3.746094 1.199219-8.683594-2.546875-11.023437zm0 0"/>
 						<path d="m324.65625 25.980469-31.765625-18.464844c-25.667969-14.921875-58.535156-6.992187-74.578125 17.992187l-140.128906 217.085938c0 .050781 0 .113281-.0625.160156-.0625.050782-.136719.136719-.183594.21875l-23.847656 41.519532c-2.191406 3.820312-.882813 8.695312 2.925781 10.902343 13.082031 7.578125 12.914063 41.601563-8.246094 78.402344-1.84375 3.265625-1.132812 7.382813 1.703125 9.839844l-48.902344 84.359375c-1.429687 2.472656-1.429687 5.519531-.003906 7.996094 1.429688 2.472656 4.066406 4 6.921875 4.003906h71.539063c2.765625 0 5.339844-1.429688 6.796875-3.785156l32.449219-52.261719 1.238281.71875c1.214843.707031 2.597656 1.082031 4 1.085937.699219.003906 1.394531-.089844 2.066406-.269531 2.054687-.546875 3.808594-1.894531 4.871094-3.738281 14.015625-24.335938 33.601562-42.878906 49.871093-47.199219 4.378907-1.511719 9.183594-1.195313 13.328126.871094 1.839843 1.074219 4.03125 1.367187 6.089843.816406 2.058594-.550781 3.808594-1.898437 4.871094-3.742187 0 0 24-41.832032 24.082031-41.921876l116.71875-230.6875c13.457032-26.507812 3.917969-58.910156-21.753906-73.902343zm-249.078125 438.015625h-53.207031l41.773437-72.082032 41.289063 24zm119.589844-105.472656c-5.933594-1.332032-12.109375-1.144532-17.949219.542968-18.800781 5.015625-39.578125 23.066406-55.449219 47.824219l-55.320312-32.144531c18.59375-36.101563 20.382812-71.886719 4.90625-88.199219l16.453125-28.640625 123.824218 72zm136.984375-265.886719-112.894532 223.117187-123.082031-71.527344 135.585938-210.046874c11.433593-17.765626 34.8125-23.402344 53.085937-12.800782l31.769532 18.464844c18.320312 10.722656 25.125 33.855469 15.535156 52.792969zm0 0"/>
 					</svg>
+				</button>
+				<a href="{% verbatim %}{{ vm.selection.data.txidUrl }}{% endverbatim %}" class="font-italic text-truncate" style="font-size: 65%">
+					{% verbatim %}{{ vm.selection.data.txid }}{% endverbatim %}
+				</a>
+				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.data.txid }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy TxID">
+					<svg width="16" height="16" viewBox="0 0 67 67">
+						<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
+					</svg>
 				</button>	
+			</div>
+			<div ng-switch="vm.selection.data.img" class="row">
+				<div ng-switch-when="https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"></div>
+				<div ng-switch-default class="btn-group mx-auto">
+					<button ng-click="vm.sourceBTC()" class="btn btn-primary mr-1">
+						&#8592; Follow BTC to Source
+					</button>
+					<button ng-click="vm.targetBTC()" class="btn btn-primary ml-1">
+						Follow BTC to Target &#8594;
+					</button>
+				</div>
 			</div>
 		</div>
 		<div ng-switch-default>
-
 		</div>
 	</div>
 	<div class="container">
 		<div class="row justify-content-center mx-auto" style="padding-top: 2vh; width: 90%">
-			<span class="h5 text-center block" data-toggle="tooltip" data-placement="top" title="{% verbatim %}{{ vm.pager.totalItems }}{% endverbatim %} Transactions">
-				{% verbatim %}{{ vm.pager.totalItems }}{% endverbatim %} Transactions <br><span class="font-italic">({% verbatim %}{{ vm.pager.totalPages }}{% endverbatim %} Pages)</span></br>
-			</span>
+			<div class="h5 text-center block">
+				<div ng-switch="vm.pager.totalItems">
+					<div ng-switch-when="1">
+						{% verbatim %}{{ vm.pager.totalItems }}{% endverbatim %} Transaction
+					</div>
+					<div ng-switch-default> 
+						{% verbatim %}{{ vm.pager.totalItems }}{% endverbatim %} Transactions
+					</div>
+				</div>
+				<div ng-switch="vm.pager.totalPages">
+					<div ng-switch-when="1">
+						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages }}{% endverbatim %} Page)</span>
+					</div>
+					<div ng-switch-default>
+						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages }}{% endverbatim %} Pages)</span>
+					</div>
+				</div>
+			</div>
 			<div class="row mx-auto" style="padding-left: 1vw; padding-right: 1vw">
 				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect">
 					<li ng-class="{disabled:vm.pager.currentPage === 1}" class="page-item">
@@ -964,9 +1274,6 @@
 						
 				</div>
 				<div class="row align-items-end justify-content-center">
-					<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" class="font-italic text-truncate" style="font-size: 65%">
-						{% verbatim %}{{ tx.txid }}{% endverbatim %}
-					</a>
 					<button width="16" height="16" ng-click="vm.highlight(tx.id, false)" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" title="Highlight on Graph">
 						<svg width="16" height="16" viewBox="-64 0 479 479.99545">
 							<path d="m68.488281 391.523438-11.765625-6.648438c-.445312-.230469-.855468-.527344-1.210937-.878906l-46.0625 77.039062c-1.28125 2.265625-1.28125 5.039063 0 7.304688 1.394531 2.285156 3.890625 3.675781 6.566406 3.65625h67.433594c2.578125.015625 4.988281-1.277344 6.398437-3.433594l30.640625-47.765625-13.046875-7.3125zm0 0" fill="#ffcc5c"/>
@@ -975,7 +1282,15 @@
 							<path d="m264.488281 46.460938c-3.738281-2.347657-8.671875-1.21875-11.023437 2.519531l-106.238282 169.199219c-1.554687 2.421874-1.6875 5.492187-.351562 8.039062 1.339844 2.546875 3.941406 4.179688 6.816406 4.277344 2.875.09375 5.582032-1.359375 7.085938-3.8125l106.257812-169.199219c2.339844-3.746094 1.199219-8.683594-2.546875-11.023437zm0 0"/>
 							<path d="m324.65625 25.980469-31.765625-18.464844c-25.667969-14.921875-58.535156-6.992187-74.578125 17.992187l-140.128906 217.085938c0 .050781 0 .113281-.0625.160156-.0625.050782-.136719.136719-.183594.21875l-23.847656 41.519532c-2.191406 3.820312-.882813 8.695312 2.925781 10.902343 13.082031 7.578125 12.914063 41.601563-8.246094 78.402344-1.84375 3.265625-1.132812 7.382813 1.703125 9.839844l-48.902344 84.359375c-1.429687 2.472656-1.429687 5.519531-.003906 7.996094 1.429688 2.472656 4.066406 4 6.921875 4.003906h71.539063c2.765625 0 5.339844-1.429688 6.796875-3.785156l32.449219-52.261719 1.238281.71875c1.214843.707031 2.597656 1.082031 4 1.085937.699219.003906 1.394531-.089844 2.066406-.269531 2.054687-.546875 3.808594-1.894531 4.871094-3.738281 14.015625-24.335938 33.601562-42.878906 49.871093-47.199219 4.378907-1.511719 9.183594-1.195313 13.328126.871094 1.839843 1.074219 4.03125 1.367187 6.089843.816406 2.058594-.550781 3.808594-1.898437 4.871094-3.742187 0 0 24-41.832032 24.082031-41.921876l116.71875-230.6875c13.457032-26.507812 3.917969-58.910156-21.753906-73.902343zm-249.078125 438.015625h-53.207031l41.773437-72.082032 41.289063 24zm119.589844-105.472656c-5.933594-1.332032-12.109375-1.144532-17.949219.542968-18.800781 5.015625-39.578125 23.066406-55.449219 47.824219l-55.320312-32.144531c18.59375-36.101563 20.382812-71.886719 4.90625-88.199219l16.453125-28.640625 123.824218 72zm136.984375-265.886719-112.894532 223.117187-123.082031-71.527344 135.585938-210.046874c11.433593-17.765626 34.8125-23.402344 53.085937-12.800782l31.769532 18.464844c18.320312 10.722656 25.125 33.855469 15.535156 52.792969zm0 0"/>
 						</svg>
-					</button>	
+					</button>
+					<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" class="font-italic text-truncate" style="font-size: 65%">
+						{% verbatim %}{{ tx.txid }}{% endverbatim %}
+					</a>
+					<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.txid }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy TxID">
+						<svg width="16" height="16" viewBox="0 0 67 67">
+							<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
+						</svg>
+					</button>		
 				</div>
 			</div>
 		</div>
@@ -1012,25 +1327,42 @@
 			console.error('Trigger:', e.trigger);
 		});
 		
+		function fullGraph() {
+			document.getElementById('graph').requestFullscreen();
+		}
+
+		function toggleDarkMode() {
+			console.log($('#graph').css('background-color'));
+			if ($('#graph').css('background-color') == "rgb(0, 0, 0)") {
+				$('#graph').css('background-color', 'white');
+				network.setOptions({"nodes": {"font": {"color": "#000000"}}});
+			} else {
+				$('#graph').css('background-color', 'black');
+				network.setOptions({"nodes": {"font": {"color": "#ffffff"}}});
+			}
+		}
+
 		// This method is responsible for drawing the graph, returns the drawn network
 		function drawGraph(stop) {
 			var container = document.getElementById('graph');
-
+			container.style = "cursor: wait";
 			// parsing and collecting nodes and edges from the python
 			//nodes = new vis.DataSet({{nodes|safe}});
 			//edges = new vis.DataSet({{edges|safe}});
 
 			// adding nodes and edges to the graph
 			data = {
-				nodes: nodes,
-				edges: edges
+				nodes: new vis.DataSet(nodes),
+				edges: new vis.DataSet(edges)
 			};
+
+			let vm = angular.element($('body')).scope();
 
 			var options = {
 				"nodes": {
 					"scaling": {
-						"min": 3,
-						"max": 150
+						"min": 25,
+						"max": 200
 					},
 					"shape": "dot",
 					"borderWidthSelected": 1,
@@ -1049,6 +1381,10 @@
 						"to": {
 							"enabled": true
 						}
+					},
+					"scaling": {
+						"min": 1,
+						"max": 25
 					},
 					"arrowStrikethrough": false,
 					"color": {
@@ -1077,7 +1413,11 @@
 					"hideEdgesOnDrag": false,
 					"hideNodesOnDrag": false,
 					"hover": true,
-					'hoverConnectedEdges': ("{{search.label}}" == 'All Addresses')
+					"tooltipDelay": 100,
+					"hoverConnectedEdges": ("{{search.label}}" == 'All Addresses')
+				},
+				"layout": {
+					"improvedLayout": false
 				},
 				"physics": {
 					'stabilization': {
@@ -1086,20 +1426,21 @@
 						'updateInterval': 100
 					},
 					"repulsion": {
-						"nodeDistance": 200,
+						"nodeDistance": 400,
 						"springLength": 300
 					},
+					"forceAtlas2Based": {
+						"avoidOverlap": 0.75
+					},
 					"enabled": true,
-					"solver": ("{{search.label}}" != 'All Addresses' || $("#hide").html().includes('Show')) ? "repulsion" : "forceAtlas2Based"
+					"solver": (!("{{search.label}}").includes('Addresses') && ($('#hide').text().toLowerCase().includes('collapse') || $('#maxTxsNum').attr('max') == 1)) ? "repulsion" : "forceAtlas2Based"
 				}
 			};
 			network = new vis.Network(container, data, options);
-			
+
 			if (stop) {
 				stopPhysics();
 			}
-
-			let vm = angular.element($('body')).scope();
 
 			network.on('click', properties => {
 				vm.$apply(`vm.select(${JSON.stringify(properties)})`);
@@ -1115,13 +1456,14 @@
 			return network;
 		}
 
-		drawGraph();
+		//drawGraph();
 
 		function stopPhysics() {
 			setTimeout(function() {
-				network.fit({animation: true});
 				network.setOptions({"physics":{"enabled":false}});
-			}, 200);
+				network.fit({animation: true});
+				document.getElementById('graph').style = "cursor: auto";
+			}, edges.length*10);
 		}
 	</script>
 </body>

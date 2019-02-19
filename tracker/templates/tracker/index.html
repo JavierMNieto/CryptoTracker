@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load coin_extras %}
 <!DOCTYPE html>
 <html ng-app="main">
 
@@ -10,14 +10,10 @@
 	<link rel="stylesheet" href="{% static 'navbar.css' %}">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
 	 crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
-	 crossorigin="anonymous">
-	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-	 crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
-	 crossorigin="anonymous"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-	 crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
 	<style type="text/css">
 		body {
@@ -35,6 +31,7 @@
 			top: 0px;
 			height: 100%;
 			padding-bottom: 50px;
+			background-color: rgba(86, 166, 252, 0.75);
 		}
 
 		::-webkit-scrollbar {
@@ -52,7 +49,6 @@
 			{% for x in search %}
 				vm.addrs.push('');
 			{% endfor %}
-
 
 			vm.customGraph = function() {
 				vm.isCustom = true;
@@ -96,7 +92,7 @@
 			<span class="navbar-toggler-icon"></span>
 		</button>
 		<div class="navbar-header">
-			<ul class="nav navbar-nav">
+			<ul class="nav navbar-nav d-inline-block">
 				<li class="dropdown">
 					<a class="navbar-brand dropdown nav-link dropdown-toggle" style="cursor: pointer;" data-toggle="dropdown" id="navbarDropdownMenuLink" aria-haspopup="true" aria-expanded="false">
 					{% if coin == 'home' %}
@@ -110,7 +106,7 @@
 						<span class="menu-collapsed">BTC</span><span class="caret"></span>
 					{% endif %}
 					</a>
-					<ul class="dropdown-menu" id="BrandDropdown" role="menu">
+					<ul class="dropdown-menu" id="BrandDropdown" role="menu" style="z-index: 10000">
 						<li class="dropdown-item">
 							<a href="{% url 'home' %}" id='home'>
 								<img src="{% static 'images/tracking.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
@@ -131,21 +127,29 @@
 						</li>
 					</ul>
 				</li>
-			</ul>
+			</ul>			
+		</div>
+		<div class="text-center mx-auto">
+			<span style="color:#F8A33D">BTC: </span><span class='font-weight-bold'>${{ btc.last | numCommas }}</span>
+		{% if btc.percentage < 0 %}
+			<span class="font-weight-italic" style="color:#c74242"> ({{btc.percentage}}%)</span>
+		{% else %}
+			<span class="font-weight-italic" style="color:#009e73"> (+{{btc.percentage}}%)</span>
+		{% endif %}
 		</div>
 	</nav>
-
+{% if coin != 'home' %}
 	<!-- Bootstrap row -->
 	<div class="row" id="body-row" ng-controller="mainController as vm">
 		<!-- Sidebar -->
 		<div id="sidebar-container" class="sidebar-expanded d-none d-md-block col-2 pre-scrollable">
-			<!-- d-* hiddens the Sidebar in smaller devices. Its itens can be kept on the Navbar 'Menu' -->
+			<!-- d-* hiddens the Sidebar in smaller devices. Its items can be kept on the Navbar 'Menu' -->
 			<!-- Bootstrap List Group -->
-			<div class="dropdown btn-group" style="width: 100%">
+			<div class="dropdown btn-group block" style="width: 100%">
 				<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" id="graphDrop" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					<span class="sr-only">Toggle Dropdown</span>
 				</button>
-				<div class="dropdown-menu keep-open" style="z-index: 10000; width: 100%">
+				<div class="dropdown-menu keep-open" style="width: 100%">
 					<div ng-switch on="vm.isCustom">
 						<div ng-switch-when="true">
 							<div class="text-center text-truncate">
@@ -158,52 +162,67 @@
 						</div>
 					</div>
 				</div>
-				<input class="form-control" id="searchBar" type="text" placeholder="Search...">
+				<input class="form-control block" id="searchBar" type="text" placeholder="Search...">
 			</div>
-			<div ng-switch on="vm.isCustom" class="ng-cloak">
-				<div ng-switch-when="true">
-					<div href="{{homeUrl}}" id="home" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white">Home</div>
-				</div>
-				<div ng-switch-default>
-					<a href="{{homeUrl}}" id="home" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white">Home</a>
-				</div>
-			</div>
-			<ul class="list-group sticky-top sticky-offset ng-cloak" id="addresses">
-				{% for x in search %}
-				<div ng-switch on="vm.isCustom">
+			
+			<div id='accordion' style="margin-bottom: 75px">
+				{% for category in categories %}
+				<button class='btn btn-dark btn-group float-right m-1' style='z-index: 1000; height: 42px' data-toggle="collapse" data-target="#{{category.category}}" aria-expanded="false" aria-controls="{{category.category}}">
+					&#8595;
+				</button>
+				<div ng-switch on="vm.isCustom" class="ng-cloak" id='{{category.category}}_heading'>
 					<div ng-switch-when="true">
-						<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
-							<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
-								<span class="menu-collapsed" id="{{x.addr}}">{{x.addr}}</span>
-							</div>
-							<div class="custom-control custom-radio custom-control-inline float-right">
-								<input type="checkbox" id="customRadioInline{{forloop.counter0}}" class="custom-control-input" ng-click="vm.toggle('{{x.addr}}')" ng-model="vm.addrs[{{forloop.counter0}}]" ng-true-value="'{{x.addr}}'" ng-false-value="">
-								<label class="custom-control-label" for="customRadioInline{{forloop.counter0}}" style='cursor: pointer;'></label>
-							</div>
+						<div class="bg-secondary list-group-item list-group-item-action" style="color: white;">
+							{{category.category}}
 						</div>
 					</div>
-					<a ng-switch-default href="{{x.url}}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
-						<div class="d-inline-block w-100 justify-content-start align-items-center text-truncate">
-							<span class="menu-collapsed">{{x.addr}}</span>
-						</div>
-					</a>
+					<div ng-switch-default>
+						<a href="{{category.url}}" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white;">
+							{{category.category}}
+						</a>
+					</div>
 				</div>
+				<ul class="list-group sticky-top sticky-offset collapse ng-cloak" id="{{category.category}}" aria-labelledby="{{category.category}}_heading" data-parent="#accordion">
+					{% for x in category.addrs %}
+					<div ng-switch on="vm.isCustom">
+						<div ng-switch-when="true">
+							<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
+								<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
+									<span class="menu-collapsed" id="{{x.addr}}">{{x.addr}}</span>
+								</div>
+								<div class="custom-control custom-radio custom-control-inline float-right">
+									<input type="checkbox" id="customRadioInline{{forloop.counter0}}" class="custom-control-input" ng-click="vm.toggle('{{x.addr}}')" ng-model="vm.addrs[{{forloop.counter0}}]" ng-true-value="'{{x.addr}}'" ng-false-value="">
+									<label class="custom-control-label" for="customRadioInline{{forloop.counter0}}" style='cursor: pointer;'></label>
+								</div>
+							</div>
+						</div>
+						<a ng-switch-default href="{{x.url}}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
+							<div class="d-inline-block w-100 justify-content-start align-items-center text-truncate">
+								<span class="menu-collapsed">{{x.addr}}</span>
+							</div>
+						</a>
+					</div>
+					{% endfor %}
+				</ul>
 				{% endfor %}
-			</ul>
+			</div>
+			
 			<!-- List Group END-->
 		</div>
 		<!-- sidebar-container END -->
 
 		<!-- MAIN -->
-		<div class="col">
-			<iframe id="iframe1" src="{{homeUrl}}" frameborder="0" name="iframe_a" width="100%" height="100%"></iframe>
+		<div class="col" id="frame">
+			<iframe id="iframe1" frameborder="0" name="iframe_a" width="100%" height="100%"></iframe>
 		</div>
 		<!-- Main Col END -->
 
 	</div>
+{% endif %}
 </body>
 
 <script>
+
 	function toggleDrop() {
 		let vm = angular.element($('#body-row')).scope();
 		vm.$apply('vm.customOff()');
@@ -218,7 +237,7 @@
 	$(document).ready(function(){
 		$("#searchBar").on("keyup", function() {
 			var value = $(this).val().toLowerCase();
-			$("#addresses .list-group-item").filter(function() {
+			$("#accordion .list-group-item").filter(function() {
 				$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
 			});
 		});
