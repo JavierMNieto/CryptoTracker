@@ -8,4 +8,5 @@ def times(number):
 
 @register.filter(name='numCommas')
 def numCommas(num):
+    num = round(num, 2)
     return ("{:,}".format(num))

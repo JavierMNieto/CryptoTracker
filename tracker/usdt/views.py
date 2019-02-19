@@ -84,12 +84,19 @@ def search(request, id):
 			"group": aNode['wallet'] or 'usdt',
 			"lastUpdate": aNode['epoch'] or time.time(),
 			"url": "/usdt/search/{}".format(aNode['name']) if aNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(aNode['addr']),
-			"value": 10.0 + float(aNode['balance'] or 0)/100000000,
+			"webUrl": "https://omniexplorer.info/address/{}".format(aNode['addr']),
+			"value": 25.0 + float(aNode['balance'] or 0)/100000000,
 			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
 						"Last Updated: {}").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")), aNode['lastUpdate'])
 		}
+		if aNode['label'] != aNode['address']:
+			aNode['title'] = ("Name: {}<br> "
+							"Address: {}<br> "
+							"Balance: {}<br> "
+							"Last Updated: {}").format(aNode['label'], aNode['address'], numWithCommas(aNode['balance']),
+														time.strftime("%Y-%m-%d, %H:%M:%S", time.localtime(aNode['lastUpdate'])))
 		bNode = nodes.get('b')
 		bNode = {
 			"id": bNode.id,
@@ -99,12 +106,19 @@ def search(request, id):
 			"group": bNode['wallet'] or 'usdt',
 			"lastUpdate": bNode['epoch'] or time.time(),
 			"url": "/usdt/search/{}".format(bNode['name']) if bNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(bNode['addr']),
-			"value": 10.0 + float(bNode['balance'] or 0)/100000000,
+			"webUrl": "https://omniexplorer.info/address/{}".format(bNode['addr']),
+			"value": 25.0 + float(bNode['balance'] or 0)/100000000,
 			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
 						"Last Updated: {}").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0") ), bNode['lastUpdate'])
 		}
+		if bNode['label'] != bNode['address']:
+			bNode['title'] = ("Name: {}<br> "
+							"Address: {}<br> "
+							"Balance: {}<br> "
+							"Last Updated: {}").format(bNode['label'], bNode['address'], numWithCommas(bNode['balance']),
+														time.strftime("%Y-%m-%d, %H:%M:%S", time.localtime(bNode['lastUpdate'])))
 		rel   = nodes.get('r')
 		rel   = {
 			"from": aNode['id'],
@@ -197,5 +211,5 @@ def search(request, id):
 		}
 		data['edges']['all'].append(rel)
 	if len(data['edges']['collapsed']) < 1:
-		mainAddr = None
+		data['edges'] = None
 	return render(request, 'coin/coin.html', {'search': mainAddr, 'nodes': data['nodes'], 'edges': data['edges']})

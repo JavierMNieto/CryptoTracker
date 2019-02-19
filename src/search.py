@@ -10,9 +10,23 @@ from random import randint
 from traceback import print_exc
 from threading import Thread, Lock
 import queue
+import ctypes
+
+kernel32 = ctypes.windll.kernel32
+kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
 def numWithCommas(num):
 	return ("{:,}".format(num))
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 class Search: 
 	def __init__(self, btcUrl, usdtUrl, neo4j):
@@ -30,20 +44,19 @@ class Search:
 
 	def usdtRequest(self, addr, page, num):
 		try: 
-			proxy = 'None' if proxies[num] is None else str(proxies[num]['https'])
+			proxy = 'None' if num < 0 or proxies[num] is None else str(proxies[num]['https'])
 			print('Checking USDT ' + addr + ' Page: ' + str(page), "Proxy: " + proxy)
 			obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
 			if obj is None or ('error' in obj and obj['error']):
-
-				return self.usdtRequest(addr, page, randint(0, 13))
+				return self.usdtRequest(addr, page, randint(-1, len(proxies)-1))
 			else: 
 				return obj
 		except Exception as e:
-			print(e)
+			print("{} {} {}".format(bcolors.FAIL, e, bcolors.ENDC))
 			print_exc(file=open("log.txt", "a"))
-			return None
+			return self.usdtRequest(addr, page, randint(-1, len(proxies)-1))
 
-	def getTxs(self, threadNum, addrObj, lastTxid):
+	def getTxs(self, threadNum, addrObj):
 		while not self.done:
 			offset = 0
 			self.mutex.acquire()
@@ -67,23 +80,29 @@ class Search:
 				return 0
 			i = 0
 			for tx in obj['txs']:
-				if addrObj['lastTxTime'] > tx['time'] or addrObj['tx_since'] > tx['time'] or tx['hash'] == lastTxid:
-					if tx['hash'] == lastTxid:
+				if addrObj['lastTxTime'] > tx['time'] or addrObj['tx_since'] > tx['time']:
+					if addrObj['lastTxTime'] > tx['time']:
 						print("No New Transactions") 
 					self.mutex.acquire()
 					self.done = True
 					self.mutex.release()
 					break
 				i += 1	
-				exist = self.driver.session().run("MATCH (a:BTC)-[r:BTCTX]->(b:BTC) WHERE r.txid = {txid} RETURN r.txid", txid = tx['hash'])
+				exist = self.driver.session().run("MATCH (a:BTC)-[r:BTCTX]->(b:BTC) WHERE r.txid = {txid} RETURN r.txid LIMIT 1", txid = tx['hash'])
 				exist = exist.single()
 				if exist is not None:
 					continue
+				for inTx in tx['inputs']:
+					if len(inTx['prev_out']['addr']) > 34:
+						continue
+				for outTx in tx['out']:
+					if len(outTx['addr']) > 34:
+						continue
 				inputs  = {}
 				outputs = {}
 				amount  = None
 				for inTx in tx['inputs']:
-					if inTx['prev_out']['addr'] is not addrObj['addr']:
+					if inTx['prev_out']['addr'] != addrObj['addr']:
 						for outTx in tx['out']:
 							if 'addr' in outTx and outTx['addr'] == addrObj['addr']:
 								total  = float(outTx['value'])
@@ -114,16 +133,16 @@ class Search:
 							outputs[outTx['addr']] =  (float(outTx['value'])/satoshi)
 					amount = float((total - change)/satoshi)
 					inputs[addrObj['addr']] = float(total/satoshi)
-				
-				if amount is not None and amount > addrObj['minTx']:
+				if amount is not None and float(amount) > float(addrObj['minTx']):
 					sortedTx = {'addr': addrObj['addr'], 'txid': tx['hash'], 'time': tx['time'], 'inputs': inputs, 'outputs': outputs, 'amount': amount}
+					#pprint.pprint(sortedTx)
 					self.upTx(sortedTx, )
 			if self.done:
-				print("All Transactions Collected for thread {}".format(threadNum))
+				print("{} All Transactions Collected for Thread {} {}".format(bcolors.OKBLUE, threadNum, bcolors.ENDC))
 				return 0
 		return 0
 
-	def getUTxs(self, threadNum, addrObj, lastTxid):
+	def getUTxs(self, threadNum, addrObj):
 		while not self.done:
 			currPage = 1
 			self.mutex.acquire()
@@ -145,16 +164,14 @@ class Search:
 						wait = False
 						obj = self.usdtRequest(addrObj['addr'], currPage, threadNum)
 			for tx in obj['transactions']:
-				if tx['txid'] == lastTxid:
-					continue
 				if addrObj['lastTxTime'] > tx['blocktime'] or addrObj['tx_since'] > tx['blocktime']:
-					if tx['txid'] == lastTxid or addrObj['lastTxTime'] > tx['blocktime']:
+					if addrObj['lastTxTime'] > tx['blocktime']:
 						print("No New Transactions")
 					self.mutex.acquire()
 					self.done = True
 					self.mutex.release()
 					break
-				exist = self.driver.session().run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE r.txid = {txid} RETURN r.txid", txid = tx['txid'])
+				exist = self.driver.session().run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE r.txid = {txid} RETURN r.txid LIMIT 1", txid = tx['txid'])
 				exist = exist.single()
 				isNotValid = 'valid' not in tx or not tx['valid'] or int(tx['propertyid']) != 31 or (int(tx['type_int']) != 0 and int(tx['type_int']) != 55) or float(tx['amount']) < addrObj['minTx'] or exist is not None 
 				if isNotValid:
@@ -172,7 +189,7 @@ class Search:
 				self.done = True
 				self.mutex.release()
 			if self.done:
-				print("All Transactions Collected for thread {}".format(threadNum))
+				print("{} All Transactions Collected for Thread {} {}".format(bcolors.OKBLUE, threadNum, bcolors.ENDC))
 				return 0
 		return 0
 
@@ -187,7 +204,7 @@ class Search:
 					val = outValue
 				else:
 					val = inValue
-				if float(val) <= minVal:
+				if float(val) < addrObj['minTx']:
 					continue
 				newAddr = inName if outName == tx['addr'] else outName
 				with self.driver.session() as session:
@@ -235,106 +252,32 @@ class Search:
 							self.addrObj['txs'].append(tx)
 		#print("Added {} Transactions to {}".format(len(self.addrObj['txs']), self.addrObj['name']))
 
-	def getUSDT(self, environ):
-		if not self.checkParams(environ):
-			return "No Address"
-		queryString = pq(environ["QUERY_STRING"])
-		addr    = queryString['addr'][0]
-		name	= queryString['name'][0] if 'name' in queryString and queryString['name'][0] is not '' else addr
-		tx_since = int(queryString['time'][0]) if 'time' in queryString else -1
-		minTx	= float(queryString['minTx'][0]) if 'minTx' in queryString else -1
-		obj = self.usdtRequest(addr, 1, 0)
-		if obj is None:
-			print("Address Does Not Exist")
-			return "Error Getting {}".format(addr)
-		addrObj = {'name': name, 'type': 'USDT', 'addr': obj['address'], 'minTx': minTx, 'tx_since': tx_since, 'txs': []}
-		self.addrObj = addrObj
-		with self.driver.session() as session:
-			lastTime = session.run("MERGE (a:USDT {addr:$addr}) "
-									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
-									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
-									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], tx_since = tx_since)
-			lastTime = lastTime.single()
-			lastTime = lastTime[0]
-		addrObj['lastTxTime'] = float(lastTime)
-		if tx_since < 0 or tx_since is None: 
-			return addrObj
-		else:
-			return self.threadsUSDT(addrObj, )
-
 	def threadsUSDT(self, addrObj):
 		self.done = False
 		self.page = 1
+		self.addrObj = addrObj
 		threads = []
-		with self.driver.session() as session:
-			lastTxid = session.run("Match (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.addr = {addr} OR b.addr = {addr}) AND NOT r.isTotal "
-									"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
-			lastTxid = lastTxid.single()
-		if lastTxid is not None:
-			lastTxid = lastTxid[0]
-		else:
-			lastTxid = '' 
-		print(lastTxid)
 		for x in range(0, len(proxies)):
-			threads.append(Thread(target=self.getUTxs, args = (x, addrObj, lastTxid)))
+			threads.append(Thread(target=self.getUTxs, args = (x, addrObj)))
 			threads[x].start()
 		for x in range(0, len(proxies)):
 			threads[x].join()
 		print("Done with all Threads")
-		print("Added {} Transactions to {}".format(len(self.addrObj['txs']), self.addrObj['addr']))
+		print("{} Added {} Transactions to {} {}".format(bcolors.OKGREEN, len(self.addrObj['txs']), self.addrObj['addr'], bcolors.ENDC))
 		return str(self.addrObj)
-
-	def getBTC(self, environ):
-		if not self.checkParams(environ):
-			return "No Address"
-		queryString = pq(environ["QUERY_STRING"])
-		addr    = queryString['addr'][0]
-		name	= queryString['name'][0] if 'name' in queryString and queryString['name'][0] is not '' else addr
-		tx_since = int(queryString['time'][0]) if 'time' in queryString else -1
-		minTx	= float(queryString['minTx'][0]) if 'minTx' in queryString else -1
-		obj = None
-		try: 
-			obj = (requests.get(self.btcUrl + addr)).json()
-		except Exception as e:
-			print(e)
-			print_exc(file=open("log.txt", "a"))
-		if obj is None:
-			print("Address Does Not Exist")
-			return "Error Getting {}".format(addr)
-		addrObj = {'name': name, 'type': 'BTC', 'addr': obj['address'], 'n_txs': obj['n_tx'], 'minTx': minTx, 'tx_since': tx_since, 'txs': []}
-		self.addrObj = addrObj
-		with self.driver.session() as session:
-			lastTime = session.run("MERGE (a:BTC {addr:$addr}) "
-									"ON CREATE SET a.minTx = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
-									"ON MATCH SET a.minTx  = {minTx}, a.name = {name}, a.tx_since = {tx_since} "
-									"RETURN CASE a.minTx WHEN NULL THEN 0 ELSE a.epoch", name = addrObj['name'], addr = addrObj['addr'], minTx = addrObj['minTx'], tx_since = tx_since)
-			lastTime = lastTime.single()
-			lastTime = lastTime[0]
-		addrObj['lastTxTime'] = float(lastTime)
-		if tx_since < 0 or tx_since is None: 
-			return addrObj
-		else:
-			return self.threadsBTC(addrObj, )
 
 	def threadsBTC(self, addrObj):
 		self.done = False
 		self.page = 0
+		self.addrObj = addrObj
 		threads = []
-		with self.driver.session() as session:
-			lastTxid = session.run("Match (a:BTC)-[r:BTCTX]->(b:BTC) WHERE (a.addr = {addr} OR b.addr = {addr}) AND NOT r.isTotal "
-										"RETURN r.txid ORDER BY r.epoch DESC LIMIT 1", addr = addrObj['addr'])
-			lastTxid = lastTxid.single()
-		if lastTxid is not None:
-			lastTxid = lastTxid[0]
-		else:
-			lastTxid = ''
 		for x in range(0, len(proxies)):
-			threads.append(Thread(target=self.getTxs, args = (x, addrObj, lastTxid)))
+			threads.append(Thread(target=self.getTxs, args = (x, addrObj)))
 			threads[x].start()
 		for x in range(0, len(proxies)):
 			threads[x].join()
 		print("Done with all Threads")
-		print("Added {} Transactions to {}".format(len(self.addrObj['txs']), self.addrObj['addr']))
+		print("{} Added {} Transactions to {} {}".format(bcolors.OKGREEN, len(self.addrObj['txs']), self.addrObj['addr'], bcolors.ENDC))
 		return str(self.addrObj)
 
 	def refresh(self):
@@ -345,7 +288,20 @@ class Search:
 			if nodes is not None:
 				for node in nodes:
 					node = node.get(node.keys()[0])
-					obj = (requests.get(self.btcUrl + node['addr'])).json()
+					try:
+						obj = requests.get(self.btcUrl + node['addr'])
+						if not obj.status_code:
+								print("{} Waiting {} Seconds {}".format(bcolors.BOLD, 10, bcolors.ENDC))
+								time.sleep(10)
+								obj = requests.get(self.btcUrl + addrObj['addr'])
+						if obj.status_code:
+							obj = obj.json()
+						else:
+							continue
+					except Exception as e:
+						print("{} {} {}".format(bcolors.FAIL, e, bcolors.ENDC))
+						print_exc(file=open("log.txt", "a"))
+						continue
 					addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
 					lastTime = session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
 											"WITH a, a.epoch as lastTime "
@@ -365,11 +321,12 @@ class Search:
 								'minTx': node['minTx'], 'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
 					self.addrObj = addrObj
 					self.threadsBTC(addrObj, )
+			print(bcolors.OKBLUE + "Done With Main BTC Addresses" + bcolors.ENDC)
 			nodes = session.run("MATCH (n:USDT) WHERE n.minTx IS NOT NULL RETURN n")
 			if nodes is not None:
 				for node in nodes:
 					node = node.get(node.keys()[0])
-					obj = self.usdtRequest(node['addr'], 1, randint(0, 13))
+					obj = self.usdtRequest(node['addr'], 1, randint(-1, len(proxies)-1))
 					if obj is None or 'error' in obj and obj['error']:
 						continue
 					for coin in obj['balance']:
@@ -393,52 +350,67 @@ class Search:
 								'tx_since': node['tx_since'], 'lastTxTime': lastTime, 'txs': []}
 					self.addrObj = addrObj
 					self.threadsUSDT(addrObj, )
-			nodes = session.run("MATCH (n) WHERE n.minTx IS NULL RETURN n, labels(n)[0] as t")
+			print(bcolors.OKBLUE + "Done With Main USDT Addresses" + bcolors.ENDC)
+			nodes = session.run("MATCH (n) WHERE n.minTx IS NULL RETURN n")
 			sAddrsQ = queue.Queue()
 			for node in nodes:
 				node  = node.get('n')
-				label = node.get('t')
 				sAddrsQ.put({
 					'addr': node['addr'],
-					'type': label
+					'type': next(iter(node.labels))
 				})
 			threads = []
 			for x in range(0, len(proxies)):
 				threads.append(Thread(target=self.smallRefresh, args = (sAddrsQ, x)))
 				threads[x].start()
 			sAddrsQ.join()
-			print("Addresses Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
+			print("{} Addresses Updated as of {} {}".format(bcolors.OKGREEN, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), bcolors.ENDC))
 
 
 	def smallRefresh(self, q, threadNum):
 		while not q.empty():
 			with self.driver.session() as session:
 				addrObj = q.get()
-				if addrObj['type'] == 'BTC':
-					print('Checking BTC {} with Thread {}'.format(addrObj['addr'], threadNum))
-					obj = requests.get(self.btcUrl + addrObj['addr']).json()
-					addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
-					session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
-								"WITH a, a.epoch as lastTime "
-								"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} ", 
-								addr = addrObj['addr'], balance = addrObj['balance'], 
-								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), 
-								epoch = time.time())
-				else:
-					obj = self.usdtRequest(addrObj['addr'], 1, threadNum)
-					if obj is None or 'error' in obj and obj['error']:
-						continue
-					for coin in obj['balance']:
-						if int(coin['id']) == 31:
-							addrObj = { 'addr': obj['address'], 'balance': float(coin['value'])/satoshi}
-							session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
-										"WITH a, a.epoch as lastTime "
-										"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} ", 
-										addr = addrObj['addr'], balance = addrObj['balance'], 
-										lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
-							break
+				try:
+					if addrObj['type'] == 'BTC':
+						
+						obj = requests.get(self.btcUrl + addrObj['addr'])
+						if int(obj.status_code) != 200:
+							print("{} Thread {} Waiting {} Seconds {}".format(bcolors.BOLD, threadNum, 10, bcolors.ENDC))
+							time.sleep(10)
+							obj = requests.get(self.btcUrl + addrObj['addr'])
+						if obj.status_code:
+							obj = obj.json()
+						else:
+							print("{} {} {}".format(bcolors.FAIL, "Error", bcolors.ENDC), "With {} {}".format(addrObj['type'], addrObj['addr']), "Thread {}".format(threadNum))
+							continue
+						print('Checking BTC {} with Thread {}'.format(addrObj['addr'], threadNum))
+						addrObj = { 'addr': obj['address'], 'balance': float(obj['final_balance']/satoshi)}
+						session.run("MATCH (a:BTC) WHERE a.addr = {addr} "
+									"WITH a, a.epoch as lastTime "
+									"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} ", 
+									addr = addrObj['addr'], balance = addrObj['balance'], 
+									lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), 
+									epoch = time.time())
+					elif addrObj['type'] == 'USDT':
+						obj = self.usdtRequest(addrObj['addr'], 1, threadNum)
+						if obj is None or 'error' in obj and obj['error']:
+							continue
+						for coin in obj['balance']:
+							if int(coin['id']) == 31:
+								addrObj = { 'addr': obj['address'], 'balance': float(coin['value'])/satoshi}
+								session.run("MATCH (a:USDT) WHERE a.addr = {addr} "
+											"WITH a, a.epoch as lastTime "
+											"SET a.balance = {balance}, a.lastUpdate = {lastUpdate}, a.epoch = {epoch} ", 
+											addr = addrObj['addr'], balance = addrObj['balance'], 
+											lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
+								break
+				except Exception as e:
+					print("{} {} {}".format(bcolors.FAIL, e, bcolors.ENDC), "For {} {}".format(addrObj['type'], addrObj['addr']), "Thread {}".format(threadNum))
+					print_exc(file=open("log.txt", "a"))
+
 				if q.unfinished_tasks % 100 == 0:
-					print("{} Addresses Left".format(q.unfinished_tasks))
+					print("{} {} Addresses Left {}".format(bcolors.HEADER, q.unfinished_tasks, bcolors.ENDC))
 				q.task_done()
 		return 0
 
@@ -462,7 +434,7 @@ class Search:
 								"ON MATCH SET r.amount = {amount}, r.lastUpdate = {lastUpdate}, r.epoch = {epoch}, r.avgTxAmt = {avgTxTotal}, r.txsNum = {txsNum} ",
 								aAddr = aAddr, bAddr = bAddr, isTotal = True, amount = total, avgTxTotal = avgTotal, txsNum = txsNum,
 								lastUpdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), epoch = time.time())
-		print("Total Transactions Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
+		print("Collapsed Transactions Updated as of {}".format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
 
 	def close(self):
 		self.driver.close()
