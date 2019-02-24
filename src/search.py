@@ -10,10 +10,10 @@ from random import randint
 from traceback import print_exc
 from threading import Thread, Lock
 import queue
-import ctypes
+#import ctypes
 
-kernel32 = ctypes.windll.kernel32
-kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+#kernel32 = ctypes.windll.kernel32
+#kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
 def numWithCommas(num):
 	return ("{:,}".format(num))

@@ -3,13 +3,13 @@ import requests
 import json
 import time
 import pprint
-import ctypes
+#import ctypes
 from threading import Thread, Lock
 from lxml import html
 
 satoshi = 100000000.0
-kernel32 = ctypes.windll.kernel32
-kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+#kernel32 = ctypes.windll.kernel32
+#kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
 neo4j   = {
 	'user': 'neo4j',
