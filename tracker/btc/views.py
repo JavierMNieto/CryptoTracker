@@ -44,9 +44,15 @@ def search(request, id):
 			id = json.loads(id)
 			addrsText = "-"
 			label = "-"
+			isCategory = False
 			for addr in id:
+				if '.' in addr:
+					label += ", {}".format(addr.split('.', 1)[1])
+					isCategory = True
+					continue
 				addrsText += " OR (a.name = '{}' OR  b.name = '{}')".format(addr, addr)
-				label += ", {}".format(addr)
+				if not isCategory:
+					label += ", {}".format(addr)
 			addrsText = addrsText.split('- OR', 1)[1]
 			label = label.split('-, ', 1)[1]
 			txs = session.run("MATCH (a:BTC)-[r:BTCTX]->(b:BTC) WHERE(" + addrsText + ") AND NOT r.isTotal "
@@ -61,6 +67,9 @@ def search(request, id):
 				"label": label,
 				"balance": 0
 			}
+			if len(id) == 2:
+				id = id[1]
+				mainAddr = None
 		else:
 			txs = session.run("MATCH (a:BTC)-[r:BTCTX]->(b:BTC) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal "
 								"RETURN a,b,r ORDER BY r.epoch DESC", name = id)
@@ -85,12 +94,13 @@ def search(request, id):
 			"label": aNode['name'],
 			"address": aNode['addr'],
 			"balance": float(aNode['balance'] or 0),
+			"balVal": float(aNode['balance'] or 0)*btcPrice,
 			"group": aNode['wallet'] or "",
 			"lastUpdate": aNode['epoch'] or time.time(),
 			"url": "/btc/search/{}".format(aNode['name']) if aNode['minTx'] is not None else "https://blockexplorer.com/address/{}".format(aNode['addr']),
 			"webUrl": "https://blockexplorer.com/address/{}".format(aNode['addr']),
 			"walletName": aNode['walletName'] or "",
-			"value": 25.0 + ((float(aNode['balance'] or 0)/100000000)*btcPrice),
+			"value": ((float(aNode['balance'] or 0)/100000000)*btcPrice),
 			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
@@ -112,12 +122,13 @@ def search(request, id):
 			"label": bNode['name'],
 			"address": bNode['addr'],
 			"balance": float(bNode['balance'] or 0),
+			"balVal": float(bNode['balance'] or 0)*btcPrice,
 			"group": bNode['wallet'] or "",
 			"lastUpdate": bNode['epoch'] or time.time(),
 			"url": "/btc/search/{}".format(bNode['name']) if bNode['minTx'] is not None else "https://blockexplorer.com/address/{}".format(bNode['addr']),
 			"webUrl": "https://blockexplorer.com/address/{}".format(bNode['addr']),
 			"walletName": bNode['walletName'] or "",
-			"value": 25.0 + ((float(bNode['balance'] or 0)/100000000)*btcPrice),
+			"value": ((float(bNode['balance'] or 0)/100000000)*btcPrice),
 			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
@@ -138,13 +149,14 @@ def search(request, id):
 			"from": aNode['id'],
 			"to": bNode['id'],
 			"id": rel.id,
-			"value": float(rel['amount'] or 0),
+			"value": float(rel['amount'] or 0)*btcPrice,
 			"source": aNode['label'],
 			"target": bNode['label'],
 			"amount": float(rel['amount'] or 0),
 			"txsNum": int(rel['txsNum'] or 1.0),
 			"lastUpdate": rel['epoch'] or rel['time'] or time.time(),
 			"avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
+			"avgTxVal": float(rel['avgTxAmt'] or rel['amount'] or 0)*btcPrice,
 			"img": img,
 			"color": {
 				"color": "#F9A540"
@@ -203,10 +215,10 @@ def search(request, id):
 			"from": aNode['id'],
 			"to": bNode['id'],
 			"id": rel.id,
-			"value": float(rel['amount']),
+			"value": float(rel['amount'] or 0)*btcPrice,
 			"source": aNode['label'],
 			"target": bNode['label'],
-			"amount": float(rel['amount'] or "0"),
+			"amount": float(rel['amount'] or 0),
 			"time": rel['epoch'],
 			"txid": rel['txid'],
 			"img": img,

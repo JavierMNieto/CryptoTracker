@@ -366,7 +366,6 @@ class Search:
 			sAddrsQ.join()
 			print("{} Addresses Updated as of {} {}".format(bcolors.OKGREEN, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())), bcolors.ENDC))
 
-
 	def smallRefresh(self, q, threadNum):
 		while not q.empty():
 			with self.driver.session() as session:
