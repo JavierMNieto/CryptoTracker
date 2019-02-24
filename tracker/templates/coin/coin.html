@@ -290,15 +290,15 @@
 
 				vm.setTxs(allEdges.all);
 
-				var txInc = orderBy(vm.txs, 'amount', false);
+				var txInc = orderBy(vm.txs, 'value', false);
 				var timeInc = orderBy(vm.txs, 'time', false);
 
 				vm.prevTxs = vm.txs;
-				vm.minTx = txInc[0].amount;
-				vm.maxTx = txInc[vm.txs.length - 1].amount;
-				vm.maxTotalTx = orderBy(allEdges.collapsed, 'amount', true)[0].amount;
-				vm.maxBal = orderBy(allNodes, 'balance', true)[0].balance;
-				vm.maxAvgTx = orderBy(allEdges.collapsed, 'avgTx', true)[0].avgTx;
+				vm.minTx = txInc[0].value;
+				vm.maxTx = txInc[vm.txs.length - 1].value;
+				vm.maxTotalTx = orderBy(allEdges.collapsed, 'value', true)[0].value;
+				vm.maxBal = orderBy(allNodes, 'balVal', true)[0].balVal;
+				vm.maxAvgTx = orderBy(allEdges.collapsed, 'avgTxVal', true)[0].avgTxVal;
 				vm.minTime = timeInc[0].time;
 				vm.lastTx = vm.minTime;
 				vm.maxTime = moment().unix();
@@ -817,8 +817,8 @@
 			</svg>
 		</button>
 	</div>
-	<div class="row justify-content-center">
-	{% if search.label != 'All Addresses' and ',' not in search.label %}
+	<div class="row justify-content-center" id='info'>
+	{% if search.label != 'All Addresses' and search.address is not None %}
 		<div class="h5 block">
 			Balance: {{search.balance|numCommas}}
 			<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
@@ -851,12 +851,12 @@
 			Transactions Since {% verbatim %}{{ vm.lastTx*1000 | date:'yyyy-MM-dd' }}{% endverbatim %}
 		</div>
 	</div>
-	<div class="row mx-auto p-1" style="width: 95%">
+	<div class="row mx-auto p-1" style="width: 95%" id='filters'>
 		<button ng-click="vm.collapse()" id="hide" class="btn btn-primary block">{% verbatim %}{{ vm.collapseText }}{% endverbatim %}</button>
 		<div class="row mx-auto">
 			<div class="btn-group p-1">
-				<input type="number" min="0" max="{% verbatim %}{{vm.maxBal}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Balance" data-toggle="tooltip" data-placement="top" title="Minimum Balance" ng-model="vm.graphFilters.node.balance.min" ng-model-options="{ allowInvalid: true}">
-				<input type="number" min="0" max="{% verbatim %}{{vm.maxBal}}{% endverbatim %}" id="maxBal" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Balance" data-toggle="tooltip" data-placement="top" title="Maximum Balance" ng-model="vm.graphFilters.node.balance.max" ng-model-options="{ allowInvalid: true}">
+				<input type="number" min="0" max="{% verbatim %}{{vm.maxBal}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Balance" data-toggle="tooltip" data-placement="top" title="Min Balance (in USD)" ng-model="vm.graphFilters.node.balance.min" ng-model-options="{ allowInvalid: true}">
+				<input type="number" min="0" max="{% verbatim %}{{vm.maxBal}}{% endverbatim %}" id="maxBal" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Balance" data-toggle="tooltip" data-placement="top" title="Max Balance (in USD)" ng-model="vm.graphFilters.node.balance.max" ng-model-options="{ allowInvalid: true}">
 				<button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					<span class="sr-only">Toggle Dropdown</span>
 				</button>
@@ -865,8 +865,8 @@
 				</div>
 			</div>
 			<div class="btn-group p-1">
-				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Tx" data-toggle="tooltip" data-placement="top" title="Minimum Transaction" ng-model="vm.graphFilters.edge.amount.min" ng-model-options="{ allowInvalid: true}">
-				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" id="maxTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Tx" data-toggle="tooltip" data-placement="top" title="Maximum Transaction" ng-model="vm.graphFilters.edge.amount.max" ng-model-options="{ allowInvalid: true}">
+				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Tx" data-toggle="tooltip" data-placement="top" title="Min Transaction (in USD)" ng-model="vm.graphFilters.edge.amount.min" ng-model-options="{ allowInvalid: true}">
+				<input type="number" min="0" max="{% verbatim %}{{vm.maxTx}}{% endverbatim %}" id="maxTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Tx" data-toggle="tooltip" data-placement="top" title="Max Transaction (in USD)" ng-model="vm.graphFilters.edge.amount.max" ng-model-options="{ allowInvalid: true}">
 				<button type="button" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					<span class="sr-only">Toggle Dropdown</span>
 				</button>
@@ -877,14 +877,14 @@
 			<div ng-switch on="vm.isCollapsed">
 				<div ng-switch-when="false">
 					<div class="btn-group p-1" name="dateTimes" data-minDate="{% verbatim %}{{vm.minTime}}{% endverbatim %}" data-maxDate="{% verbatim %}{{vm.maxTime}}{% endverbatim %}">
-						<input type="text" name="minTime" class="form-control text-center text-truncate" step="100000.00" style="width: 11vw" placeholder="Min Tx Time" data-toggle="tooltip" data-placement="top" title="Minimum Transaction Time" ng-model="vm.graphFilters.edge.time.min" ng-model-options="{ allowInvalid: true}">
-						<input type="text" name="maxTime" class="form-control text-center text-truncate" step="100000.00" style="width: 11vw" placeholder="Max Tx Time" data-toggle="tooltip" data-placement="top" title="Maximum Transaction Time" ng-model="vm.graphFilters.edge.time.max" ng-model-options="{ allowInvalid: true}">
+						<input type="text" name="minTime" class="form-control text-center text-truncate" step="100000.00" style="width: 11vw" placeholder="Min Tx Time" data-toggle="tooltip" data-placement="top" title="Min Transaction Time" ng-model="vm.graphFilters.edge.time.min" ng-model-options="{ allowInvalid: true}">
+						<input type="text" name="maxTime" class="form-control text-center text-truncate" step="100000.00" style="width: 11vw" placeholder="Max Tx Time" data-toggle="tooltip" data-placement="top" title="Max Transaction Time" ng-model="vm.graphFilters.edge.time.max" ng-model-options="{ allowInvalid: true}">
 					</div>
 				</div>
 				<div ng-switch-default>
 					<div class="btn-group p-1">
-						<input type="number" min="0" max="{% verbatim %}{{vm.maxAvgTx}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Avg Tx" data-toggle="tooltip" data-placement="top" title="Minimum Average Transaction" ng-model="vm.graphFilters.edge.avgTx.min" ng-model-options="{ allowInvalid: true}">
-						<input type="number" min="0" max="{% verbatim %}{{vm.maxAvgTx}}{% endverbatim %}" id="maxAvgTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Avg Tx" data-toggle="tooltip" data-placement="top" title="Maximum Average Transaction" ng-model="vm.graphFilters.edge.avgTx.max" ng-model-options="{ allowInvalid: true}">
+						<input type="number" min="0" max="{% verbatim %}{{vm.maxAvgTx}}{% endverbatim %}" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Avg Tx" data-toggle="tooltip" data-placement="top" title="Min Avg Transaction (in USD)" ng-model="vm.graphFilters.edge.avgTx.min" ng-model-options="{ allowInvalid: true}">
+						<input type="number" min="0" max="{% verbatim %}{{vm.maxAvgTx}}{% endverbatim %}" id="maxAvgTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Avg Tx" data-toggle="tooltip" data-placement="top" title="Max Avg Transaction (in USD)" ng-model="vm.graphFilters.edge.avgTx.max" ng-model-options="{ allowInvalid: true}">
 						<button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							<span class="sr-only">Toggle Dropdown</span>
 						</button>
@@ -893,8 +893,8 @@
 						</div>
 					</div>
 					<div class="btn-group p-1">
-						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxsNum}}{% endverbatim %}" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Min Txs" data-toggle="tooltip" data-placement="top" title="Minimum # of Transactions" ng-model="vm.graphFilters.edge.txsNum.min" ng-model-options="{ allowInvalid: true}">
-						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxsNum}}{% endverbatim %}" id="maxTxsNum" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Max Txs" data-toggle="tooltip" data-placement="top" title="Maximum # of Transactions" ng-model="vm.graphFilters.edge.txsNum.max" ng-model-options="{ allowInvalid: true}">
+						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxsNum}}{% endverbatim %}" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Min Txs" data-toggle="tooltip" data-placement="top" title="Min # of Transactions" ng-model="vm.graphFilters.edge.txsNum.min" ng-model-options="{ allowInvalid: true}">
+						<input type="number" min="1" max="{% verbatim %}{{vm.maxTxsNum}}{% endverbatim %}" id="maxTxsNum" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Max Txs" data-toggle="tooltip" data-placement="top" title="Max # of Transactions" ng-model="vm.graphFilters.edge.txsNum.max" ng-model-options="{ allowInvalid: true}">
 						<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							<span class="sr-only">Toggle Dropdown</span>
 						</button>
@@ -915,7 +915,7 @@
 			</button>
 		</div>
 	</div>
-	<div class="row mx-auto">
+	<div class="row mx-auto" id='graphContainer'>
 		<div id="graph"></div>
 		<div>
 			<button ngsf-toggle-fullscreen width="1vw" height="1vw" class="btn position-relative btn-sm" onclick="fullGraph()" data-toggle="tooltip" data-placement="top" title="Fullscreen Graph">
@@ -930,7 +930,7 @@
 			</button>
 		</div>
 	</div>
-	<div ng-switch="vm.selection.type">
+	<div ng-switch="vm.selection.type" id='selection'>
 		<div ng-switch-when="node" class="list-group-item mx-auto container" style="padding-top: 2vh; width: 90%">
 			<div ng-switch="vm.selection.data.url">
 				<div ng-switch-when="" class="text-center text-truncate h2">
@@ -1160,7 +1160,7 @@
 		<div ng-switch-default>
 		</div>
 	</div>
-	<div class="container">
+	<div class="container" id='txList'>
 		<div class="row justify-content-center mx-auto" style="padding-top: 2vh; width: 90%">
 			<div class="h5 text-center block">
 				<div ng-switch="vm.pager.totalItems">
@@ -1205,8 +1205,8 @@
 				</button>
 				<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 					<a class="dropdown-item" ng-click="vm.sortBy('time', true)">Most Recent</a>
-					<a class="dropdown-item" ng-click="vm.sortBy('amount', true)">Transaction Amount <span class="font-italic h6">| Largest to Smallest</span></a>
-					<a class="dropdown-item" ng-click="vm.sortBy('amount', false)">Transaction Amount <span class="font-italic h6">| Smallest to Largest</span></a>
+					<a class="dropdown-item" ng-click="vm.sortBy('value', true)">Transaction Amount <span class="font-italic h6">| Largest to Smallest</span></a>
+					<a class="dropdown-item" ng-click="vm.sortBy('value', false)">Transaction Amount <span class="font-italic h6">| Smallest to Largest</span></a>
 				</div>
 			</div>
 		</div>

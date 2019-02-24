@@ -15,6 +15,8 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+	<script type="text/javascript" src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
 	<style type="text/css">
 		body {
 			padding-top: 56px;
@@ -30,8 +32,12 @@
 			width: 100%;
 			top: 0px;
 			height: 100%;
-			padding-bottom: 50px;
+			padding-bottom: 56px;
 			background-color: rgba(86, 166, 252, 0.75);
+		}
+
+		.dropdown-menu a:hover {
+			background-color: rgba(53, 54, 54, 0.692);
 		}
 
 		::-webkit-scrollbar {
@@ -41,10 +47,12 @@
 	<script>
 		var main = angular
 						.module('main', [])
-						.controller('mainController', [mainController]);
-		function mainController() {
+						.controller('mainController', ['$scope', mainController]);
+		function mainController($scope) {
 			vm = this
 			vm.isCustom = false;
+			vm.ct = moment().format('H:mm:ss');
+			vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
 			vm.addrs = []
 			{% for x in search %}
 				vm.addrs.push('');
@@ -81,11 +89,18 @@
 					$(`#${id}`).css("color", 'rgb(255, 255, 255)');
 				}	
 			}
+
+			setInterval(function() {
+				$scope.$apply(function() {
+					vm.ct = moment().format('H:mm:ss');
+					vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
+				});
+			}, 1000);
 		}
 	</script>
 </head>
 
-<body>
+<body ng-controller="mainController as vm">
 	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top">
 		<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
 			aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,42 +121,39 @@
 						<span class="menu-collapsed">BTC</span><span class="caret"></span>
 					{% endif %}
 					</a>
-					<ul class="dropdown-menu" id="BrandDropdown" role="menu" style="z-index: 10000">
-						<li class="dropdown-item">
-							<a href="{% url 'home' %}" id='home'>
-								<img src="{% static 'images/tracking.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
-								<span class="menu-collapsed">Home</span><span class="caret"></span>
-							</a>
-						</li>
-						<li class="dropdown-item">
-							<a href="{% url 'usdt' %}" id='usdt'>
-								<img src="{% static 'images/usdt.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
-								<span class="menu-collapsed">USDT</span><span class="caret"></span>
-							</a>
-						</li>
-						<li class="dropdown-item">
-							<a href="{% url 'btc' %}" id='btc'>
-								<img src="{% static 'images/btc.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
-								<span class="menu-collapsed">BTC</span><span class="caret"></span>
-							</a>
-						</li>
-					</ul>
+					<div class="dropdown-menu" id="BrandDropdown" role="menu" style="z-index: 10000">
+						<a class="dropdown-item" href="{% url 'home' %}" id='home'>
+							<img src="{% static 'images/tracking.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+							<span class="menu-collapsed">Home</span><span class="caret"></span>
+						</a>
+						<a class="dropdown-item" href="{% url 'usdt' %}" id='usdt'>
+							<img src="{% static 'images/usdt.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+							<span class="menu-collapsed">USDT</span><span class="caret"></span>
+						</a>
+						<a class="dropdown-item" href="{% url 'btc' %}" id='btc'>
+							<img src="{% static 'images/btc.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+							<span class="menu-collapsed">BTC</span><span class="caret"></span>
+						</a>
+					</div>
 				</li>
 			</ul>			
 		</div>
-		<div class="text-center mx-auto">
-			<span style="color:#F8A33D">BTC: </span><span class='font-weight-bold'>${{ btc.last | numCommas }}</span>
+		<div class="text-center mx-auto ng-cloak">
+			<span class='text-dark'>Hong Kong Time: </span><span class="font-weight-bold text-light">{% verbatim %}{{ vm.hk }}{% endverbatim %}</span>
+			<span style="color:#F8A33D" class='pl-5'>BTC: </span><span class='font-weight-bold'>${{ btc.last | numCommas }}</span>
 		{% if btc.percentage < 0 %}
-			<span class="font-weight-italic" style="color:#c74242"> ({{btc.percentage}}%)</span>
+			<span class="font-weight-italic pr-5" style="color:#c74242"> ({{btc.percentage}}%)</span>
 		{% else %}
-			<span class="font-weight-italic" style="color:#009e73"> (+{{btc.percentage}}%)</span>
+			<span class="font-weight-italic pr-5" style="color:#009e73"> (+{{btc.percentage}}%)</span>
 		{% endif %}
+			<span class='text-dark'>Current Time: </span><span class="font-weight-bold text-light">{% verbatim %}{{ vm.ct }}{% endverbatim %}</span>
 		</div>
 	</nav>
-{% if coin != 'home' %}
+
 	<!-- Bootstrap row -->
-	<div class="row" id="body-row" ng-controller="mainController as vm">
+	<div class="row" id="body-row">
 		<!-- Sidebar -->
+		{% if coin != 'home' %}
 		<div id="sidebar-container" class="sidebar-expanded d-none d-md-block col-2 pre-scrollable">
 			<!-- d-* hiddens the Sidebar in smaller devices. Its items can be kept on the Navbar 'Menu' -->
 			<!-- Bootstrap List Group -->
@@ -206,25 +218,27 @@
 				</ul>
 				{% endfor %}
 			</div>
-			
 			<!-- List Group END-->
 		</div>
 		<!-- sidebar-container END -->
-
+		
 		<!-- MAIN -->
 		<div class="col" id="frame">
 			<iframe id="iframe1" frameborder="0" name="iframe_a" width="100%" height="100%"></iframe>
 		</div>
 		<!-- Main Col END -->
-
+		{% else %}
+		<div id="frame">
+			<iframe id="iframe1" style="padding-bottom: 0 !important; padding-top: 56px !important" src="{% url 'searchHome' %}" frameborder="0" width="100%" height="100%"></iframe>
+		</div>
+		{% endif %}
 	</div>
-{% endif %}
 </body>
 
 <script>
 
 	function toggleDrop() {
-		let vm = angular.element($('#body-row')).scope();
+		let vm = angular.element($('body')).scope();
 		vm.$apply('vm.customOff()');
 		$('#graphDrop').next().toggle();
 	}

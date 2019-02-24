@@ -39,7 +39,7 @@ class Node(models.Model):
     USDT_Address = models.CharField(max_length=250, validators=[alphanumeric])
     minTx = models.FloatField(default=1000000.00)
     tx_Since = models.DateField(default=subtract_years(date.today(), 1))
-    category = models.CharField(max_length=36, validators=[alphanumeric], default='')
+    category = models.CharField(max_length=36, validators=[alphanumeric], default='', blank=True)
 
     def save(self, force_insert=False, force_update=False):
         if self.category.lower() == 'home':

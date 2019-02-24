@@ -40,9 +40,15 @@ def search(request, id):
 			id = json.loads(id)
 			addrsText = "-"
 			label = "-"
+			isCategory = False
 			for addr in id:
+				if '.' in addr:
+					label += ", {}".format(addr.split('.', 1)[1])
+					isCategory = True
+					continue
 				addrsText += " OR (a.name = '{}' OR  b.name = '{}')".format(addr, addr)
-				label += ", {}".format(addr)
+				if not isCategory:
+					label += ", {}".format(addr)
 			addrsText = addrsText.split('- OR', 1)[1]
 			label = label.split('-, ', 1)[1]
 			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + addrsText + ") AND NOT r.isTotal "
@@ -57,6 +63,9 @@ def search(request, id):
 				"label": label,
 				"balance": 0
 			}
+			if len(id) == 2:
+				id = id[1]
+				mainAddr = None
 		else:
 			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal "
 								"RETURN a,b,r ORDER BY r.epoch DESC", name = id)
@@ -81,11 +90,12 @@ def search(request, id):
 			"label": aNode['name'],
 			"address": aNode['addr'],
 			"balance": float(aNode['balance'] or 0),
+			"balVal": float(aNode['balance'] or 0),
 			"group": aNode['wallet'] or 'usdt',
 			"lastUpdate": aNode['epoch'] or time.time(),
 			"url": "/usdt/search/{}".format(aNode['name']) if aNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(aNode['addr']),
 			"webUrl": "https://omniexplorer.info/address/{}".format(aNode['addr']),
-			"value": 25.0 + float(aNode['balance'] or 0)/100000000,
+			"value": float(aNode['balance'] or 0)/100000000,
 			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
@@ -103,11 +113,12 @@ def search(request, id):
 			"label": bNode['name'],
 			"address": bNode['addr'],
 			"balance": float(bNode['balance'] or 0),
+			"balVal": float(bNode['balance'] or 0),
 			"group": bNode['wallet'] or 'usdt',
 			"lastUpdate": bNode['epoch'] or time.time(),
 			"url": "/usdt/search/{}".format(bNode['name']) if bNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(bNode['addr']),
 			"webUrl": "https://omniexplorer.info/address/{}".format(bNode['addr']),
-			"value": 25.0 + float(bNode['balance'] or 0)/100000000,
+			"value": float(bNode['balance'] or 0)/100000000,
 			"img": img,
 			"title": ("Address: {}<br> "
 						"Balance: {}<br> "
@@ -131,6 +142,7 @@ def search(request, id):
 			"txsNum": int(rel['txsNum'] or 1.0),
 			"lastUpdate": rel['epoch'] or rel['time'] or time.time(),
 			"avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
+			"avgTxVal": float(rel['avgTxAmt'] or rel['amount'] or 0),
 			"img": img,
 			"color": {
 				"color": "#26A17B"
@@ -192,7 +204,7 @@ def search(request, id):
 			"value": float(rel['amount']),
 			"source": aNode['label'],
 			"target": bNode['label'],
-			"amount": float(rel['amount'] or "0"),
+			"amount": float(rel['amount'] or 0),
 			"time": rel['epoch'],
 			"txid": rel['txid'],
 			"img": img,
