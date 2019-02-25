@@ -49,7 +49,7 @@
 		function mainController($scope) {
 			vm = this
 			vm.isCustom = false;
-			vm.ct = moment().utc().format('H:mm:ss');
+			vm.ut = moment().utc().format('H:mm:ss');
 			vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
 			vm.addrs = []
 			{% for x in search %}
@@ -90,7 +90,7 @@
 
 			setInterval(function() {
 				$scope.$apply(function() {
-					vm.ct = moment().utc().format('H:mm:ss');
+					vm.ut = moment().utc().format('H:mm:ss');
 					vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
 				});
 			}, 1000);
@@ -144,7 +144,7 @@
 		{% else %}
 			<span class="font-weight-italic pr-5" style="color:#009e73"> (+{{btc.percentage}}%)</span>
 		{% endif %}
-			<span class='text-dark'>Current Time: </span><span class="font-weight-bold text-light">{% verbatim %}{{ vm.ct }}{% endverbatim %}</span>
+			<span class='text-dark'>UTC Time: </span><span class="font-weight-bold text-light">{% verbatim %}{{ vm.ut }}{% endverbatim %}</span>
 		</div>
 	</nav>
 
