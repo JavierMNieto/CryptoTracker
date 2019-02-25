@@ -1,6 +1,6 @@
 import sys
 
-timeout = 1800.0 #seconds
+timeout = 3600.0 #seconds
 satoshi = 100000000.0
 minVal  = 100
 neo4j   = {
