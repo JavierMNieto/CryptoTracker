@@ -26,5 +26,6 @@ urlpatterns = [
     path('usdt', views.usdt_home, name="usdt"),
     path('btc', views.btc_home, name="btc"),
     path('usdt/', include('usdt.urls')),
-    path('btc/', include('btc.urls'))
+    path('btc/', include('btc.urls')),
+    path('getTxs', views.getTxs, name='getTxs')
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
