@@ -1,61 +1,629 @@
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-12312df
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
-getAddr
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 308, in connect
+    self._tunnel()
+  File "/usr/lib/python3.6/http/client.py", line 914, in _tunnel
+    (version, code, message) = response._read_status()
+  File "/usr/lib/python3.6/http/client.py", line 266, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[0]['proxy'])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 308, in connect
+    self._tunnel()
+  File "/usr/lib/python3.6/http/client.py", line 919, in _tunnel
+    message.strip()))
+OSError: Tunnel connection failed: 502 Proxy Error: server_error Error creating ext request: Connection closed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 502 Proxy Error: server_error Error creating ext request: Connection closed',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[0]['proxy'])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 502 Proxy Error: server_error Error creating ext request: Connection closed',)))
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[0]['proxy'])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 343, in _make_request
+    self._validate_conn(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 839, in _validate_conn
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 355, in connect
+    cert = self.sock.getpeercert()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/contrib/pyopenssl.py", line 360, in getpeercert
+    'subjectAltName': get_subj_alt_name(x509)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/contrib/pyopenssl.py", line 210, in get_subj_alt_name
+    ext = cert.extensions.get_extension_for_class(
+  File "/usr/lib/python3/dist-packages/cryptography/utils.py", line 159, in inner
+    result = func(instance)
+  File "/usr/lib/python3/dist-packages/cryptography/hazmat/backends/openssl/x509.py", line 134, in extensions
+    self._backend, self._x509
+  File "/usr/lib/python3/dist-packages/cryptography/hazmat/backends/openssl/decode_asn1.py", line 238, in parse
+    value = handler(backend, ext_data)
+  File "/usr/lib/python3/dist-packages/cryptography/hazmat/backends/openssl/decode_asn1.py", line 417, in _decode_subject_alt_name
+    _decode_general_names_extension(backend, ext)
+  File "/usr/lib/python3/dist-packages/cryptography/x509/extensions.py", line 1210, in __init__
+    self._general_names = GeneralNames(general_names)
+  File "/usr/lib/python3/dist-packages/cryptography/x509/extensions.py", line 1163, in __init__
+    if not all(isinstance(x, GeneralName) for x in general_names):
+  File "/usr/lib/python3/dist-packages/cryptography/x509/extensions.py", line 1163, in <genexpr>
+    if not all(isinstance(x, GeneralName) for x in general_names):
+  File "/usr/lib/python3.6/abc.py", line 184, in __instancecheck__
+    if subclass in cls._abc_cache:
+  File "/usr/lib/python3.6/_weakrefset.py", line 75, in __contains__
+    return wr in self.data
+RecursionError: maximum recursion depth exceeded in comparison
+Traceback (most recent call last):
+  File "src/search.py", line 33, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 524, in request
+    prep.url, proxies, stream, verify, cert
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 699, in merge_environment_settings
+    no_proxy = proxies.get('no_proxy') if proxies is not None else None
+AttributeError: 'set' object has no attribute 'get'
+Traceback (most recent call last):
+  File "src/search.py", line 33, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 524, in request
+    prep.url, proxies, stream, verify, cert
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 699, in merge_environment_settings
+    no_proxy = proxies.get('no_proxy') if proxies is not None else None
+AttributeError: 'set' object has no attribute 'get'
+Traceback (most recent call last):
+  File "src/search.py", line 33, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 524, in request
+    prep.url, proxies, stream, verify, cert
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 699, in merge_environment_settings
+    no_proxy = proxies.get('no_proxy') if proxies is not None else None
+AttributeError: 'set' object has no attribute 'get'
+{'name': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'addr': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'minTx': 1000000.0, 'maxTime': 15552000, 'txs': []}{'addr': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'txid': '2c9f41a307ac73eeba304737e862144ef396b348ff03ea83b5b56a99887c0b97', 'time': 1545333650, 'inputs': {'3GyeFJmQynJWd8DeACm4cdEnZcckAtrfcN': 1000000.0}, 'outputs': {'1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu': 999999.99993232}, 'amount': '1000000.00000000'}{'addr': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'txid': 'fc9024d661d0d5e62717a63b5606237932d33d63b3397931f0adf928b3bd527e', 'time': 1543962505, 'inputs': {'3GyeFJmQynJWd8DeACm4cdEnZcckAtrfcN': 1000000.0}, 'outputs': {'1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu': 999999.99991001}, 'amount': '1000000.00000000'}{'addr': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'txid': '52d621eb7fd71a7ebfb8c42b450f6f77ac069f8f40d79774998217a7bc664d4b', 'time': 1542903348, 'inputs': {'1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu': 1000000.0}, 'outputs': {'1L9h4i1nrZR1CjyTVUUi9f75zLGJK7FWqQ': 999999.99972714}, 'amount': '1000000.00000000'}{'addr': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'txid': '2c9f41a307ac73eeba304737e862144ef396b348ff03ea83b5b56a99887c0b97', 'time': 1545333650, 'inputs': {'3GyeFJmQynJWd8DeACm4cdEnZcckAtrfcN': 1000000.0}, 'outputs': {'1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu': 999999.99993232}, 'amount': '1000000.00000000'}{'addr': '1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu', 'txid': 'fc9024d661d0d5e62717a63b5606237932d33d63b3397931f0adf928b3bd527e', 'time': 1543962505, 'inputs': {'3GyeFJmQynJWd8DeACm4cdEnZcckAtrfcN': 1000000.0}, 'outputs': {'1KzajBjZrQgVcJM53VKxfLANX6vXr2ARdu': 999999.99991001}, 'amount': '1000000.00000000'}None
+None
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 308, in connect
+    self._tunnel()
+  File "/usr/lib/python3.6/http/client.py", line 914, in _tunnel
+    (version, code, message) = response._read_status()
+  File "/usr/lib/python3.6/http/client.py", line 266, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 36, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 159, in _new_conn
+    (self._dns_host, self.port), self.timeout, **extra_kw)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/connection.py", line 57, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "/usr/lib/python3.6/socket.py", line 745, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -3] Temporary failure in name resolution
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 301, in connect
+    conn = self._new_conn()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 168, in _new_conn
+    self, "Failed to establish a new connection: %s" % e)
+urllib3.exceptions.NewConnectionError: <urllib3.connection.VerifiedHTTPSConnection object at 0x7f5260a81080>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f5260a81080>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 36, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f5260a81080>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution',)))
+Traceback (most recent call last):
+  File "src/search.py", line 34, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "src/search.py", line 35, in usdtRequest
+    print('Checking ' + addr + ' Page: ' + str(page), "Proxy: " + str(proxies[num]['https']))
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 308, in connect
+    self._tunnel()
+  File "/usr/lib/python3.6/http/client.py", line 914, in _tunnel
+    (version, code, message) = response._read_status()
+  File "/usr/lib/python3.6/http/client.py", line 266, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 37, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 308, in connect
+    self._tunnel()
+  File "/usr/lib/python3.6/http/client.py", line 919, in _tunnel
+    message.strip()))
+OSError: Tunnel connection failed: 502 Proxy Error
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 502 Proxy Error',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 37, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 502 Proxy Error',)))
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 594, in urlopen
+    self._prepare_proxy(conn)
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 805, in _prepare_proxy
+    conn.connect()
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connection.py", line 308, in connect
+    self._tunnel()
+  File "/usr/lib/python3.6/http/client.py", line 914, in _tunnel
+    (version, code, message) = response._read_status()
+  File "/usr/lib/python3.6/http/client.py", line 266, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "/home/javi/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/search.py", line 37, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 116, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/api.py", line 60, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/javi/.local/lib/python3.6/site-packages/requests/adapters.py", line 510, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by ProxyError('Cannot connect to proxy.', RemoteDisconnected('Remote end closed connection without response',)))
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 410, in send
+    conn = self.get_connection(request.url, proxies)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 308, in get_connection
+    proxy_manager = self.proxy_manager_for(proxy)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 188, in proxy_manager_for
+    **proxy_kwargs
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 45, in SOCKSProxyManager
+    raise InvalidSchema("Missing dependencies for SOCKS support.")
+requests.exceptions.InvalidSchema: Missing dependencies for SOCKS support.
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 851, in connect
+    negotiate(self, dest_addr, dest_port)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 497, in _negotiate_SOCKS5
+    self, CONNECT, dest_addr)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 548, in _SOCKS5_request
+    raise SOCKS5AuthError("SOCKS5 authentication failed")
+socks.SOCKS5AuthError: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 88, in _new_conn
+    **extra_kw
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 262, in create_connection
+    raise err
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 252, in create_connection
+    sock.connect((remote_host, remote_port))
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 100, in wrapper
+    return function(*args, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 855, in connect
+    raise GeneralProxyError("Socket error", error)
+socks.GeneralProxyError: Socket error: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 343, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 849, in _validate_conn
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 110, in _new_conn
+    "Failed to establish a new connection: %s" % error
+urllib3.exceptions.NewConnectionError: <urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x064A8D10>: Failed to establish a new connection: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x064A8D10>: Failed to establish a new connection: SOCKS5 authentication failed'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 513, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x064A8D10>: Failed to establish a new connection: SOCKS5 authentication failed'))
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 851, in connect
+    negotiate(self, dest_addr, dest_port)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 497, in _negotiate_SOCKS5
+    self, CONNECT, dest_addr)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 548, in _SOCKS5_request
+    raise SOCKS5AuthError("SOCKS5 authentication failed")
+socks.SOCKS5AuthError: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 88, in _new_conn
+    **extra_kw
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 262, in create_connection
+    raise err
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 252, in create_connection
+    sock.connect((remote_host, remote_port))
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 100, in wrapper
+    return function(*args, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 855, in connect
+    raise GeneralProxyError("Socket error", error)
+socks.GeneralProxyError: Socket error: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 343, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 849, in _validate_conn
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 110, in _new_conn
+    "Failed to establish a new connection: %s" % error
+urllib3.exceptions.NewConnectionError: <urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x063D0B90>: Failed to establish a new connection: SOCKS5 authentication failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x063D0B90>: Failed to establish a new connection: SOCKS5 authentication failed'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 513, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x063D0B90>: Failed to establish a new connection: SOCKS5 authentication failed'))
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\models.py", line 896, in json
+    return complexjson.loads(self.text, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\json\__init__.py", line 348, in loads
+    return _default_decoder.decode(s)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 851, in connect
+    negotiate(self, dest_addr, dest_port)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 497, in _negotiate_SOCKS5
+    self, CONNECT, dest_addr)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 569, in _SOCKS5_request
+    resp = self._readall(reader, 3)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 329, in _readall
+    d = file.read(count - len(data))
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\socket.py", line 589, in readinto
+    return self._sock.recv_into(b)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 88, in _new_conn
+    **extra_kw
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 262, in create_connection
+    raise err
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 252, in create_connection
+    sock.connect((remote_host, remote_port))
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 100, in wrapper
+    return function(*args, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\socks.py", line 855, in connect
+    raise GeneralProxyError("Socket error", error)
+socks.GeneralProxyError: Socket error: [WinError 10054] An existing connection was forcibly closed by the remote host
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 343, in _make_request
+    self._validate_conn(conn)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 849, in _validate_conn
+    conn.connect()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connection.py", line 314, in connect
+    conn = self._new_conn()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\contrib\socks.py", line 110, in _new_conn
+    "Failed to establish a new connection: %s" % error
+urllib3.exceptions.NewConnectionError: <urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x08E69810>: Failed to establish a new connection: [WinError 10054] An existing connection was forcibly closed by the remote host
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 445, in send
+    timeout=timeout
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\connectionpool.py", line 638, in urlopen
+    _stacktrace=sys.exc_info()[2])
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\urllib3\util\retry.py", line 398, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x08E69810>: Failed to establish a new connection: [WinError 10054] An existing connection was forcibly closed by the remote host'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\javie\Dropbox\CryptoWalletTracker\src\search.py", line 34, in usdtRequest
+    obj = (requests.post(self.usdtUrl, data = {'addr': addr, 'page': page}, proxies = proxies[num])).json()
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 112, in post
+    return request('post', url, data=data, json=json, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 512, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\sessions.py", line 622, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\javie\AppData\Local\Programs\Python\Python37-32\lib\site-packages\requests\adapters.py", line 513, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: SOCKSHTTPSConnectionPool(host='api.omniwallet.org', port=443): Max retries exceeded with url: /v1/address/addr/details/ (Caused by NewConnectionError('<urllib3.contrib.socks.SOCKSHTTPSConnection object at 0x08E69810>: Failed to establish a new connection: [WinError 10054] An existing connection was forcibly closed by the remote host'))

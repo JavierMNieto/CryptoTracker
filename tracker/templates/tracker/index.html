@@ -1,13 +1,15 @@
+{% load compress %}
 {% load static %}
 {% load coin_extras %}
+{% spaceless %}
 <!DOCTYPE html>
 <html ng-app="main">
-
 <head>
 	<meta charset="utf-8">
 	<title>USDT/BTC Market Tracker</title>
 	<link rel="shortcut icon" href="{% static 'images/tracking.png' %}">
-	<link rel="stylesheet" href="{% static 'navbar.css' %}">
+	<link rel="icon" href="{% static 'images/tracking.png' %}">
+	<link rel="stylesheet" href="{% static 'css/navbar.min.css' %}">
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
@@ -15,37 +17,13 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 	<script type="text/javascript" src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
-	<style type="text/css">
-		body {
-			padding-top: 56px;
-			width: 100%;
-			height: 100%;
-			margin: 0;
-			overflow: hidden;
-		}
-
-		#iframe1 {
-			position: absolute;
-			left: 0px;
-			width: 100%;
-			top: 0px;
-			height: 100%;
-			padding-bottom: 56px;
-			background-color: rgba(86, 166, 252, 0.75);
-		}
-
-		.dropdown-menu a:hover {
-			background-color: rgba(53, 54, 54, 0.692);
-		}
-
-		::-webkit-scrollbar {
-			display: none;
-		}
-	</style>
+	<link rel="stylesheet" href="{% static 'css/index.min.css' %}">
+	{% compress js inline %}
 	<script>
 		var main = angular
 						.module('main', [])
 						.controller('mainController', ['$scope', mainController]);
+
 		function mainController($scope) {
 			vm = this
 			vm.isCustom = false;
@@ -96,6 +74,7 @@
 			}, 1000);
 		}
 	</script>
+	{% endcompress %}
 </head>
 
 <body ng-controller="mainController as vm">
@@ -222,68 +201,17 @@
 		
 		<!-- MAIN -->
 		<div class="col" id="frame">
-			<iframe id="iframe1" frameborder="0" name="iframe_a" width="100%" height="100%"></iframe>
+			<!-- Select an Address to Track -->
+			<iframe id="iframe1" frameborder="0" name="iframe_a" src="{{coin}}/search/0" width="100%" height="100%"></iframe>
 		</div>
 		<!-- Main Col END -->
 		{% else %}
 		<div id="frame">
-			<iframe id="iframe1" style="padding-bottom: 0 !important; padding-top: 56px !important" src="{% url 'searchHome' %}" frameborder="0" width="100%" height="100%"></iframe>
+			<iframe id="iframe1" style="margin-top: 56px !important" src="{% url 'searchHome' %}" frameborder="0" width="100%" height="100%"></iframe>
 		</div>
 		{% endif %}
 	</div>
 </body>
-
-<script>
-
-	function toggleDrop() {
-		let vm = angular.element($('body')).scope();
-		vm.$apply('vm.customOff()');
-		$('#graphDrop').next().toggle();
-	}
-
-	jQuery('#graphDrop').on('click', toggleDrop);
-	jQuery('.dropdown-menu').click(function(e) {
-		e.stopPropagation();
-	}); 
-
-	$(document).ready(function(){
-		$("#searchBar").on("keyup", function() {
-			var value = $(this).val().toLowerCase();
-			$("#accordion .list-group-item").filter(function() {
-				$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-			});
-		});
-	});
-
-	// Hide submenus
-	$('#body-row .collapse').collapse('hide');
-
-	// Collapse/Expand icon
-	$('#collapse-icon').addClass('fa-angle-double-left');
-
-	// Collapse click
-	$('[data-toggle=sidebar-colapse]').click(function () {
-		SidebarCollapse();
-	});
-
-	function SidebarCollapse() {
-		$('.menu-collapsed').toggleClass('d-none');
-		$('.sidebar-submenu').toggleClass('d-none');
-		$('.submenu-icon').toggleClass('d-none');
-		$('#sidebar-container').toggleClass('sidebar-expanded sidebar-collapsed');
-
-		// Treating d-flex/d-none on separators with title
-		var SeparatorTitle = $('.sidebar-separator-title');
-		if (SeparatorTitle.hasClass('d-flex')) {
-			SeparatorTitle.removeClass('d-flex');
-		} else {
-			SeparatorTitle.addClass('d-flex');
-		}
-
-		// Collapse/Expand icon
-		$('#collapse-icon').toggleClass('fa-angle-double-left fa-angle-double-right');
-	}
-</script>
-
+<script src="{% static 'js/index.min.js' %}"></script>
 </html>
-<!-- body-row END -->
+{% endspaceless %}

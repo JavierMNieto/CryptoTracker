@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import loader
 from django.shortcuts import get_object_or_404, render
+from django.http import JsonResponse
 from neo4j.v1 import GraphDatabase
 import pprint
 import json
@@ -19,171 +20,28 @@ img = "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png"
 def numWithCommas(num):
 	return ("{:,}".format(float(num)))
 
-def search(request, id):
-	mainAddr = None
-	id = unquote(id)
+def getTxs(request):
+	page = max(int(request.GET.get('page')) or 1, 1)
+	name = request.GET.getlist('name[]') or None
+	sort = request.GET.get('sort') or 'epoch'
+	order = request.GET.get('order') or 'DESC'
+
+	return JsonResponse(txData(page - 1, name=name, sort=sort, order=order), safe=False)
 	
+def txData(page, name=None, sort='epoch', order='DESC'):
 	with driver.session() as session:
-		if id == '0':
-			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal "
-							"RETURN a,b,r ORDER BY r.epoch DESC")
-			addrs = session.run("MATCH (a:USDT)-[r]->(b:USDT) "
-								"WITH DISTINCT a,b, count(r) AS sstcount "
-								"MATCH p=(a)-[r]->(b) "
-								"WHERE sstcount = 1 OR r.isTotal = True "
-								"RETURN a, b, r")
-			mainAddr = {
-				"label": "All Addresses",
-				"balance": 0
-			}
-		elif '[' in id:
-			id = json.loads(id)
-			addrsText = "-"
-			label = "-"
-			isCategory = False
-			for addr in id:
-				if '.' in addr:
-					label += ", {}".format(addr.split('.', 1)[1])
-					isCategory = True
-					continue
+		if name:
+			addrsText = '-'
+			for addr in name:
 				addrsText += " OR (a.name = '{}' OR  b.name = '{}')".format(addr, addr)
-				if not isCategory:
-					label += ", {}".format(addr)
 			addrsText = addrsText.split('- OR', 1)[1]
-			label = label.split('-, ', 1)[1]
-			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + addrsText + ") AND NOT r.isTotal "
-								"RETURN a,b,r ORDER BY r.epoch DESC")
-			addrs = session.run("MATCH (a:USDT)-[r]->(b:USDT) "
-								"WHERE(" + addrsText + ") "
-								"WITH DISTINCT a,b, count(r) AS sstcount "
-								"MATCH p=(a)-[r]->(b) "
-								"WHERE sstcount = 1 OR r.isTotal = True "
-								"RETURN a, b, r")
-			mainAddr = {
-				"label": label,
-				"balance": 0
-			}
-			if len(id) == 2:
-				id = id[1]
-				mainAddr = None
+			data = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + addrsText + ") AND NOT r.isTotal "
+									"RETURN a,b,r ORDER BY r." + sort + " " + order + " SKIP {offSet} LIMIT 10", offSet = page*10)
 		else:
-			txs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal "
-								"RETURN a,b,r ORDER BY r.epoch DESC", name = id)
-			addrs = session.run("MATCH (a:USDT)-[r]->(b:USDT) "
-								"WHERE (a.name = {name} OR b.name = {name}) "
-								"WITH DISTINCT a,b, count(r) AS sstcount "
-								"MATCH p=(a)-[r]->(b) "
-								"WHERE sstcount = 1 OR r.isTotal = True "
-								"RETURN a, b, r", name = id)
-	data = {
-		'nodes': [],
-		'edges': {
-			'collapsed': [],
-			'all': []
-		}
-	}
-
-	for nodes in addrs:
-		aNode = nodes.get('a')
-		aNode = {
-			"id": aNode.id,
-			"label": aNode['name'],
-			"address": aNode['addr'],
-			"balance": float(aNode['balance'] or 0),
-			"balVal": float(aNode['balance'] or 0),
-			"group": aNode['wallet'] or 'usdt',
-			"lastUpdate": aNode['epoch'] or time.time(),
-			"url": "/usdt/search/{}".format(aNode['name']) if aNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(aNode['addr']),
-			"webUrl": "https://omniexplorer.info/address/{}".format(aNode['addr']),
-			"value": float(aNode['balance'] or 0)/100000000,
-			"img": img,
-			"title": ("Address: {}<br> "
-						"Balance: {}<br> "
-						"Last Updated: {}").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")), aNode['lastUpdate'])
-		}
-		if aNode['label'] != aNode['address']:
-			aNode['title'] = ("Name: {}<br> "
-							"Address: {}<br> "
-							"Balance: {}<br> "
-							"Last Updated: {}").format(aNode['label'], aNode['address'], numWithCommas(aNode['balance']),
-														time.strftime("%Y-%m-%d, %H:%M:%S", time.localtime(aNode['lastUpdate'])))
-		bNode = nodes.get('b')
-		bNode = {
-			"id": bNode.id,
-			"label": bNode['name'],
-			"address": bNode['addr'],
-			"balance": float(bNode['balance'] or 0),
-			"balVal": float(bNode['balance'] or 0),
-			"group": bNode['wallet'] or 'usdt',
-			"lastUpdate": bNode['epoch'] or time.time(),
-			"url": "/usdt/search/{}".format(bNode['name']) if bNode['minTx'] is not None else "https://omniexplorer.info/address/{}".format(bNode['addr']),
-			"webUrl": "https://omniexplorer.info/address/{}".format(bNode['addr']),
-			"value": float(bNode['balance'] or 0)/100000000,
-			"img": img,
-			"title": ("Address: {}<br> "
-						"Balance: {}<br> "
-						"Last Updated: {}").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0") ), bNode['lastUpdate'])
-		}
-		if bNode['label'] != bNode['address']:
-			bNode['title'] = ("Name: {}<br> "
-							"Address: {}<br> "
-							"Balance: {}<br> "
-							"Last Updated: {}").format(bNode['label'], bNode['address'], numWithCommas(bNode['balance']),
-														time.strftime("%Y-%m-%d, %H:%M:%S", time.localtime(bNode['lastUpdate'])))
-		rel   = nodes.get('r')
-		rel   = {
-			"from": aNode['id'],
-			"to": bNode['id'],
-			"id": rel.id,
-			"value": float(rel['amount'] or 0),
-			"source": aNode['label'],
-			"target": bNode['label'],
-			"amount": float(rel['amount'] or 0),
-			"txsNum": int(rel['txsNum'] or 1.0),
-			"lastUpdate": rel['epoch'] or rel['time'] or time.time(),
-			"avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
-			"avgTxVal": float(rel['avgTxAmt'] or rel['amount'] or 0),
-			"img": img,
-			"color": {
-				"color": "#26A17B"
-			},
-			"sourceUrl": "/usdt/search/{}".format(aNode['label']) if aNode['url'] != ''
-						else "https://omniexplorer.info/address/{}".format(aNode['label']),
-			"targetUrl": "/usdt/search/{}".format(bNode['label']) if aNode['url'] != ''
-						else "https://omniexplorer.info/address/{}".format(bNode['label']),
-			"title": ("Collapsed: True<br> "
-						"# of Txs: {}<br> "
-						"Total: {}<br> "
-						"Average Tx Amount: {}<br> "
-						"Last Updated: {}").format(numWithCommas(rel['txsNum'] or 1.0), numWithCommas(rel['amount']), 
-										numWithCommas(rel['avgTxAmt'] or rel['amount']), rel['lastUpdate'] or rel['time'])
-		}
-
-		aExists = False
-		bExists = False
-		for node in data['nodes']:
-			if node['id'] == aNode['id']:
-				aExists = True
-			if node['id'] == bNode['id']:
-				bExists = True
-			if aExists and bExists:
-				break
-		if not aExists:
-			if mainAddr == None and aNode['label'] == id:
-				mainAddr = aNode
-				mainAddr['minTx'] = nodes.get('a')['minTx']
-				mainAddr['tx_since'] = nodes.get('a')['tx_since']
-				mainAddr['url'] = "https://omniexplorer.info/address/{}".format(mainAddr['address'])
-			data['nodes'].append(aNode)
-		if not bExists:
-			if mainAddr == None and bNode['label'] == id:
-				mainAddr = bNode
-				mainAddr['minTx'] = nodes.get('b')['minTx']
-				mainAddr['tx_since'] = nodes.get('b')['tx_since']
-				mainAddr['url'] = "https://omniexplorer.info/address/{}".format(mainAddr['address'])
-			data['nodes'].append(bNode)
-		data['edges']['collapsed'].append(rel)
-	for nodes in txs:
+			data = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal "
+								"RETURN a,b,r ORDER BY r." + sort + " " + order + " SKIP {offSet} LIMIT 10", offSet = page*10)
+	edges = []
+	for nodes in data:
 		aNode = nodes.get('a')
 		aNode = {
 			"id": aNode.id,
@@ -221,7 +79,80 @@ def search(request, id):
 						"Total: {}<br> "
 						"Time: {}").format(rel['txid'], numWithCommas(float(rel['amount'])), rel['time'])
 		}
-		data['edges']['all'].append(rel)
-	if len(data['edges']['collapsed']) < 1:
-		data['edges'] = None
-	return render(request, 'coin/coin.html', {'search': mainAddr, 'nodes': data['nodes'], 'edges': data['edges']})
+		edges.append(rel)
+	return edges
+
+def search(request, id):
+	if 'img' in str(id) and '{' in str(id):
+		return render(request, 'coin/coin.html')
+	mainAddr = None
+	id = unquote(id)
+	with driver.session() as session:
+		if id == '0':
+			txs = txData(0)
+			totalTxs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal RETURN count(r) AS totalTxs").single().get('totalTxs')
+			minTx	 = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal RETURN r.amount ORDER BY r.amount ASC LIMIT 1").single().value()
+			lastTx	 = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE NOT r.isTotal RETURN r.epoch ORDER BY r.epoch ASC LIMIT 1").single().value()
+			mainAddr = {
+				"label": "All Addresses",
+				"name": None,
+				"totalTxs": totalTxs,
+				"minTx": minTx,
+				"lastTx": lastTx,
+				"balance": 0
+			}
+		elif '[' in id:
+			id = json.loads(id)
+			names = []
+			txsText = '-'
+			addrsText = '-'
+			label = "-"
+			isCategory = False
+			for addr in id:
+				if '.' in addr:
+					label += ", {}".format(addr.split('.', 1)[1])
+					isCategory = True
+					continue
+				names.append(addr)
+				txsText += " OR (a.name = '{}' OR  b.name = '{}')".format(addr, addr)
+				addrsText += " OR a.name = '{}'".format(addr)
+				if not isCategory:
+					label += ", {}".format(addr)
+			txsText = txsText.split('- OR', 1)[1]
+			addrsText = addrsText.split('- OR', 1)[1]
+			label = label.split('-, ', 1)[1]
+			txs = txData(0, name=names)
+			totalTxs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + txsText + ") AND NOT r.isTotal RETURN count(r)").single().value()
+			balance  = session.run("MATCH (a:USDT) WHERE(" + addrsText + ") RETURN SUM(a.balance)").single().value()
+			minTx	 = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + txsText + ") AND NOT r.isTotal RETURN r.amount ORDER BY r.amount ASC LIMIT 1").single().value()
+			lastTx	 = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE(" + txsText + ") AND NOT r.isTotal RETURN r.epoch ORDER BY r.epoch ASC LIMIT 1").single().value()
+
+			mainAddr = {
+				"label": label,
+				"name": names,
+				"totalTxs": totalTxs,
+				"minTx": minTx,
+				"lastTx": lastTx,
+				"balance": balance
+			}
+		else:
+			totalTxs = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal RETURN count(r)", name = id).single().value()
+			minTx	 = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal RETURN r.amount ORDER BY r.amount ASC LIMIT 1", name = id).single().value()
+			lastTx	 = session.run("MATCH (a:USDT)-[r:USDTTX]->(b:USDT) WHERE (a.name = {name} OR b.name = {name}) AND NOT r.isTotal RETURN r.epoch ORDER BY r.epoch ASC LIMIT 1", name = id).single().value()
+
+			addrInfo = session.run("MATCH (a:USDT) WHERE a.name = {name} RETURN a.balance as bal, a.addr as addr", name = id).single()
+			addr = addrInfo.get('addr')
+			bal  = addrInfo.get('bal')
+
+			mainAddr = {
+				"label": id,
+				"name": [id],
+				"address": addr,
+				"totalTxs": totalTxs,
+				"minTx": minTx,
+				"lastTx": lastTx,
+				"balance": bal
+			}
+			txs = txData(0, name=[id])
+
+	return render(request, 'coin/coin.html', {'search': mainAddr, 'edges': txs})

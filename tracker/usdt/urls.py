@@ -23,4 +23,5 @@ app_name = 'usdt'
 urlpatterns = [
     path('admin/', admin.site.urls, name='admin'),
     path('search/<str:id>', views.search, name='search'),
+    path('getTxs', views.getTxs, name='getTxs')
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
