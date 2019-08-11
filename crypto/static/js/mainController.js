@@ -9,6 +9,8 @@ function mainController($scope) {
 	vm.ut = moment().utc().format('H:mm:ss');
 	vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
 	vm.addrs = []
+	vm.known = []
+
 
 	vm.formState = "";
 	vm.overlay   = {};
@@ -113,9 +115,27 @@ function mainController($scope) {
 
 		$(`.modal`).modal('hide');
 
+		vm.addrInput = {
+			'addr': {
+				'val': '',
+				'state': 'invalid'
+			},
+			'name': {
+				'val': '',
+				'state': 'invalid'
+			}
+		};
+
 		console.log(resp);
 
-		// DO SOMETHING ON SUCCESS
+		if (resp.toLowerCase() == "success") {
+			updateKnown();
+		}
+	}
+
+	async function updateKnown() {
+		vm.known = await $.get(window.location + "/getKnown");
+		console.log(vm.known)
 	}
 
 	vm.checkAddr = async function () {
@@ -175,4 +195,6 @@ function mainController($scope) {
 
 		vm.addrInput.name.state = "invalid";
 	}
+
+	updateKnown();
 }

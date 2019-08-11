@@ -24,5 +24,6 @@ urlpatterns = [
     path('search/<str:id>', views.search, name='search'),
     path('getTxs', views.getTxs, name='getTxs'),
     path('getGraph', views.getGraphData, name='getGraph'),
+    path('getKnown', views.getKnown, name="getKnown"),
     path('addr', views.addr, name='addr'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -24,20 +24,7 @@ def search(request, coin=None):
 	cmc = ccxt.coinmarketcap()
 	btc = cmc.fetch_ticker('BTC/USD')
 
-	nodes = driver.session().run("MATCH (a:USDTKNOWN) RETURN a")
-
-	categories = [{
-		'category': 'Home',
-		'url': "/{}/search/0".format(coin),
-		'addrs': []
-	}]
-	for node in nodes:
-		categories[0]['addrs'].append({
-			'name': node.get('a')['name'],
-			'url': "/{}/search/{}".format(coin, node.get('a')['addr']),
-			'addr': node.get('a')['addr']
-		})
-	search = {'search': categories[0]['addrs'], 'categories': categories, 'coin': coin, 'homeUrl': '/{}/search/0'.format(coin), 'btc': btc}
+	search = {'coin': coin, 'homeUrl': '/{}/search/0'.format(coin), 'btc': btc}
 	return render(request, 'tracker/index.html', search)
 
 def usdt_home(request):
