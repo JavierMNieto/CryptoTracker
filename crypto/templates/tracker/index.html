@@ -1,0 +1,314 @@
+{% load static %}
+{% load coin_extras %}
+<!DOCTYPE html>
+<html ng-app="main">
+
+<head>
+	<meta charset="utf-8">
+	<title>USDT/BTC Market Tracker</title>
+	<link rel="shortcut icon" href="{% static 'images/tracking.png' %}">
+	<link rel="icon" href="{% static 'images/tracking.png' %}">
+	<link rel="stylesheet" href="{% static 'css/index.css' %}">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+		integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
+	</script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+	</script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+	<script type="text/javascript" src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
+	<script src="https://kit.fontawesome.com/af6506c08e.js"></script>
+	<script src="{% static 'js/mainController.js' %}"></script>
+</head>
+
+<body ng-controller="mainController as vm">
+	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top" style="z-index: 100;">
+		<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+			data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false"
+			aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="navbar-header">
+			<ul class="nav navbar-nav d-inline-block">
+				<li class="dropdown">
+					<a class="navbar-brand dropdown nav-link dropdown-toggle" style="cursor: pointer;"
+						data-toggle="dropdown" id="navbarDropdownMenuLink" aria-haspopup="true" aria-expanded="false">
+						{% if coin == 'home' %}
+						<img src="{% static 'images/tracking.png' %}" width="30" height="30"
+							class="d-inline-block align-top" alt="">
+						<span class="menu-collapsed">Home</span><span class="caret"></span>
+						{% elif coin == 'usdt' %}
+						<img src="{% static 'images/usdt.png' %}" width="30" height="30"
+							class="d-inline-block align-top" alt="">
+						<span class="menu-collapsed">USDT</span><span class="caret"></span>
+						{% endif %}
+					</a>
+					<div class="dropdown-menu" id="BrandDropdown" role="menu" style="z-index: 10000">
+						<a class="dropdown-item" href="{% url 'home' %}" id='home'>
+							<img src="{% static 'images/tracking.png' %}" width="30" height="30"
+								class="d-inline-block align-top" alt="">
+							<span class="menu-collapsed">Home</span><span class="caret"></span>
+						</a>
+						<a class="dropdown-item" href="{% url 'usdt' %}" id='usdt'>
+							<img src="{% static 'images/usdt.png' %}" width="30" height="30"
+								class="d-inline-block align-top" alt="">
+							<span class="menu-collapsed">USDT</span><span class="caret"></span>
+						</a>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<div class="text-center mx-auto ng-cloak">
+			<span class='text-dark'>Hong Kong Time: </span><span
+				class="font-weight-bold text-light">{% verbatim %}{{ vm.hk }}{% endverbatim %}</span>
+			<span style="color:#F8A33D" class='pl-5'>BTC: </span><span
+				class='font-weight-bold'>${{ btc.last | numCommas }}</span>
+			{% if btc.percentage < 0 %}
+			<span class="font-weight-italic pr-5" style="color:#c74242"> ({{btc.percentage}}%)</span>
+			{% else %}
+			<span class="font-weight-italic pr-5" style="color:#009e73"> (+{{btc.percentage}}%)</span>
+			{% endif %}
+			<span class='text-dark'>UTC Time: </span><span
+				class="font-weight-bold text-light">{% verbatim %}{{ vm.ut }}{% endverbatim %}</span>
+		</div>
+	</nav>
+	
+	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" aria-hidden="true">
+		<div ng-switch on="vm.overlay.type" class="modal-dialog modal-dialog-centered modal-sm" role="document">
+			<form id="edit" method="post" action="{{ request.path }}/addr" ng-switch-when="edit" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="py-2 px-3">
+					<h5 class="modal-title d-inline-block text-muted mr-3 mt-2">Edit <span class="text-light">{% verbatim %}{{ vm.overlay.name }}{% endverbatim %}</span></h5>
+					<button type="button" class="close mt-2 btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+					<div class="text-center text-muted text-truncate"><small>{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}</small></div>
+				</div>
+				<div class="modal-body shadow-lg bg-secondary">
+					<input type="text" name="name" placeholder="Name" ng-readonly="vm.addrInput.name.state == 'load'"
+						class="shadow form-control w-75 mx-auto my-1 text-center" ng-model="vm.addrInput.name.val" ng-change="vm.checkName()">
+					<div style="position: absolute; top: 1.2rem; right: 3.25rem;" ng-switch on="vm.addrInput.name.state">
+						<div ng-switch-when="valid">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-when="load">
+							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
+						<div ng-switch-default>
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<input type="hidden" name="method" value="edit">
+					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-info" ng-disabled="vm.addrInput.name.state != 'valid'" ng-click="vm.submit('edit')">
+						<span ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						Save changes
+					</button>
+				</div>
+			</form>
+			<form id="add" method="post" action="{{ request.path }}/addr" ng-switch-when="add" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title">Add New Address</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg bg-secondary">
+					<input type="text" name="addr" style="font-size: 75%" placeholder="Address" ng-change="vm.checkAddr()" ng-readonly="vm.addrInput.addr.state == 'load'" 
+						ng-model="vm.addrInput.addr.val" class="shadow form-control w-100 my-1 text-center text-muted">
+					<div style="position: absolute; top: 1.2rem; right: 1.2rem;" ng-switch on="vm.addrInput.addr.state">
+						<div ng-switch-when="valid">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-when="load">
+							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
+						<div ng-switch-default>
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+					<input type="text" name="name" placeholder="Name" class="shadow form-control w-75 mx-auto my-1 text-center" ng-readonly="vm.addrInput.name.state == 'load'"
+						ng-change="vm.checkName()" ng-model="vm.addrInput.name.val">
+					<div style="position: absolute; top: 3.45rem; right: 3.35rem;" ng-switch on="vm.addrInput.name.state">
+						<div ng-switch-when="valid">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-when="load">
+							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
+						<div ng-switch-default>
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<input type="hidden" name="method" value="add">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-success" ng-disabled="vm.addrInput.addr.state != 'valid' && vm.addrInput.name.state != 'valid'"
+						ng-click="vm.submit('add')">
+						<span ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						Add Address
+					</button>
+				</div>
+			</form>
+			<form id="delete" method="post" action="{{ request.path }}/addr" post="post" action="{% verbatim %}{{ vm.url }}{% endverbatim %}/addr" ng-switch-when="delete" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title text-muted">Delete <span class="text-light">{% verbatim %}{{ vm.overlay.name }}{% endverbatim %}</span>?</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg bg-secondary text-center">
+					Are you sure you want to delete <small class="font-weight-bold">{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}</small>?
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<input type="hidden" name="method" value="delete">
+					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
+					<button type="button" class="btn btn-danger" ng-click="vm.submit('delete')">
+						<span ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						Delete
+					</button>
+				</div>
+			</form>
+			<div ng-switch-default>
+				You shouldn't be seeing this.
+			</div>
+		</div>
+	</div>
+
+	<!-- Bootstrap row -->
+	<div id="body-row ng-cloak" style="display: flex">
+		<!-- Sidebar -->
+		{% if coin != 'home' %}
+		<div id="sidebar-container" class="pre-scrollable" style="z-index: 10; position: relative; width: 250px">
+			<div ng-switch on="vm.isCustom" class="btn-group w-100" style="white-space: nowrap;">
+				<input class="form-control block" id="searchBar" style="height: auto" type="text" placeholder="Search...">
+				<div ng-switch-when="true" class="btn-group">
+					<button class="btn btn-danger rounded shadow-none" ng-click="vm.customOff();">&#10005;</button>
+					<button class="btn btn-success rounded shadow-none" ng-click="vm.makeGraph();">&#10003;</button>
+				</div>
+				<div ng-switch-default class="btn-group">
+					<button class="btn btn-info shadow-none" ng-click="vm.customGraph();"><img src="{% static 'images/graph.png' %}" style="width: 24px; height: auto;"><span> Custom Graph</span></button>
+					<button class="btn btn-success shadow-none" ng-click="vm.showOverlay({type:'add'});" data-toggle="modal" data-target="#overlay"><img src="{% static 'images/add.png' %}" style="width: 24px; height: auto;"><span> Add Address</span></button>
+				</div>
+			</div>
+			
+			<div id='accordion' style="margin-bottom: 75px">
+				<div class="text-center" id="spinner" style="display: none">
+					<div class="spinner-grow text-success" role="status">
+						<span class="sr-only">Loading...</span>
+					</div>
+				</div>
+				<div ng-if="vm.tempAddr.addr.length == 34" class="list-group sticky-top sticky-offset">
+					<div ng-switch on="vm.isCustom" data-addy="{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}">
+						<div ng-switch-when="true">
+							<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
+								<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
+									<span class="menu-collapsed" ng-attr-id="{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}">{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}</span>
+								</div>
+								<div class="custom-control custom-radio custom-control-inline float-right">
+									<input type="checkbox" id="tempRadio" class="custom-control-input" ng-click="vm.toggle('{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}')">
+									<label class="custom-control-label" for="tempRadio" style='cursor: pointer;'></label>
+								</div>
+							</div>
+						</div>
+						<div ng-switch-default>
+							<a href="{% verbatim %}{{ vm.tempAddr.url }}{% endverbatim %}" target="iframe_a" class="bg-dark list-group-item list-group-item-action text-truncate">
+								{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}
+							</a>
+						</div>
+					</div>
+				</div>
+				{% for category in categories %}
+				<div class="category">
+					<button class='btn btn-dark btn-group float-right m-1 mr-2 shadow-none' style='z-index: 100; height: 42px'
+						data-toggle="collapse" data-target="#{{category.category}}" aria-expanded="false"
+						aria-controls="{{category.category}}" onclick="rotate(this);">
+						<i class="fas fa-caret-down"></i>
+					</button>
+					<div ng-switch on="vm.isCustom" class="ng-cloak text-truncate" style="overflow: visible !important;" id='{{category.category}}_heading'>
+						<div ng-switch-when="true">
+							<div class="bg-secondary list-group-item list-group-item-action" style="color: white;">
+								{{category.category}}
+							</div>
+						</div>
+						<div ng-switch-default>
+							<a href="{{category.url}}" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white;">
+								{{category.category}}
+							</a>
+						</div>
+					</div>
+				</div>
+				<div class="list-group sticky-top sticky-offset collapse" id="{{category.category}}"
+					aria-labelledby="{{category.category}}_heading" data-parent="#accordion">
+					{% for x in category.addrs %}
+					<div ng-switch on="vm.isCustom" class="addr" data-addy="{{x.addr}}">
+						<div ng-switch-when="true">
+							<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
+								<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
+									<span class="menu-collapsed" id="{{x.addr}}">{{x.name}}</span>
+								</div>
+								<div class="custom-control custom-radio custom-control-inline float-right">
+									<input type="checkbox" id="customRadioInline{{forloop.counter0}}" class="custom-control-input" ng-click="vm.toggle('{{x.addr}}')">
+									<label class="custom-control-label" for="customRadioInline{{forloop.counter0}}" style='cursor: pointer;'></label>
+								</div>
+							</div>
+						</div>
+						<div ng-switch-default style="white-space: nowrap;">
+							<button class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow-none'
+								data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'delete',name:'{{x.name}}',addr:'{{x.addr}}'});">
+								<i class="fas fa-trash"></i>
+							</button>
+							<button class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none' 
+								data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'edit',name:'{{x.name}}',addr:'{{x.addr}}'});">
+								<i class="fas fa-edit"></i>
+							</button>
+							<a href="{{x.url}}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
+								{{x.name}}
+							</a>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+				{% endfor %}
+			</div>
+			<!-- List Group END-->
+		</div>
+		<!-- sidebar-container END -->
+
+		<div style="position: relative; align-items:center; display: flex;">
+			<div id="dragbar"></div>
+			<a id="dragcircle" href="" class="justify-content-center d-inline-flex text-white"><i class="fas fa-caret-left"></i></a>
+		</div>
+	
+		<!-- MAIN -->
+		<div class="col" id="frame" style="flex-grow: 1; z-index: 1;">
+			<!-- Select an Address to Track -->
+			<iframe id="iframe1" frameborder="0" name="iframe_a" src="{{coin}}/search/0"></iframe>
+		</div>
+		<!-- Main Col END -->
+		{% else %}
+		<div id="frame">
+			<iframe id="iframe1" class="fixFrame" src="" frameborder="0" width="100%" height="100%"></iframe>
+		</div>
+		{% endif %}
+	</div>
+</body>
+<script src="{% static 'js/index.js' %}"></script>
+</html>
