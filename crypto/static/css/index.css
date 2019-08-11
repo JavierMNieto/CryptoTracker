@@ -1,0 +1,151 @@
+body {
+	padding-top: 56px;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	overflow: hidden;
+}
+
+#iframe1 {
+	position: absolute;
+	left: 0px;
+	width: 100%;
+	top: 0px;
+	height: 100%;
+	padding-bottom: 56px;
+	background-color: rgba(86, 166, 252, 0.75);
+}
+
+.dropdown-menu a:hover {
+	background-color: rgba(53, 54, 54, 0.692);
+}
+
+::-webkit-scrollbar {
+	display: none;
+}
+
+.fixFrame {
+	margin-top: 56px !important;
+}
+
+#dragbar {
+	background-color: rgba(0, 0, 0, 1);
+	position: absolute;
+	width: 2px;
+	cursor: ew-resize;
+	z-index: 9;
+	min-height: 100%;
+	min-height: 100vh;
+	opacity: 0.85;
+}
+
+#dragcircle {
+	background: black;
+	height: 48px;
+	width: 24px;
+	border-bottom-right-radius: 48px;
+	border-top-right-radius: 48px;
+	position: absolute;
+	opacity: 0.85;
+	right: 0;
+	z-index: 9;
+	align-items: center;
+	text-decoration: none;
+	transition: all 0.5s ease-in-out;
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+}
+
+#sidebar-container {
+	min-height: 100vh;
+	background-color: #333;
+	padding: 0;
+}
+
+div:hover > #dragcircle {
+	transform: translate(24px, 0);
+    -webkit-transform: translate(24px, 0);
+    -o-transform: translate(24px, 0);
+    -moz-transform: translate(24px, 0);
+}
+
+.slide-right {
+	transform: translate(24px, 0);
+    -webkit-transform: translate(24px, 0);
+    -o-transform: translate(24px, 0);
+    -moz-transform: translate(24px, 0);
+}
+
+#sidebar-container .list-group a {
+	height: 50px;
+	color: white;
+}
+
+button span {
+	max-width: 0;
+	-webkit-transition: max-width 1s;
+	transition: max-width 1s;
+	display: inline-block;
+	vertical-align: top;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+button:hover span {
+	max-width: 7rem;
+}
+
+.btn-overlap {
+	opacity: 0;
+	top: 0;
+	left: 0;
+	z-index: 10;
+	height: 32px;
+}
+
+div:hover>.btn-overlap {
+	opacity: 0.75;
+}
+
+.overlay {
+	position: fixed;
+	/*display: none;*/
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 99;
+	cursor: pointer;
+}
+
+.modal-footer {
+	border: none !important;
+}
+
+.modal-header {
+	border: none !important;
+}
+
+.fa-caret-down {
+	transform: rotate(0deg);
+	transition: transform 0.3s linear;
+}
+
+.fa-caret-down.open {
+	transform: rotate(180deg);
+	transition: transform 0.3s linear;
+}
+
+.fa-caret-left {
+	transform: rotate(0deg);
+	transition: transform 0.3s linear;
+}
+
+.fa-caret-left.open {
+	transform: rotate(180deg);
+	transition: transform 0.3s linear;
+}
