@@ -110,7 +110,7 @@
 					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<button type="button" class="btn btn-info" ng-disabled="vm.addrInput.name.state != 'valid'" ng-click="vm.submit('edit')">
-						<span ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Save changes
 					</button>
 				</div>
@@ -160,7 +160,7 @@
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<button type="button" class="btn btn-success" ng-disabled="vm.addrInput.addr.state != 'valid' && vm.addrInput.name.state != 'valid'"
 						ng-click="vm.submit('add')">
-						<span ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Add Address
 					</button>
 				</div>
@@ -181,7 +181,7 @@
 					<input type="hidden" name="method" value="delete">
 					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
 					<button type="button" class="btn btn-danger" ng-click="vm.submit('delete')">
-						<span ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Delete
 					</button>
 				</div>
@@ -235,58 +235,56 @@
 						</div>
 					</div>
 				</div>
-				{% for category in categories %}
-				<div class="category">
-					<button class='btn btn-dark btn-group float-right m-1 mr-2 shadow-none' style='z-index: 100; height: 42px'
-						data-toggle="collapse" data-target="#{{category.category}}" aria-expanded="false"
-						aria-controls="{{category.category}}" onclick="rotate(this);">
-						<i class="fas fa-caret-down"></i>
-					</button>
-					<div ng-switch on="vm.isCustom" class="ng-cloak text-truncate" style="overflow: visible !important;" id='{{category.category}}_heading'>
-						<div ng-switch-when="true">
-							<div class="bg-secondary list-group-item list-group-item-action" style="color: white;">
-								{{category.category}}
+				<div ng-repeat="category in vm.known">
+					<div class="category">
+						<button class='btn btn-dark btn-group float-right m-1 mr-2 shadow-none' style='z-index: 100; height: 42px'
+							data-toggle="collapse" data-target="#{% verbatim %}{{category.category}}{% endverbatim %}" aria-expanded="false"
+							aria-controls="{% verbatim %}{{category.category}}{% endverbatim %}" onclick="rotate(this);">
+							<i class="fas fa-caret-down"></i>
+						</button>
+						<div ng-switch on="vm.isCustom" class="ng-cloak text-truncate" style="overflow: visible !important;" ng-attr-id='{% verbatim %}{{category.category}}{% endverbatim %}_heading'>
+							<div ng-switch-when="true">
+								<div class="bg-secondary list-group-item list-group-item-action" style="color: white;">
+									{% verbatim %}{{category.category}}{% endverbatim %}
+								</div>
+							</div>
+							<div ng-switch-default>
+								<a href="{% verbatim %}{{category.url}}{% endverbatim %}" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white;">
+									{% verbatim %}{{category.category}}{% endverbatim %}
+								</a>
 							</div>
 						</div>
-						<div ng-switch-default>
-							<a href="{{category.url}}" target="iframe_a" class="bg-secondary list-group-item list-group-item-action" style="color: white;">
-								{{category.category}}
-							</a>
+					</div>
+					<div class="list-group sticky-top sticky-offset collapse" ng-attr-id="{% verbatim %}{{category.category}}{% endverbatim %}"
+						aria-labelledby="{% verbatim %}{{category.category}}{% endverbatim %}_heading" data-parent="#accordion" ng-repeat="x in category.addrs">
+						<div ng-switch on="vm.isCustom" class="addr" data-addy="{% verbatim %}{{x.addr}}{% endverbatim %}">
+							<div ng-switch-when="true">
+								<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
+									<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
+										<span class="menu-collapsed" ng-attr-id="{% verbatim %}{{x.addr}}{% endverbatim %}">{% verbatim %}{{x.name}}{% endverbatim %}</span>
+									</div>
+									<div class="custom-control custom-radio custom-control-inline float-right">
+										<input type="checkbox" ng-attr-id="customRadioInline{% verbatim %}{{$index}}{% endverbatim %}" class="custom-control-input" ng-click="vm.toggle(x.addr)">
+										<label class="custom-control-label" for="customRadioInline{% verbatim %}{{$index}}{% endverbatim %}" style='cursor: pointer;'></label>
+									</div>
+								</div>
+							</div>
+							<div ng-switch-default style="white-space: nowrap;">
+								<button class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow-none'
+									data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'delete',name:x.name,addr:x.addr});">
+									<i class="fas fa-trash"></i>
+								</button>
+								<button class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none' 
+									data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'edit',name:x.name,addr:x.addr});">
+									<i class="fas fa-edit"></i>
+								</button>
+								<a href="{% verbatim %}{{x.url}}{% endverbatim %}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
+									{% verbatim %}{{x.name}}{% endverbatim %}
+								</a>
+							</div>
 						</div>
 					</div>
 				</div>
-				<div class="list-group sticky-top sticky-offset collapse" id="{{category.category}}"
-					aria-labelledby="{{category.category}}_heading" data-parent="#accordion">
-					{% for x in category.addrs %}
-					<div ng-switch on="vm.isCustom" class="addr" data-addy="{{x.addr}}">
-						<div ng-switch-when="true">
-							<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
-								<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
-									<span class="menu-collapsed" id="{{x.addr}}">{{x.name}}</span>
-								</div>
-								<div class="custom-control custom-radio custom-control-inline float-right">
-									<input type="checkbox" id="customRadioInline{{forloop.counter0}}" class="custom-control-input" ng-click="vm.toggle('{{x.addr}}')">
-									<label class="custom-control-label" for="customRadioInline{{forloop.counter0}}" style='cursor: pointer;'></label>
-								</div>
-							</div>
-						</div>
-						<div ng-switch-default style="white-space: nowrap;">
-							<button class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow-none'
-								data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'delete',name:'{{x.name}}',addr:'{{x.addr}}'});">
-								<i class="fas fa-trash"></i>
-							</button>
-							<button class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none' 
-								data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'edit',name:'{{x.name}}',addr:'{{x.addr}}'});">
-								<i class="fas fa-edit"></i>
-							</button>
-							<a href="{{x.url}}" id="addr" target="iframe_a" class="bg-dark list-group-item list-group-item-action">
-								{{x.name}}
-							</a>
-						</div>
-					</div>
-					{% endfor %}
-				</div>
-				{% endfor %}
 			</div>
 			<!-- List Group END-->
 		</div>

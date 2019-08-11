@@ -290,9 +290,26 @@ class CoinController:
         
         return data
         
+    def getSortedKnown(self):
+        nodes = self.driver.session().run("MATCH (a:USDTKNOWN) RETURN a")
+
+        categories = [{
+            'category': 'Home',
+            'url': "/{}/search/0".format(self.coin),
+            'addrs': []
+        }]
+        for node in nodes:
+            categories[0]['addrs'].append({
+                'name': node.get('a')['name'],
+                'url': "/{}/search/{}".format(self.coin, node.get('a')['addr']),
+                'addr': node.get('a')['addr']
+            })
+
+        return categories
+    
     def addAddr(self, addr, name): 
         if self.isValidName(name) and self.isValidAddr(addr) and not self.nameExists(name):   
-            node = self.driver.session().run("MATCH (a:" + self.coin + ") WHERE a.addr = '{addr}' REMOVE a:" + self.coin + " SET a:" + self.coin + "KNOWN, a.name = '{name}' RETURN a", addr=addr, name=name).single()
+            node = self.driver.session().run("MATCH (a:" + self.coin + ") WHERE a.addr = '" + addr + "' REMOVE a:" + self.coin + " SET a:" + self.coin + "KNOWN, a.name = '" + name + "' RETURN a").single()
             
             if node:
                 return "Success"
@@ -317,7 +334,7 @@ class CoinController:
 
     def delAddr(self, addr): 
         if self.isValidAddr(addr, True):
-            node = self.driver.session().run("MATCH (a:" + self.coin + "KNOWN) WHERE a.addr = '" + addr + "' REMOVE a:" + self.coin + "KNOWN SET a:" + self.coin + " RETURN a").single()
+            node = self.driver.session().run("MATCH (a:" + self.coin + "KNOWN) WHERE a.addr = '" + addr + "' REMOVE a:" + self.coin + "KNOWN SET a:" + self.coin + ", a.name = '" + addr + "' RETURN a").single()
             
             if node:
                 return "Success"

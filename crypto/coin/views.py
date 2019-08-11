@@ -19,6 +19,11 @@ coinController = CoinController()
 def getTxs(request, coin=None):
     return JsonResponse(coinController.getTxs(getParams(request)), safe=False)
 
+
+def getKnown(request, coin=None):
+    coinController.setCoin(coin)
+    return JsonResponse(coinController.getSortedKnown(), safe=False)
+
 def addr(request, coin=None):
     if request.method == "GET":
         if request.GET.get('method') == "isValid":
