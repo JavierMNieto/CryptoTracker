@@ -3,6 +3,7 @@ from neo4j import GraphDatabase
 import json
 import time
 import re
+import os
 
 def numWithCommas(num):
     return ("{:,}".format(float(num)))
@@ -11,8 +12,11 @@ class CoinController:
 
     def __init__(self):
         self.driver = GraphDatabase.driver(Neo4j()['url'], auth=(Neo4j()['user'], Neo4j()['pass']))
-        self.coin   = ''
+        self.coin   = 'USDT'
         self.urls   = []
+
+        # TEMPORARY
+        self.path   = os.path.dirname(os.path.realpath(__file__)) + "\\"
         
     def setCoin(self, url):
         if 'btc' in url:
@@ -27,33 +31,22 @@ class CoinController:
                                         minTxsNum=filters['minTxsNum'], maxTxsNum=filters['maxTxsNum'], minAvg=filters['minAvg'], maxAvg=filters['maxAvg'])
 
     def getTxs(self, params=DParams()):
-        query = ("a.balance > {minBal} AND a.balance < {maxBal} AND b.balance > {minBal} AND b.balance < {maxBal} AND r.usdAmount > {minTx} AND r.usdAmount < {maxTx} AND r.epoch > {minTime} AND r.epoch < {maxTime} "
-                    "WITH startNode(r) as a, endNode(r) as b, r "
-                    "WITH {id: ID(a), label: a.name, addr: a.addr} AS a, {id: ID(b), label: b.name, addr: b.addr} AS b, {amount: SUM(r.usdAmount),txsNum: count(r),avgTxAmt: SUM(r.usdAmount)/count(r)} as r, COLLECT(r) as txs "
-                    "WITH CASE WHEN r.amount > {minTotal} AND r.amount < {maxTotal} AND r.txsNum > {minTxsNum} AND r.txsNum < {maxTxsNum} AND r.avgTxAmt > {minAvg} AND r.avgTxAmt < {maxAvg} THEN "
-                    "REDUCE(vals = [], tx in txs | vals + [{from: a, to: b, txid: tx.txid, amount: tx.usdAmount, epoch: tx.epoch, type: TYPE(tx), id: ID(tx)}]) ELSE NULL END AS result "
-                    "UNWIND result as r RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
+        query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
 
         addrsText = ''
-
-        isKnown = True
         
         print(params)
 
         if params['addr[]']:
             addrsText = "({}) AND".format(self.getAddrsText(params['addr[]']))
-            isKnown   = self.getIsKnown(params['addr[]'])
-            types     = self.getTypes(isKnown)
-            query     = "MATCH (a:{})-[r:{}TX]-(b{}) WHERE {} {}".format(types['a'], self.coin, types['b'], addrsText, query)
+
+            query     = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
         elif params['sender[]'] and params['receiver[]']:
             addrsText = "({}) AND".format(self.getAddrsText(params['sender[]'], params['receiver[]']))
-            isKnown   = self.getIsKnown(params['receiver[]']) and self.getIsKnown(params['sender[]'])
-            
-            types     = self.getTypes(isKnown)
-            query     = "MATCH (a:{})-[r:{}TX]->(b{}) WHERE {} {}".format(types['a'], self.coin, types['b'], addrsText, query.replace("WITH startNode(r) as a, endNode(r) as b, r ", ""))
+
+            query     = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query.replace("WITH startNode(r) as a, endNode(r) as b, r ", ""))
         else:
-            types = self.getTypes(isKnown)
-            query = "MATCH (a:{})-[r:{}TX]-(b{}) WHERE {}".format(types['a'], self.coin, types['b'], query)
+            query = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {}".format(self.coin, self.coin, self.coin, query)
 
         txs = self.runFilters(query, params)
 
@@ -69,9 +62,9 @@ class CoinController:
                 "to": bNode['id'],
                 #"id": rel['id'],
                 "value": float(rel['amount']),
-                "source": aNode['label'],
+                "source": aNode['label'] or aNode['addr'],
                 "sourceAddr": aNode['addr'],
-                "target": bNode['label'],
+                "target": bNode['label'] or bNode['addr'],
                 "targetAddr": bNode['addr'],
                 "type": rel['type'],
                 "amount": float(rel['amount']),
@@ -86,118 +79,73 @@ class CoinController:
 
         return edges
 
-    # TEMPORARY
-    def getIsKnown(self, addrs):
-        if addrs is None: 
-            return False
-        
-        for addr in addrs:
-            node = self.driver.session().run("MATCH (a:" + self.coin + "KNOWN) WHERE a.addr = {addr} RETURN a", addr=addr).single()
-            if node == None:
-                return False
-        
-        return True
-
-    def getTypes(self, isKnown=True):
-        types = {
-            "a": self.coin,
-            "b": ""
-        }
-
-        if isKnown:
-            types["a"] += "KNOWN"
-                    
-        return types
-
-    def getAddrInfo(self, addr):     
-        types = {}
+    def getAddrInfo(self, addr, filters):    
                     
         info = {
             "label": "",
             "addr": None,
             "totalTxs": 0,
-            "minTx": DMinTx(),
             "lastTx": 1230940800,
-            "balance": 0
+            "balance": 0,
+            "filters": {}
         }
           
         if addr == "0":
             info["label"]    = "All Addresses"
-            types = self.getTypes(self.getIsKnown(info['addr']))
-        elif "[" in addr:
-            addr = json.loads(addr)
-            
-            addrs = []
-            label = ""
-            isCategory = False
-            for addy in addr:
-                if '.' in addy:
-                    if label == "":
-                        label += addy.split('.', 1)[1]
-                        isCategory = True
-                    else:
-                        label += ", {}".format(addy.split('.', 1)[1])
-                    continue
-                addrs.append(addy)
-                if not isCategory:
-                    if label == "":
-                        label += addy
-                    else:
-                        label += ", " + addy            
+        elif filters['addr[]']:
+            info['label']    = addr
 
-            info['label']    = label
-            info['addr']     = addrs
+            if len(addr) < 2:
+                info['label'] = "Custom Graph"          
+
+            info['addr']     = filters['addr[]']
             
-            types = self.getTypes(self.getIsKnown(info['addr']))
-    
-            info['balance']  = self.driver.session().run("MATCH (a: " + types['a'] + ") WHERE " + self.getAddrsText(addrs) + " RETURN SUM(a.balance)").single().value()
+            info['balance']  = self.driver.session().run("MATCH (a: " + self.coin + ") WHERE " + self.getAddrsText(info['addr']) + " RETURN SUM(a.balance)").single().value()
         else:
-            types = self.getTypes(self.getIsKnown([addr]))
-            
-            node = self.driver.session().run("MATCH (a:" + types['a'] + ") WHERE a.addr = {addr} RETURN a", addr=addr).single()
+            node = self.driver.session().run("MATCH (a:" + self.coin + ") WHERE a.addr = {addr} RETURN a", addr=addr).single()
             
             if node:
                 node = node.value()
             else:
-                info['address'] = addr
+                info['address'] = addr + " DOES NOT EXIST"
                 return {"search": info}
 
-            info['label']   = node['name']
+            info['label']   = self.getKnown(node['addr'])['name']
+
             info['addr']    = [node['addr']]
             info['balance'] = node['balance']
-            info['address'] = node['addr']
-            info['minTx']   = node['minTx'] or info['minTx']     
+            info['address'] = node['addr'] # CHANGE - CONFUSING   
         
+        # WHAT WERE YOU THINKING?
         if 'address' in info:
             info['url'] = self.urls['addr'] + info['address']
 
-        query  = "MATCH (a:{})-[r:{}TX]-(b{}) WHERE a.balance > -1 AND b.balance > -1".format(types['a'], self.coin, types['b'])
+        addrText = ""
 
         if info['addr']:
-            query += " AND ({})".format(self.getAddrsText(info['addr']))
+            addrText = self.getAddrsText(info['addr']) + " AND "
 
-        info["totalTxs"] = self.driver.session().run(query + " AND r.usdAmount > {minTx} RETURN count(r)", minTx=info['minTx']).single().value()
+        query  = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {} RETURN count(r)".format(self.coin, self.coin, self.coin, addrText, TxsQuery())
+
+        info["totalTxs"] = self.runFilters(query, filters).single().value()
         
+        for f, val in filters.items():
+            if "min" in f or "max" in f:
+                info['filters'][f] = val
+
         return {
             "search": info
         }
     
     def getGraphData(self, params):
-        query = ("a.balance > {minBal} AND a.balance < {maxBal} AND b.balance > {minBal} AND b.balance < {maxBal} AND r.usdAmount > {minTx} "
-                  "AND r.usdAmount < {maxTx} AND r.epoch > {minTime} AND r.epoch < {maxTime} WITH DISTINCT startNode(r) as a, endNode(r) as b, {amount: SUM(r.usdAmount),txsNum: count(r),avgTxAmt: SUM(r.usdAmount)/count(r)} AS r "
-                  "RETURN CASE WHEN r.amount > {minTotal} AND r.amount < {maxTotal} AND r.txsNum > {minTxsNum} AND r.txsNum < {maxTxsNum} AND r.avgTxAmt > {minAvg} AND r.avgTxAmt < {maxAvg} THEN {from:a, to:b, r:r} ELSE null END AS result") 
+        query = GraphQuery()
         
         addrsText = ''
 
-        isKnown = True
-
         if params['addr[]']:
             addrsText = "({}) AND".format(self.getAddrsText(params['addr[]']))
-            isKnown   = self.getIsKnown(params['addr[]'])
 
-        types = self.getTypes(isKnown)
-
-        query = "MATCH (a:{})-[r:{}TX]-(b{}) WHERE {} {}".format(types['a'], self.coin, types['b'], addrsText, query)
+        query = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
         
         txs   = self.runFilters(query, params)
         
@@ -215,7 +163,7 @@ class CoinController:
             aNode = nodes['from']
             aNode = {
                 "id": aNode.id,
-                "label": aNode['name'],
+                "label": aNode['name'] or aNode['addr'],
                 "addr": aNode['addr'],
                 "balance": float(aNode['balance'] or 0),
                 "balVal": float(aNode['balance'] or 0),
@@ -234,7 +182,7 @@ class CoinController:
             bNode = nodes['to']
             bNode = {
                 "id": bNode.id,
-                "label": bNode['name'],
+                "label": bNode['name'] or bNode['addr'],
                 "addr": bNode['addr'],
                 "balance": float(bNode['balance'] or 0),
                 "balVal": float(bNode['balance'] or 0),
@@ -289,10 +237,16 @@ class CoinController:
             data['edges'].append(rel)
         
         return data
-        
-    def getSortedKnown(self):
-        nodes = self.driver.session().run("MATCH (a:USDTKNOWN) RETURN a")
 
+    def getKnown(self, addr):
+        for known in self.getSortedKnown()[0]['addrs']:
+            if known['addr'] == addr:
+                return known
+        
+        return {"name": addr, "addr": addr}
+
+    def getSortedKnown(self):
+        nodes = json.load(open(self.path + self.coin + ".json"))
         categories = [{
             'category': 'Home',
             'url': "/{}/search/0".format(self.coin),
@@ -300,19 +254,28 @@ class CoinController:
         }]
         for node in nodes:
             categories[0]['addrs'].append({
-                'name': node.get('a')['name'],
-                'url': "/{}/search/{}".format(self.coin, node.get('a')['addr']),
-                'addr': node.get('a')['addr']
+                'name': node['name'],
+                'url': "/{}/search/{}".format(self.coin, node['addr']),
+                'addr': node['addr']
             })
 
         return categories
     
-    def addAddr(self, addr, name): 
-        if self.isValidName(name) and self.isValidAddr(addr) and not self.nameExists(name):   
-            node = self.driver.session().run("MATCH (a:" + self.coin + ") WHERE a.addr = '" + addr + "' REMOVE a:" + self.coin + " SET a:" + self.coin + "KNOWN, a.name = '" + name + "' RETURN a").single()
-            
-            if node:
-                return "Success"
+    def addAddr(self, addr, name):
+        try: 
+            if self.isValidName(name) and self.isValidAddr(addr) and not self.nameExists(name):
+                addrs = self.getSortedKnown()[0]['addrs'] or []
+                with open(self.path + self.coin + ".json", "w") as f:
+                    addrs.append({
+                        "name": name,
+                        "addr": addr
+                    })
+                    json.dump(addrs, f)
+
+                    return "Success"
+        except Exception as e:
+            print(e)
+
         return "ERROR"
         
     def getAddrsText(self, addr, extras=[]):
@@ -333,36 +296,53 @@ class CoinController:
         return addrsText
 
     def delAddr(self, addr): 
-        if self.isValidAddr(addr, True):
-            node = self.driver.session().run("MATCH (a:" + self.coin + "KNOWN) WHERE a.addr = '" + addr + "' REMOVE a:" + self.coin + "KNOWN SET a:" + self.coin + ", a.name = '" + addr + "' RETURN a").single()
+        try: 
+            if self.isValidAddr(addr):
+                addrs = self.getSortedKnown()[0]['addrs'] or []
+                with open(self.path + self.coin + ".json", "w") as f:
+                    
+                    for i in range(len(addr)):
+                        if addrs[i]['addr'] == addr:
+                            del addrs[i]
+                            json.dump(addrs, f)
+                            return "Success"
+        except Exception as e:
+            print(e)
             
-            if node:
-                return "Success"
         return "ERROR"
 
     def isValidName(self, name):            
-        return len(name) < 16 and re.match(r'^[A-Za-z0-9_-]*$', name) != None
+        return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_-]*$', name) != None
 
     def nameExists(self, name):
-        node = self.driver.session().run("MATCH (a:" + self.coin + "KNOWN) WHERE a.name = '" + name + "' RETURN a").single()
+        addrs = self.getSortedKnown()[0]['addrs']
+        
+        for addr in addrs:
+            if addr['name'].lower() == name.lower():
+                return True
  
-        return node != None
+        return False
 
-    def isValidAddr(self, addr, known=False):
+    def isValidAddr(self, addr):
         if len(addr) == 34 and ' ' not in addr and re.match(r'^[A-Za-z0-9]*$', addr):
-            add = ""
-            if known:
-                add = "KNOWN"
-            node = self.driver.session().run("MATCH (a:" + self.coin + add + ") WHERE a.addr = '" + addr + "' RETURN a").single()
+            node = self.driver.session().run("MATCH (a:" + self.coin + ") WHERE a.addr = '" + addr + "' RETURN a").single()
 
             if node:
                 return True
         return False
 
     def editAddr(self, addr, name):
-        if self.isValidAddr(addr, True) and self.isValidName(name) and not self.nameExists(name):
-            node = self.driver.session().run("MATCH (a:" + self.coin + "KNOWN) WHERE a.addr = '" + addr + "' SET a.name = '" + name + "' RETURN a").single()
-
-            if node:
-                return "Success"
+        try: 
+            if self.isValidAddr(addr) and self.isValidName(name) and not self.nameExists(name):
+                addrs = self.getSortedKnown()[0]['addrs'] or []
+                with open(self.coin + ".json", "w") as f:
+                    
+                    for addr in addrs:
+                        if addr['addr'] == addr:
+                            addr['name'] = name
+                            json.dump(addrs, f)
+                            return "Success"
+        except Exception as e:
+            print(e)
+            
         return "ERROR"

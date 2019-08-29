@@ -171,7 +171,7 @@ function mainController($scope) {
 	vm.checkName = function () {
 		var val = vm.addrInput.name.val;
 
-		if (val.length < 16 && namePattern.test(val)) {
+		if (val.length < 16 && val.length > 2 && namePattern.test(val)) {
 
 			vm.addrInput.name.state = "load";
 

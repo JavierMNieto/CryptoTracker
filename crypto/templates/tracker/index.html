@@ -109,7 +109,7 @@
 					<input type="hidden" name="method" value="edit">
 					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-info" ng-disabled="vm.addrInput.name.state != 'valid'" ng-click="vm.submit('edit')">
+					<button type="button" class="btn btn-info" ng-disabled="(vm.addrInput.name.state != 'valid')" ng-click="vm.submit('edit')">
 						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Save changes
 					</button>
@@ -158,7 +158,7 @@
 				<div class="modal-footer">
 					<input type="hidden" name="method" value="add">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-success" ng-disabled="vm.addrInput.addr.state != 'valid' && vm.addrInput.name.state != 'valid'"
+					<button type="button" class="btn btn-success" ng-disabled="((vm.addrInput.addr.state != 'valid') && (vm.addrInput.name.state != 'valid'))"
 						ng-click="vm.submit('add')">
 						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Add Address

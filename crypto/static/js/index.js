@@ -62,7 +62,7 @@ $('#dragbar').mousedown(function(e) {
 	var side = $('#sidebar-container');
 	$('iframe').css('pointer-events', 'none');
 	$(document).mousemove(function(ex) {
-		if (ex.pageX + 2 < 400 && ex.pageX + 2 > 50 && dragging) {
+		if (ex.pageX + 2 < 400 && ex.pageX + 2 > 50 && dragging && !toggle) {
 			side.width(ex.pageX + 2);
 		} else if (ex.pageX + 2 <= 50 && !toggle && dragging) {
 			toggle = true;
@@ -90,13 +90,14 @@ $("#sidebar-container").hover(() => {
 });
 
 $("#dragcircle").click(() => {
-	console.log(toggle);
 	var symbol = $("#dragcircle i");
 	if (toggle) {
 		$(symbol).attr("class", "fas fa-caret-left");
 		$('#sidebar-container').animate({width: '250px'}, 'slow');
 		toggle = false;
+		$(".btn-overlap").show();
 	} else {
+		$(".btn-overlap").hide();
 		$("#dragcircle").addClass("slide-right");
 		$(symbol).attr("class", "fas fa-caret-left open");
 		$('#sidebar-container').animate({width: '0px'}, 'slow');

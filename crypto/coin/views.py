@@ -25,14 +25,14 @@ def getKnown(request, coin=None):
     return JsonResponse(coinController.getSortedKnown(), safe=False)
 
 def addr(request, coin=None):
+    coinController.setCoin(coin)
+    
     if request.method == "GET":
         if request.GET.get('method') == "isValid":
             return JsonResponse(coinController.isValidAddr(request.GET.get('addr')), safe=False)
 
     if request.method != "POST":
         return
-
-    coinController.setCoin(coin)
     
     method = request.POST.get('method') or ""
 
@@ -46,6 +46,7 @@ def addr(request, coin=None):
         return
 
 def search(request, id, coin=None):
+    # FIX
     if 'img' in str(id) and '{' in str(id):
         return render(request, 'coin/coin.html')
     
@@ -53,7 +54,7 @@ def search(request, id, coin=None):
 
     id = unquote(id)
     
-    data = coinController.getAddrInfo(id)
+    data = coinController.getAddrInfo(id, getParams(request))
 
     return render(request, 'coin/coin.html', data)
 
