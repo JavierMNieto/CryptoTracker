@@ -1,7 +1,6 @@
 {% load compress %}
 {% load static %}
 {% load coin_extras %}
-{% spaceless %}
 <!DOCTYPE html>
 <html ng-app="txs">
 
@@ -31,22 +30,21 @@
 	<div class="h1 text-center">No Transactions Yet</div>
 </head>
 {% else %}
-	{% compress js inline %}
 	<script>
 		{%if search.addr %}
-			const _addr = {{search.addr|safe}};
+			const _addr = {{search.addr | safe}};
 		{% else %}
 			const _addr = null;
 		{% endif %}
 		var totalTxs   = {{search.totalTxs}};
-		const minTx    = {{search.minTx}};
-		const lastTx   = {{search.lastTx}};
+		const dFilters = {{search.filters | safe}};
+		const minTx    = dFilters.minTx;
+		const lastTx   = {{search.lastTx}}; // Change
 		var network;
 		var container;
 		var options, data;
 		const satoshi = 100000000.0;
 	</script>
-	{% endcompress %}
 	<script src="{% static 'js/coinController.js' %}"></script>
 </head>
 
@@ -93,54 +91,36 @@
 		{% endif %}
 		<div class="row mx-auto p-1" style="width: 95%" id='filters'>
 			<div class="row mx-auto">
-				<div class="btn-group p-1">
-					<input type="number" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Balance" data-toggle="tooltip" data-placement="top" title="Min Balance (in USD)" ng-model="vm.graphFilters.minBal" ng-model-options="{ allowInvalid: true}">
-					<input type="number" id="maxBal" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Balance" data-toggle="tooltip" data-placement="top" title="Max Balance (in USD)" ng-model="vm.graphFilters.maxBal" ng-model-options="{ allowInvalid: true}">
-					<button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span class="sr-only">Toggle Dropdown</span>
+				<div class="dropdown dropdown-hover mx-2">
+					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Balance
 					</button>
-					<div class="dropdown-menu">
-						<a class="dropdown-item" ng-click="vm.setMaxBal()">max</a>
+					<div class="dropdown-menu" style="min-width: 10vw">
+						<input type="number" name="minBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Balance" ng-model="vm.graphFilters.minBal">
+						<input type="number" name="maxBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Balance" ng-model="vm.graphFilters.maxBal">
 					</div>
 				</div>
-				<div class="btn-group p-1" name="dateTimes">
-						<input type="text" name="minTime" class="form-control text-center text-truncate" style="width: 11vw" placeholder="Min Tx Time" data-toggle="tooltip" data-placement="top" title="Min Transaction Time" ng-model="vm.graphFilters.minTime" ng-model-options="{ allowInvalid: true}">
-						<input type="text" name="maxTime" class="form-control text-center text-truncate" style="width: 11vw" placeholder="Max Tx Time" data-toggle="tooltip" data-placement="top" title="Max Transaction Time" ng-model="vm.graphFilters.maxTime" ng-model-options="{ allowInvalid: true}">
-					</div>
-				<div class="btn-group p-1">
-					<input type="number" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Tx" data-toggle="tooltip" data-placement="top" title="Min Transaction (in USD)" ng-model="vm.graphFilters.minTx" ng-model-options="{ allowInvalid: true}">
-					<input type="number" id="maxTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Tx" data-toggle="tooltip" data-placement="top" title="Max Transaction (in USD)" ng-model="vm.graphFilters.maxTx" ng-model-options="{ allowInvalid: true}">
-					<button type="button" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span class="sr-only">Toggle Dropdown</span>
+
+				<div class="dropdown dropdown-hover mx-2" id="time">
+					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Time
 					</button>
-					<div class="dropdown-menu">
-						<a class="dropdown-item" ng-click="vm.graphFilters.setMaxTx()">max</a>
+					<div class="dropdown-menu" name="dateTimes" style="min-width: 15vw">
+						<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx Time" ng-model="vm.graphFilters.minTime">
+						<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx Time" ng-model="vm.graphFilters.maxTime">
+					</div>
+				</div> 
+				<div class="dropdown dropdown-hover mx-2">
+					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Transaction Amount
+					</button>
+					<div class="dropdown-menu" style="min-width: 10vw">
+						<input type="number" name="minTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx" ng-model="vm.graphFilters.minTx">
+						<input type="number" name="maxTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx" ng-model="vm.graphFilters.maxTx">
 					</div>
 				</div>
 			</div>
-			<!--<div class="row mx-auto">
-				<div class="btn-group p-1">
-					<input type="number" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Min Avg Tx" data-toggle="tooltip" data-placement="top" title="Min Avg Transaction (in USD)" ng-model="vm.graphFilters.minAvg" ng-model-options="{ allowInvalid: true}">
-					<input type="number" id="maxAvgTx" class="form-control text-center text-truncate" step="100000.00" style="width: 8.25vw" placeholder="Max Avg Tx" data-toggle="tooltip" data-placement="top" title="Max Avg Transaction (in USD)" ng-model="vm.graphFilters.maxAvg" ng-model-options="{ allowInvalid: true}">
-					<button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span class="sr-only">Toggle Dropdown</span>
-					</button>
-					<div class="dropdown-menu">
-						<a class="dropdown-item" ng-click="vm.setMaxAvgTx()">max</a>
-					</div>
-				</div>
-				<div class="btn-group p-1">
-					<input type="number" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Min Txs" data-toggle="tooltip" data-placement="top" title="Min # of Transactions" ng-model="vm.graphFilters.minTxsNum" ng-model-options="{ allowInvalid: true}">
-					<input type="number" id="maxTxsNum" class="form-control text-center text-truncate" step="5" style="width: 6vw" placeholder="Max Txs" data-toggle="tooltip" data-placement="top" title="Max # of Transactions" ng-model="vm.graphFilters.maxTxsNum" ng-model-options="{ allowInvalid: true}">
-					<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span class="sr-only">Toggle Dropdown</span>
-					</button>
-					<div class="dropdown-menu">
-						<a class="dropdown-item" ng-click="vm.setMaxTxsNum()">max</a>
-					</div>
-				</div>
-			</div>-->
-			<div class="btn-group block">
+			<div class="btn-group block" style="position: absolute; right: 3.5%;">
 				<button ng-click="vm.setFilters(false)" class="btn btn-primary block" id="filterBtn">Set Filters</button>
 				<button id="resetBtn" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.setFilters(true)" data-toggle="tooltip" data-placement="top" title="Load Graph">
 					<svg height="24" viewBox="-14 0 277 277.50116" width="24">
@@ -381,7 +361,59 @@
 		</div>
 	</div>
 	<script src="{% static 'js/graph.js' %}"></script>
+	<script>
+		var clipboard  = new ClipboardJS('.btn');
+
+		clipboard.on('success', function (e) {
+			e.action
+			e.clearSelection();
+		});
+
+		clipboard.on('error', function (e) {
+			console.error('Action:', e.action);
+			console.error('Trigger:', e.trigger);
+		});
+
+		$(".dropdown-hover").hover(e => {
+			var el = e.currentTarget;
+			if (!$(el).hasClass("show")) {
+				if (el.id != "time") {
+					$(".dropdown-hover").dropdown("dispose");
+				}
+				$(el).find(".dropdown-toggle").dropdown('toggle');
+			}
+		}, e => {
+			var el = e.currentTarget;
+			if ($(el).hasClass("show")) {
+				$(el).find(".dropdown-toggle").dropdown('toggle');
+			}
+		});
+
+		$("#time").on("hide.bs.dropdown", el => {
+			var dates = $(".daterangepicker");
+			for (var i = 0; i < dates.length; i++) {
+				if ($(dates[i]).css("display") != "none") {
+					return false;
+				}
+			}
+		});
+
+		$('.dropdown-menu').on('click', e => {
+			e.stopPropagation();
+		});
+
+		$(".dropdown-hover input").focus(e => {
+			var el   = e.target;
+			if (dFilters[el.name] == $(el).val()) {
+				$(el).val("");
+			}
+		}).blur(e => {
+			var el = e.target;
+			if ($(el).val() == "") {
+				$(el).val(dFilters[el.name]);
+			}
+		});
+	</script>
 </body>
 {% endif %}
 </html>
-{% endspaceless %}

@@ -48,20 +48,10 @@ function toggleIFrame() {
 
 		vm.savedPages = {};
 
-		vm.graphFilters = {
-			minBal: -1,
-			maxBal: 1e99,
-			minTx: minTx,
-			maxTx: 1e99,
-			minTime: moment.unix(lastTx).format('M/DD/YY hh:mm A'),
-			maxTime: moment.unix(moment().unix()).format('M/DD/YY hh:mm A'),
-			minTotal: -1,
-			maxTotal: 1e99,
-			minTxsNum: -1,
-			maxTxsNum: 1e99,
-			minAvg: -1,
-			maxAvg: 1e99
-		}
+		vm.graphFilters = dFilters;
+
+		vm.graphFilters.minTime = moment.unix(lastTx).format('M/DD/YY hh:mm A');
+		vm.graphFilters.maxTime = moment.unix(moment().unix()).format('M/DD/YY hh:mm A');
 		
 		$(function () {
 			$('[data-toggle="tooltip"]').tooltip({
@@ -73,6 +63,7 @@ function toggleIFrame() {
 				singleDatePicker: true,
 				timePicker: true,
 				showDropdowns: true,
+				parentEl: "#time .dropdown-menu",
 				minDate: moment.unix(lastTx).format('M/DD/YY hh:mm A'),
 				maxDate: moment.unix(moment().unix()).format('M/DD/YY hh:mm A'),
 				locale: {
@@ -83,6 +74,7 @@ function toggleIFrame() {
 				singleDatePicker: true,
 				timePicker: true,
 				showDropdowns: true,
+				parentEl: "#time .dropdown-menu",
 				minDate: moment.unix(lastTx).format('M/DD/YY hh:mm A'),
 				maxDate: moment.unix(moment().unix()).format('M/DD/YY hh:mm A'),
 				locale: {
@@ -221,20 +213,10 @@ function toggleIFrame() {
 					url += `&${filter}=${val}`;
 				}
 			} else {
-				vm.graphFilters = {
-					minBal: -1,
-					maxBal: 1e99,
-					minTx: minTx,
-					maxTx: 1e99,
-					minTime: moment.unix(lastTx).format('M/DD/YY hh:mm A'),
-					maxTime: moment.unix(moment().unix()).format('M/DD/YY hh:mm A'),
-					minTotal: -1,
-					maxTotal: 1e99,
-					minTxsNum: -1,
-					maxTxsNum: 1e99,
-					minAvg: -1,
-					maxAvg: 1e99
-				}
+				vm.graphFilters = dFilters;
+
+				vm.graphFilters.minTime = moment.unix(lastTx).format('M/DD/YY hh:mm A');
+				vm.graphFilters.maxTime = moment.unix(moment().unix()).format('M/DD/YY hh:mm A');
 			}
 			url = url.replace('?&', '?');
 			$.get(url, resp => {
@@ -306,8 +288,8 @@ function toggleIFrame() {
 				for (var i = 0; i < tempTxs.length; i++) {
 					let tx = data.edges.get(tempTxs[i]);
 					vm.selCollapsed.push({
-						sender: tx.sourceAddr,
-						receiver: tx.targetAddr
+						sender: tx.source,
+						receiver: tx.target
 					});
 					tempNum += tx.txsNum;
 				}

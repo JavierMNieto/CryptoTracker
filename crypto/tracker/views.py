@@ -12,9 +12,6 @@ import time
 import math
 import requests
 
-driver = GraphDatabase.driver(constants.neo4j['url'], auth=(constants.neo4j['user'], constants.neo4j['pass']))
-dFilters = {'minBal':-1,'maxBal':1e99,'minTx':-1,'maxTx':1e99,'minTime':-1,'maxTime':1e99,'minTotal':-1,'maxTotal':1e99,'minTxsNum':-1,'maxTxsNum':1e99,'minAvg':-1,'maxAvg':1e99}
-
 def numWithCommas(num):
 	return ("{:,}".format(float(num)))
 

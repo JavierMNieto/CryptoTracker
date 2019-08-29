@@ -1,15 +1,3 @@
-var clipboard = new ClipboardJS('.btn');
-
-clipboard.on('success', function (e) {
-	e.action
-	e.clearSelection();
-});
-
-clipboard.on('error', function (e) {
-	console.error('Action:', e.action);
-	console.error('Trigger:', e.trigger);
-});
-
 function fullGraph() {
 	document.getElementById('graph').requestFullscreen();
 }
