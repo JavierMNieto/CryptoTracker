@@ -19,7 +19,7 @@ def DParams():
         'maxBal': 1e16, 
         'minTx': DMinTx(), 
         'maxTx': 1e16, 
-        'minTime': -1, 
+        'minTime': 1230940800, 
         'maxTime': 1e16,
         'minTotal': -1, 
         'maxTotal': 1e16, 
@@ -72,10 +72,10 @@ def Neo4j():
     Defualt query to get single transactions
 """
 def TxsQuery():
-    return (" a.balance > {minBal} AND a.balance < {maxBal} AND b.balance > {minBal} AND b.balance < {maxBal} AND r.amount > {minTx} AND r.amount < {maxTx} AND r.epoch > {minTime} AND r.epoch < {maxTime} "
+    return (" a.balance >= {minBal} AND a.balance <= {maxBal} AND b.balance >= {minBal} AND b.balance <= {maxBal} AND r.amount >= {minTx} AND r.amount <= {maxTx} AND r.epoch >= {minTime} AND r.epoch <= {maxTime} "
             "WITH a, b, r "
-            "WITH {id: ID(a), label: a.name, addr: a.addr} AS a, {id: ID(b), label: b.name, addr: b.addr} AS b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} as r, COLLECT(r) as txs "
-            "WITH CASE WHEN r.amount > {minTotal} AND r.amount < {maxTotal} AND r.txsNum > {minTxsNum} AND r.txsNum < {maxTxsNum} AND r.avgTxAmt > {minAvg} AND r.avgTxAmt < {maxAvg} THEN "
+            "WITH {id: ID(a), addr: a.addr} AS a, {id: ID(b), addr: b.addr} AS b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} as r, COLLECT(r) as txs "
+            "WITH CASE WHEN r.amount >= {minTotal} AND r.amount <= {maxTotal} AND r.txsNum >= {minTxsNum} AND r.txsNum <= {maxTxsNum} AND r.avgTxAmt >= {minAvg} AND r.avgTxAmt <= {maxAvg} THEN "
             "REDUCE(vals = [], tx in txs | vals + [{from: a, to: b, txid: tx.txid, amount: tx.amount, epoch: tx.epoch, type: TYPE(tx), id: ID(tx)}]) ELSE NULL END AS result "
             "UNWIND result as r ")
 
@@ -83,6 +83,6 @@ def TxsQuery():
     Defualt query to get graph transactions
 """
 def GraphQuery():
-    return  (" a.balance > {minBal} AND a.balance < {maxBal} AND b.balance > {minBal} AND b.balance < {maxBal} AND r.amount > {minTx} "
-                  "AND r.amount < {maxTx} AND r.epoch > {minTime} AND r.epoch < {maxTime} WITH a, b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} AS r "
-                  "RETURN CASE WHEN r.amount > {minTotal} AND r.amount < {maxTotal} AND r.txsNum > {minTxsNum} AND r.txsNum < {maxTxsNum} AND r.avgTxAmt > {minAvg} AND r.avgTxAmt < {maxAvg} THEN {from:a, to:b, r:r} ELSE null END AS result ") 
+    return  (" a.balance >= {minBal} AND a.balance <= {maxBal} AND b.balance >= {minBal} AND b.balance <= {maxBal} AND r.amount >= {minTx} "
+                  "AND r.amount <= {maxTx} AND r.epoch >= {minTime} AND r.epoch <= {maxTime} WITH a, b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} AS r "
+                  "RETURN CASE WHEN r.amount >= {minTotal} AND r.amount <= {maxTotal} AND r.txsNum >= {minTxsNum} AND r.txsNum <= {maxTxsNum} AND r.avgTxAmt >= {minAvg} AND r.avgTxAmt <= {maxAvg} THEN {from:a, to:b, r:r} ELSE null END AS result ") 

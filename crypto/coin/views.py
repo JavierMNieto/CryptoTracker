@@ -19,10 +19,9 @@ coinController = CoinController()
 def getTxs(request, coin=None):
     return JsonResponse(coinController.getTxs(getParams(request)), safe=False)
 
-
 def getKnown(request, coin=None):
     coinController.setCoin(coin)
-    return JsonResponse(coinController.getSortedKnown(), safe=False)
+    return JsonResponse(coinController.getKnownList(), safe=False)
 
 def addr(request, coin=None):
     coinController.setCoin(coin)
@@ -32,24 +31,22 @@ def addr(request, coin=None):
             return JsonResponse(coinController.isValidAddr(request.GET.get('addr')), safe=False)
 
     if request.method != "POST":
-        return
+        return "ERROR"
     
     method = request.POST.get('method') or ""
-
+ 
     if method == "add":
-        return JsonResponse(coinController.addAddr(request.POST.get('addr'), request.POST.get('name')), safe=False)
+        return JsonResponse(coinController.addAddr(request.POST.get('addr'), request.POST.get('name'), request.POST.get('cat') or ""), safe=False)
     elif method == "edit":
-        return JsonResponse(coinController.editAddr(request.POST.get('addr'), request.POST.get('name')), safe=False)
+        return JsonResponse(coinController.editAddr(request.POST.get('addr'), request.POST.get('name'), request.POST.get('cat') or ""), safe=False)
     elif method == "delete":
         return JsonResponse(coinController.delAddr(request.POST.get('addr')), safe=False)
+    elif method == "editCat":
+        return JsonResponse(coinController.editCat(request.POST.get('prevCat'), request.POST.get('newCat')), safe=False)
     else:
-        return
+        return "ERROR"
 
 def search(request, id, coin=None):
-    # FIX
-    if 'img' in str(id) and '{' in str(id):
-        return render(request, 'coin/coin.html')
-    
     coinController.setCoin(coin)
 
     id = unquote(id)
@@ -70,7 +67,7 @@ def getParams(request):
         else:
             temp = request.GET.get(p)
         
-        if temp:
+        if temp and temp != "max" and temp != "latest":
             try:
                 temp = float(temp.replace(" ", ""))
                 if p == 'page':

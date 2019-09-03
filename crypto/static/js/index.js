@@ -16,22 +16,50 @@ $(document).ready(function () {
 
 		prevVal = value;
 
+		if (value === "") {
+			$("#accordion .addr").toggle(true)
+			$("#accordion .category").filter(function () {
+				$('#' + $(this).attr('name')).collapse('hide');	
+				$(this).toggle(true);
+			});
+
+			return;
+		}
+
 		var categories = {};
 		var exists     = false;
 		$("#accordion .addr").filter(function () {
 			let isValid = ($(this).text().toLowerCase().indexOf(value) > -1 || $(this).attr("data-addy").toLowerCase() === value);
 			if (isValid) {
-				categories[$(this).parent().attr('id')] = true;
+				categories[$(this).parent().parent().attr('id')] = true;
 				exists = true;
 			}
 			$(this).toggle(isValid);
 		});
-		$("#accordion .category").filter(function () {
-			$(this).toggle(categories[$(this).find('button').attr('aria-controls')] === true);
-		});
-		if (Object.keys(categories).length == 1) {
-			$("#" + Object.keys(categories)[0]).collapse('show');
+
+		if (Object.keys(categories).length == 2 && categories['Home']) {
+			categories['Home'] = false;
+		} else if (Object.keys(categories).length > 2) {
+			categories = {
+				'Home': true
+			}
 		}
+
+		$("#accordion .category").filter(function () {
+			let toggle = categories[$(this).attr('name')] === true;
+
+			if (toggle) {
+				$('#' + $(this).attr('name')).collapse('show');
+			}
+
+			$(this).toggle(toggle);
+		});
+		
+		/*
+		if (Object.keys(categories).length == 1) {
+			$(`[cat='${Object.keys(categories)[0]}']`).collapse('show');
+		}
+		*/
 
 		if (!exists && value.length == 34 && !value.includes(" ") && addrPattern.test(value)) {
 			$('#spinner').show();
@@ -123,6 +151,19 @@ function rotate(el) {
 	if ($(el).hasClass("open")) {
 		$(el).attr("class", "fas fa-caret-down");
 	} else {
+		$(".open").attr("class", "fas fa-caret-down");
 		$(el).attr("class", "fas fa-caret-down open");
 	}
 }
+
+$('#accordion').on('hide.bs.collapse', e => {
+	var el = $(`[name='${e.target.id}']`).find('.fa-caret-down');
+
+	$(el).attr("class", "fas fa-caret-down");
+});
+
+$('#accordion').on('show.bs.collapse', e => {
+	var el = $(`[name='${e.target.id}']`).find('.fa-caret-down');
+
+	$(el).attr("class", "fas fa-caret-down open");
+});

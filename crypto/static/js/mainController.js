@@ -10,20 +10,12 @@ function mainController($scope) {
 	vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
 	vm.addrs = []
 	vm.known = []
+	vm.categories = []
 
-
-	vm.formState = "";
-	vm.overlay   = {};
-	vm.addrInput = {
-		'addr': {
-			'val': '',
-			'state': 'invalid'
-		},
-		'name': {
-			'val': '',
-			'state': 'invalid'
-		}
-	};
+	vm.formState   = "";
+	vm.overlay     = {};
+	vm.addrInput   = {};
+	vm.filterInput = {};
 
 	vm.tempAddr = {
 		addr: '',
@@ -33,6 +25,9 @@ function mainController($scope) {
 	vm.customGraph = function () {
 		vm.isCustom = true;
 		$('#searchBar').val('');
+		if ($('.show').length < 1) {
+			$('#Home').collapse('show');
+		}
 	}
 
 	vm.customOff = function () {
@@ -68,7 +63,11 @@ function mainController($scope) {
 
 	vm.makeGraph = function () {
 		if (vm.addrs.length <= 1) return;
-		var url = "{{homeUrl}}".replace(/0/, JSON.stringify(vm.addrs))
+		var url = window.location + "/search/c?addr[]=" + vm.addrs[0];
+		for (var i = 1; i < vm.addrs.length; i++) {
+			url += "&addr[]=" + vm.addrs[i];
+		}
+		vm.startLoader();
 		$('#iframe1').attr('src', url);
 		vm.customOff();
 	}
@@ -90,8 +89,72 @@ function mainController($scope) {
 	vm.showOverlay = function (obj) {
 		vm.overlay = obj;
 
+		vm.addrInput = {
+			'addr': {
+				'val': '',
+				'state': 'invalid'
+			},
+			'name': {
+				'val': '',
+				'state': 'invalid'
+			},
+			'cat': {
+				'val': '',
+				'state': 'invalid'
+			}
+		};
+
+		vm.filterInput = JSON.parse(JSON.stringify(dFilters));
+		vm.filterInput.maxTime = moment.unix(moment().unix()).format('M/DD/YY hh:mm A');
+
+		vm.filterInput['state'] = 'invalid';
+		
 		if (obj.type == "edit") {
-			vm.addrInput.name.val = obj.name;
+			vm.addrInput.name.val  = obj.name;
+			vm.addrInput.cat.val   = obj.cat;
+			vm.addrInput.cat.state = 'valid';
+		}
+
+		$(function () {
+			$('[data-toggle="tooltip"]').tooltip();
+			
+		});
+
+		$(function () {
+			$('input[name="minTime"]').daterangepicker({
+				singleDatePicker: true,
+				timePicker: true,
+				showDropdowns: true,
+				parentEl: "#overlay",
+				minDate: moment.unix(dFilters.minTime).format('M/DD/YY hh:mm A'),
+				maxDate: moment.unix(moment().unix()).format('M/DD/YY hh:mm A'),
+				locale: {
+					format: 'M/DD/YY hh:mm A'
+				}
+			});
+			$('input[name="maxTime"]').daterangepicker({
+				singleDatePicker: true,
+				timePicker: true,
+				showDropdowns: true,
+				drops: "up",
+				parentEl: "#overlay",
+				minDate: moment.unix(dFilters.minTime).format('M/DD/YY hh:mm A'),
+				locale: {
+					format: 'M/DD/YY hh:mm A'
+				}
+			});
+		});
+	}
+
+	vm.focusCheck = function (filter) {
+		if (dFilters[filter] == vm.filterInput[filter]) {
+			vm.filterInput[filter] = "";
+		}
+	}
+
+	vm.blurCheck = function (filter) {
+		if (vm.filterInput[filter] == "") {
+			vm.filterInput[filter] = dFilters[filter];
 		}
 	}
 
@@ -113,29 +176,20 @@ function mainController($scope) {
 
 		vm.formState = "";
 
-		$(`.modal`).modal('hide');
-
-		vm.addrInput = {
-			'addr': {
-				'val': '',
-				'state': 'invalid'
-			},
-			'name': {
-				'val': '',
-				'state': 'invalid'
-			}
-		};
-
 		console.log(resp);
 
 		if (resp.toLowerCase() == "success") {
 			updateKnown();
+			$(`.modal`).modal('hide');
 		}
 	}
 
 	async function updateKnown() {
 		vm.known = await $.get(window.location + "/getKnown");
-		console.log(vm.known)
+		vm.categories = [];
+		for (var i = 0; i < vm.known.length; i++) {
+			vm.categories.push(vm.known[i].category);
+		}
 	}
 
 	vm.checkAddr = async function () {
@@ -194,6 +248,20 @@ function mainController($scope) {
 		}
 
 		vm.addrInput.name.state = "invalid";
+	}
+
+	vm.checkCat = function () {
+		var val = vm.addrInput.cat.val;
+
+		if (val.length < 16 && val.length > 2 && namePattern.test(val)) {
+			vm.addrInput.cat.state = "valid";
+		} else {
+			vm.addrInput.cat.state = "invalid";
+		}
+	}
+
+	vm.startLoader = function() { 
+		$('iframe').contents().find('body').html('<div style="min-height: 100vh; display: flex; align-items: center;"><div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status"><span class="sr-only">Loading...</span></div></div>');
 	}
 
 	updateKnown();
