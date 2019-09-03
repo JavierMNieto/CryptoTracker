@@ -1,8 +1,6 @@
 from django.http import HttpResponse
 from django.template import loader
 from neo4j.v1 import GraphDatabase
-from django.http import JsonResponse
-from . import constants
 #from btc.models import Node as btcNode
 #from usdt.models import Node as usdtNode
 from django.shortcuts import render
@@ -11,6 +9,10 @@ import json
 import time
 import math
 import requests
+import sys
+
+sys.path.append("../")
+from coin.defaults import DParams
 
 def numWithCommas(num):
 	return ("{:,}".format(float(num)))
@@ -21,7 +23,9 @@ def search(request, coin=None):
 	cmc = ccxt.coinmarketcap()
 	btc = cmc.fetch_ticker('BTC/USD')
 
-	search = {'coin': coin, 'homeUrl': '/{}/search/0'.format(coin), 'btc': btc}
+	filters = DParams()
+
+	search = {'coin': coin, 'homeUrl': '/{}/search/0'.format(coin), 'btc': btc, 'dFilters': json.dumps(filters)}
 	return render(request, 'tracker/index.html', search)
 
 def usdt_home(request):

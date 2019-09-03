@@ -19,10 +19,10 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
 	<script src="https://morgul.github.io/ui-bootstrap4/ui-bootstrap-tpls-3.0.6.min.js"></script>
-	<script src="{% static 'js/clipboard.min.js' %}"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 	<script src="https://kit.fontawesome.com/af6506c08e.js"></script>
+	<script src="{% static 'js/clipboard.min.js' %}"></script>
 	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 	<link rel="stylesheet" href="{% static 'css/coin.min.css' %}">
 {%if search.totalTxs < 1 %}
@@ -48,13 +48,8 @@
 	<script src="{% static 'js/coinController.js' %}"></script>
 </head>
 
-<body ng-controller="txsController as vm" class="container-fluid ng-cloak">
-	<div id='iframe'>
-		<a class="btn btn-danger" style="z-index: 1000; right:0; position: absolute; opacity: 0.75;" href="about:blank" target="popup">X</a>
-		<iframe src="" name="popup" style="z-index: 100; position: absolute; width: 100%; height: 100%; left: 0" onload="toggleIFrame()"></iframe>
-	</div>
-	
-	<div id="body">
+<body ng-controller="txsController as vm" class="container-fluid">
+	<div id="body" class="ng-cloak">
 		<div id="name" class="font-weight-bold text-center h1">
 			{{search.label}}
 			<button width="30" height="30" onclick="location.reload();" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="right" title="Refresh Page">
@@ -67,7 +62,7 @@
 		{% if search.label != 'All Addresses' %}
 		<div class="row justify-content-center" id='info'>
 			<div class="px-5 h5">
-				Balance: {{search.balance}}
+				Balance: {{search.balance | numCommas}}
 				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
 					<svg width="16" height="16" viewBox="0 0 67 67">
 						<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
@@ -76,10 +71,7 @@
 			</div>
 			{% if search.address is not None %}
 			<div class="h5">
-				Address:&nbsp   
-					<a href="{{search.url}}">
-						{{search.address}}
-					</a>
+				Address:&nbsp {{search.address}}
 				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.address }}" data-toggle="tooltip" data-placement="top" title="Copy Address">
 					<svg width="16" height="16" viewBox="0 0 67 67">
 						<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
@@ -95,7 +87,7 @@
 					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Balance
 					</button>
-					<div class="dropdown-menu" style="min-width: 10vw">
+					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
 						<input type="number" name="minBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Balance" ng-model="vm.graphFilters.minBal">
 						<input type="number" name="maxBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Balance" ng-model="vm.graphFilters.maxBal">
 					</div>
@@ -105,7 +97,7 @@
 					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Time
 					</button>
-					<div class="dropdown-menu" name="dateTimes" style="min-width: 15vw">
+					<div class="dropdown-menu mt-n1" name="dateTimes" style="min-width: 15vw">
 						<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx Time" ng-model="vm.graphFilters.minTime">
 						<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx Time" ng-model="vm.graphFilters.maxTime">
 					</div>
@@ -114,15 +106,15 @@
 					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Transaction Amount
 					</button>
-					<div class="dropdown-menu" style="min-width: 10vw">
+					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
 						<input type="number" name="minTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx" ng-model="vm.graphFilters.minTx">
 						<input type="number" name="maxTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx" ng-model="vm.graphFilters.maxTx">
 					</div>
 				</div>
 			</div>
 			<div class="btn-group block" style="position: absolute; right: 3.5%;">
-				<button ng-click="vm.setFilters(false)" class="btn btn-primary block" id="filterBtn">Set Filters</button>
-				<button id="resetBtn" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.setFilters(true)" data-toggle="tooltip" data-placement="top" title="Load Graph">
+				<button ng-click="vm.setFilters()" class="btn btn-primary block" id="filterBtn">Set Filters</button>
+				<button id="resetBtn" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.loadGraph()" data-toggle="tooltip" data-placement="top" title="Load Graph">
 					<svg height="24" viewBox="-14 0 277 277.50116" width="24">
 						<path
 							d="m194.421875 185.890625c1.742187-.828125 2.851563-2.582031 2.851563-4.511719v-59.960937c0-2.761719-2.238282-5-5-5-2.761719 0-5 2.238281-5 5v56.800781l-58 27.601562v-74.164062l65.132812-31.019531c2.492188-1.183594 3.554688-4.167969 2.367188-6.664063-.40625-.792968-1.023438-1.464844-1.785157-1.933594-.160156-.183593-.359375-.332031-.582031-.429687l-68-32.375c-1.359375-.648437-2.941406-.648437-4.300781 0l-68 32.375c-.0625.035156-.089844.082031-.152344.113281-.121094.0625-.25.101563-.367187.171875-1.449219.917969-2.328126 2.511719-2.328126 4.226563v85.253906c0 1.925781 1.109376 3.683594 2.847657 4.511719l68 32.375c1.320312.648437 2.863281.648437 4.183593 0h.117188zm-133.121094-81.847656 20.945313 9.972656c2.488281 1.164063 5.449218.101563 6.632812-2.378906 1.179688-2.480469.136719-5.449219-2.332031-6.648438l-18.617187-8.867187 56.359374-26.835938 56.355469 26.835938-56.355469 26.839844-17.527343-8.347657c-2.488281-1.164062-5.449219-.097656-6.632813 2.378907-1.179687 2.480468-.140625 5.449218 2.332032 6.652343l16.832031 8v74.1875l-58-27.601562zm0 0" fill="#9a9ca0"/>
@@ -187,7 +179,7 @@
 						</button>
 					</div>
 					<div ng-switch-default class="text-center text-truncate">
-						<a href="{% verbatim %}{{ vm.selection.url }}{% endverbatim %}" target="popup" class="h2 font-weight-bold">
+						<a href="{% verbatim %}{{ vm.selection.url }}{% endverbatim %}" class="h2 font-weight-bold">
 							{% verbatim %}{{ vm.selection.label }}{% endverbatim %}
 						</a>
 						<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.label }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Name">
@@ -205,12 +197,12 @@
 	
 					</div>
 					<div ng-switch-default class="text-center">
-						Wallet: <a target="popup" href="https://www.walletexplorer.com/wallet/{% verbatim %}{{ vm.selection.group }}{% endverbatim %}/addresses">{% verbatim %}{{ vm.selection.walletName }}{% endverbatim %}</a>
+						Wallet: <a href="https://www.walletexplorer.com/wallet/{% verbatim %}{{ vm.selection.group }}{% endverbatim %}/addresses">{% verbatim %}{{ vm.selection.walletName }}{% endverbatim %}</a>
 					</div>
 				</div>
 				<div class="row align-items-start" style="padding-bottom: 1vh;">
 					<div class="col-sm-1">
-						<img src="{% verbatim %}{{ vm.selection.img }}{% endverbatim %}" width="48" height="48">
+						<img ng-src="{% verbatim %}{{ vm.selection.img }}{% endverbatim %}" width="48" height="48">
 					</div>
 					<div class="col-sm-7 h1">
 						{% verbatim %}{{ vm.selection.balance | number : fractionSize }}{% endverbatim %}
@@ -223,7 +215,7 @@
 					<div class="col-sm-4 h5 font-italic text-right" data-toggle="tooltip" data-placement="top" title="Last Update">{% verbatim %}{{ vm.selection.lastUpdate*1000 | date:'yyyy-MM-dd h:mm:ss a' }}{% endverbatim %}</div>
 				</div>
 				<div class="row align-items-end justify-content-center">
-					<a href="{% verbatim %}{{ vm.selection.webUrl }}{% endverbatim %}" target="popup" class="font-italic" style="font-size: 65%">
+					<a href="{% verbatim %}{{ vm.selection.webUrl }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
 						{% verbatim %}{{ vm.selection.addr }}{% endverbatim %}
 					</a>
 					<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.addr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Address">
@@ -255,19 +247,19 @@
 			</div>
 			<div class="px-5">
 				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect">
-					<li ng-class="{disabled:vm.pager.currentPage === 1}" class="page-item">
+					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(1)" class="page-link">First</a>
 					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === 1}" class="page-item"> 
+					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item"> 
 						<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
 					</li>
-					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page}" class="page-item">
+					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled: vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page}}{% endverbatim %}</a>
 					</li>                
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages}" class="page-item">
+					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
 					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages}" class="page-item">
+					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(vm.pager.totalPages)" class="page-link">Last</a>
 					</li>
 				</ul>
@@ -283,12 +275,17 @@
 				</div>
 			</div>
 		</div>
-		<div class="container">
-			<div class="list-group" id="txList" style="position: relative">
-				<div ng-repeat="tx in vm.txs" class="list-group-item mx-auto" style="width: 90%">
+		<div class="container" ng-switch="vm.txLoading">
+			<div ng-switch-when="true" class="text-center mb-5 vertCenter">
+				<div class="spinner-grow plus" style="width: 5rem; height: 5rem;" role="status">
+					<span class="sr-only">Loading...</span>
+				</div>
+			</div>
+			<div ng-switch-default class="list-group" id="txList" style="position: relative">
+				<div ng-repeat="tx in vm.txs" class="list-group-item mx-auto" style="width: 90%;">
 					<div class="row align-items-start" style="padding-bottom: 1vh;">
 						<div class="col-sm-1">
-							<img src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
+							<img ng-src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
 						</div>
 						<div class="col-sm-7 h1">
 							{% verbatim %}{{ tx.amount | number : fractionSize }}{% endverbatim %}
@@ -301,10 +298,12 @@
 					</div>
 					<div class="row justify-content-center" style="padding-bottom: 1rem;">
 						<div class="col-sm-5 text-right block" style="position: relative; whitespace: nowrap;">
-							<button width="16" height="16" ng-click="vm.highlight(tx.from, true)" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" title="Highlight on Graph">
+							<button width="16" height="16" ng-click="vm.highlight(tx.from, true)" class="btn btn-icon" 
+								style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" 
+								title="Highlight on Graph" ng-class="{disabled: !vm.graph}">
 								<i class="fas fa-highlighter"></i>
 							</button>
-							<a href="{% verbatim %}{{ tx.sourceUrl }}{% endverbatim %}" target="popup" class="text-truncate h6">
+							<a href="{% verbatim %}{{ tx.sourceUrl }}{% endverbatim %}" ng-click="vm.startLoader();" class="text-truncate h6">
 								{% verbatim %}{{ tx.source }}{% endverbatim %}
 							</a>
 							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.sourceAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Sender Address">
@@ -313,10 +312,12 @@
 						</div>
 						<i class="fas fa-long-arrow-alt-right"></i>
 						<div class="col-sm-5 text-left block" style="position: relative; whitespace: nowrap;">
-							<button width="16" height="16" ng-click="vm.highlight(tx.to, true)" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" title="Highlight on Graph">
+							<button width="16" height="16" ng-click="vm.highlight(tx.to, true)" class="btn btn-icon" 
+								style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top"
+								title="Highlight on Graph" ng-class="{disabled: !vm.graph}">
 								<i class="fas fa-highlighter"></i>
 							</button>
-							<a href="{% verbatim %}{{ tx.targetUrl }}{% endverbatim %}" target="popup" class="text-truncate h6">
+							<a href="{% verbatim %}{{ tx.targetUrl }}{% endverbatim %}" ng-click="vm.startLoader();" class="text-truncate h6">
 								{% verbatim %}{{ tx.target }}{% endverbatim %}
 							</a>
 							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.targetAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Reference Address">
@@ -325,10 +326,12 @@
 						</div>
 					</div>
 					<div class="row align-items-end justify-content-center">
-						<button width="16" height="16" ng-click="vm.highlight({source: tx.source, target: tx.target}, false)" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" title="Highlight on Graph">
+						<button width="16" height="16" ng-click="vm.highlight({source: tx.source, target: tx.target}, false)" 
+							class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" 
+							data-placement="top" title="Highlight on Graph" ng-class="{disabled: !vm.graph}">
 							<i class="fas fa-highlighter"></i>
 						</button>
-						<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" target="popup" class="font-italic text-truncate" style="font-size: 65%">
+						<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" ng-click="vm.startLoader();" class="font-italic text-truncate" style="font-size: 65%">
 							{% verbatim %}{{ tx.txid }}{% endverbatim %}
 						</a>
 						<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.txid }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy TxID">
@@ -339,21 +342,21 @@
 			</div>
 		</div>
 		<div class="row mx-auto justify-content-center">
-			<div style="padding-top: 2vh">
+			<div style="padding-top: 2vh; padding-left: 0.5vw;">
 				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect">
-					<li ng-class="{disabled:vm.pager.currentPage === 1}" class="page-item">
+					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(1)" class="page-link">First</a>
 					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === 1}" class="page-item"> 
+					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item"> 
 						<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
 					</li>
-					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page}" class="page-item">
+					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled:vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page}}{% endverbatim %}</a>
 					</li>                
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages}" class="page-item">
+					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
 					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages}" class="page-item">
+					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(vm.pager.totalPages)" class="page-link">Last</a>
 					</li>
 				</ul>

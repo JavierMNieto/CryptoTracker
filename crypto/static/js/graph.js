@@ -127,6 +127,7 @@ function drawGraph(stop, graph) {
 			document.getElementById('bar').style.width = width + 'px';
 			document.getElementById('text').innerHTML = Math.round(widthFactor * 100) + '%';
 		});
+		
 		network.once("stabilizationIterationsDone", function () {
 			$('#text').text('100%')
 			$('#bar').css('width', '496px');
@@ -140,28 +141,28 @@ function drawGraph(stop, graph) {
 			}, 500);
 		});
 
-		
-
 		network.on('click', properties => {
 			vm.$apply(`vm.select(${JSON.stringify(properties)})`);
 		});
 
-		network.on('deselectEdge', properties => {
+		network.on('deselectEdge', () => {
 			var tempNum = 0;
 			data.edges.forEach(edge => {
 				tempNum += edge.txsNum;
 			});
 			totalTxs = tempNum;
-			vm.$apply('vm.selCollapsed = [];vm.savedPages = {};vm.setPage(1);');
+			vm.$apply('vm.selCollapsed = [];vm.setPage(1);');
+			clicked  = false;
 		});
 
-		network.on('deselectNode', properties => {
+		network.on('deselectNode', () => {
 			var tempNum = 0;
 			data.edges.forEach(edge => {
 				tempNum += edge.txsNum;
 			});
 			totalTxs = tempNum;
 			vm.$apply('vm.selection = undefined;');
+			clicked  = false;
 		});
 
 		//return resolve(network);
@@ -182,7 +183,6 @@ function stopPhysics(graph) {
 			animation: true
 		});
 		document.getElementById('graphContainer').style = "cursor: auto";
-		$('#resetBtn').prop('disabled', false);
 		$('#filterBtn').prop('disabled', false);
 	}, graph.edges.length * 10);
 }

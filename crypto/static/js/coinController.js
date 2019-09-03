@@ -1,17 +1,3 @@
-var iFrameLoad = true;
-
-function toggleIFrame() {
-	if (iFrameLoad) {
-		$('#body').show();
-		$('#iframe').hide();
-		iFrameLoad = false;
-	} else {
-		$('#body').hide();
-		$('#iframe').show();
-		iFrameLoad = true;
-	}
-}
-
 (function () {
 	'use strict';
 
@@ -24,16 +10,13 @@ function toggleIFrame() {
 		var vm = this;
 		var order = 'DESC';
 		var sort = 'epoch';
-		var graph = {
-			nodes: [],
-			edges: []
-		};
 		$('#loadingBar').hide();
 		$('#iframe').hide();
 		$('#body').show();
 
 		vm.selCollapsed = [];
-
+		
+		vm.graph;
 		vm.txs = [];
 		vm.pager = {};
 		vm.dropText = "Most Recent";
@@ -46,7 +29,8 @@ function toggleIFrame() {
 
 		vm.currentId = 0;
 
-		vm.savedPages = {};
+		vm.savedTxs   = {};
+		vm.txLoading  = false;
 
 		vm.graphFilters = dFilters;
 
@@ -95,32 +79,28 @@ function toggleIFrame() {
 			vm.pager = PagerService.GetPager(totalTxs, page);
 			$('[data-toggle="tooltip"]').tooltip('hide');
 
-			if (vm.savedPages["" + page]) {
-				vm.txs = vm.savedPages["" + page];
-				$(function () {
-					$('[data-toggle="tooltip"]').tooltip({
-						trigger: 'hover'
-					});
-				});
-				return;
-			}
+			// get current page of items
+			var url = `../getTxs?page=${vm.pager.currentPage - 1}&sort=${sort}&order=${order}`;
 
-			$('#txList').fadeTo(Math.max(totalTxs/50, 100), 0, () => {
-				// get current page of items
-				var url = `../getTxs?page=${vm.pager.currentPage - 1}&sort=${sort}&order=${order}`;
-
-				if (_addr == null && vm.selection !== undefined && vm.selection.title.includes('Name:')) {
-					url += `&addr[]=${vm.selection.addr}`;
-				} else if (vm.selCollapsed.length > 0) {
-					for (var i = 0; i < vm.selCollapsed.length; i++) {
-						url += `&sender[]=${vm.selCollapsed[i].sender}&receiver[]=${vm.selCollapsed[i].receiver}`;
-					}
-				} else if (_addr) {
-					for (var n = 0; n < _addr.length; n++) {
-						url += "&addr[]=" + _addr[n];
-					}
+			if (_addr !== 0 && vm.selection !== undefined && vm.selection.title.includes('Name:')) {
+				url += `&addr[]=${vm.selection.addr}`;
+			} else if (vm.selCollapsed.length > 0) {
+				for (var i = 0; i < vm.selCollapsed.length; i++) {
+					url += `&sender[]=${vm.selCollapsed[i].sender}&receiver[]=${vm.selCollapsed[i].receiver}`;
 				}
-
+			} else if (_addr) {
+				for (var n = 0; n < _addr.length; n++) {
+					url += "&addr[]=" + _addr[n];
+				}
+			}
+			
+			var reqSig = url;
+			var txSave = vm.savedTxs[reqSig] || undefined;
+			
+			if (txSave) {
+				vm.txs = txSave;
+			} else {
+				vm.txLoading = true;
 				for (let filter in vm.graphFilters) {
 					var val = vm.graphFilters[filter];
 					if (filter.toLowerCase().includes('time')) {
@@ -131,18 +111,18 @@ function toggleIFrame() {
 
 				$.get(url, data => {
 					$scope.$apply(() => {
-						vm.txs = data;
+						vm.txs 		  = data;
+						vm.txLoading  = false;
 					});
-					vm.savedPages["" + page] = data;
+					vm.savedTxs[reqSig] = data;
 					
-					$('#txList').fadeTo("fast", 1);
 					$(function () {
 						$('[data-toggle="tooltip"]').tooltip({
 							trigger: 'hover'
 						});
 					});
 				});
-			});
+			}
 		}
 
 		vm.sortBy = function (propertyName, reverse) {
@@ -159,9 +139,7 @@ function toggleIFrame() {
 				sort = 'amount';
 				order = 'ASC';
 			}
-			vm.savedPages = {};
 			vm.setPage(vm.pager.currentPage);
-			//vm.txs = $.get(`../getTxs?page=${vm.pager.currentPage}&sort=${sort}&order=${order}`);
 		}
 
 		vm.rangeBy = function (fieldName, minValue, maxValue) {
@@ -173,23 +151,42 @@ function toggleIFrame() {
 			};
 		}
 
-		vm.setMaxTx = function () {
-			$('#maxTx').val(1e99);
+		vm.setFilters = function () {
+			var url = window.location + "";
+
+			if (!url.includes('?')) {
+				url += "?";
+			}
+
+			for (let filter in vm.graphFilters) {
+				var urlFilter = `${filter}=`;
+				if (url.includes(urlFilter)) {
+					if (url.includes("&" + urlFilter)) {
+						urlFilter = "&" + urlFilter;
+					}
+
+					var temp = url.substring(url.indexOf(urlFilter));
+					if (temp.match(/&/g).length > 1) {
+						temp = temp.substring(0, temp.indexOf("&", 1));
+					}
+
+					url = url.replace(temp, "");
+				}
+
+				var val = vm.graphFilters[filter];
+				if (filter.toLowerCase().includes('time')) {
+					val = moment(val, 'M/DD/YY hh:mm A').valueOf()/1000;
+				}
+
+				url += `&${filter}=${val}`;
+			}
+
+			url = url.replace("?&", "?");
+
+			window.location = url;
 		}
 
-		vm.setMaxBal = function () {
-			$('#maxBal').val(1e99);
-		}
-
-		vm.setMaxAvgTx = function () {
-			$('#maxAvgTx').val(1e99);
-		}
-
-		vm.setMaxTxsNum = function () {
-			$('#maxTxsNum').val(1e99);
-		}
-
-		vm.setFilters = function (isReset) {
+		vm.loadGraph = function () {
 			document.getElementById('graphContainer').style = "cursor: wait";
 			$('#text').text('0%')
 			$('#bar').css('width', '20px');
@@ -204,19 +201,12 @@ function toggleIFrame() {
 					url += "&addr[]=" + _addr[n];
 				}
 			}
-			if (!isReset) {
-				for (let filter in vm.graphFilters) {
-					var val = vm.graphFilters[filter]
-					if (filter.toLowerCase().includes('time')) {
-						val = moment(val, 'M/DD/YY hh:mm A').valueOf()/1000;
-					}
-					url += `&${filter}=${val}`;
+			for (let filter in dFilters) {
+				var val = dFilters[filter]
+				if (filter.toLowerCase().includes('time')) {
+					val = moment(val, 'M/DD/YY hh:mm A').valueOf()/1000;
 				}
-			} else {
-				vm.graphFilters = dFilters;
-
-				vm.graphFilters.minTime = moment.unix(lastTx).format('M/DD/YY hh:mm A');
-				vm.graphFilters.maxTime = moment.unix(moment().unix()).format('M/DD/YY hh:mm A');
+				url += `&${filter}=${val}`;
 			}
 			url = url.replace('?&', '?');
 			$.get(url, resp => {
@@ -224,25 +214,22 @@ function toggleIFrame() {
 					$('#loadingBar').hide();
 					$('#graph').html('<div style="margin-top: 20%">Nothing Found.</div>');
 					document.getElementById('graphContainer').style = "cursor: auto";
-					$('#resetBtn').prop('disabled', false);
 					$('#filterBtn').prop('disabled', false);
+					$('#resetBtn').prop('disabled', false);
 				} else {
-					graph = {
+					vm.graph = {
 						nodes: resp.nodes,
 						edges: resp.edges
 					}
 					totalTxs = resp.totalTxs;
-					drawGraph(true, graph);
-					vm.savedPages = {};
-					vm.setPage(1);
-					$("#resetBtn").attr('data-original-title', 'Reset Graph');
+					drawGraph(true, vm.graph);
 				}
 			});
 			
 		}
 
 		vm.highlight = function (id, isNode) {
-			if (!graph) return;
+			if (!vm.graph) return;
 
 			if (isNode) {
 				network.selectNodes([id], false);
@@ -256,14 +243,12 @@ function toggleIFrame() {
 			let target = id.target;
 			var edgeId;
 
-			for (var i = 0; i < graph.edges.length; i++) {
-				if (graph.edges[i].source == source && graph.edges[i].target == target) {
-					edgeId = graph.edges[i].id
+			for (var i = 0; i < vm.graph.edges.length; i++) {
+				if (vm.graph.edges[i].source == source && vm.graph.edges[i].target == target) {
+					edgeId = vm.graph.edges[i].id
 					break;
 				}
 			}
-
-			console.log(edgeId);
 
 			if (edgeId) {
 				network.fit({
@@ -274,29 +259,39 @@ function toggleIFrame() {
 		}
 
 		vm.select = function (properties) {
+			var isCatKnown = false;
 			if (properties.nodes.length > 0) {
 				let id = properties.nodes[0];
 				let node = data.nodes.get(id);
-				if (node.label.toLowerCase() === $('#name').text().toLowerCase()) {
+				if (_addr.length == 1 && _addr[0] == node.addr) {
 					return;
 				}
 				vm.selection = node;
-			}
+				for (var i = 0; i < _addr.length; i++) {
+					if (_addr[i] == vm.selection.addr) {
+						isCatKnown = true;
+						break;
+					}
+				}
+			} 
 			if (properties.edges.length > 0) {
 				var tempTxs = properties.edges
 				var tempNum = 0;
 				for (var i = 0; i < tempTxs.length; i++) {
 					let tx = data.edges.get(tempTxs[i]);
-					vm.selCollapsed.push({
-						sender: tx.source,
-						receiver: tx.target
-					});
+
+					if (!isCatKnown) {
+						vm.selCollapsed.push({
+							sender: tx.sourceAddr,
+							receiver: tx.targetAddr
+						});
+					}
+					
 					tempNum += tx.txsNum;
 				}
 				totalTxs = tempNum;
 			}
 			if (properties.edges.length > 0 || properties.nodes.length > 0) {
-				vm.savedPages = {};
 				vm.setPage(1);
 				$(function () {
 					$('[data-toggle="tooltip"]').tooltip({
@@ -306,11 +301,19 @@ function toggleIFrame() {
 			}
 		}
 
-		if (totalTxs < 2000) {
-			vm.setFilters(false);
-		} else {
-			vm.setPage(1);
+		vm.startLoader = function() { 
+			$('body').html('<div style="min-height: 100vh; display: flex; align-items: center;"><div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status"><span class="sr-only">Loading...</span></div></div>');
 		}
+
+		if (totalTxs < 2000) {
+			vm.loadGraph();
+		}
+
+		vm.setPage(1);
+
+		setInterval(function () {
+			vm.savedTxs = {};
+		}, 300000);
 	}
 
 	function PagerService() {
