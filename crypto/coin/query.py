@@ -34,19 +34,17 @@ class CoinController:
         query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
 
         addrsText = ''
-        
-        print(params)
 
         if params['addr[]']:
             addrsText = "({}) AND".format(self.getAddrsText(params['addr[]']))
 
-            query     = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
+            query     = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
         elif params['sender[]'] and params['receiver[]']:
             addrsText = "({}) AND".format(self.getAddrsText(params['sender[]'], params['receiver[]'], rel=False))
 
-            query     = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query.replace("WITH startNode(r) as a, endNode(r) as b, r ", ""))
+            query     = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query.replace("WITH startNode(r) as a, endNode(r) as b, r ", ""))
         else:
-            query = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {}".format(self.coin, self.coin, self.coin, query)
+            query = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {}".format(self.coin, self.coin, self.coin, query)
 
         txs = self.runFilters(query, params)
 
@@ -125,7 +123,7 @@ class CoinController:
         if info['addr']:
             addrText = self.getAddrsText(info['addr']) + " AND "
 
-        query  = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {} RETURN count(r)".format(self.coin, self.coin, self.coin, addrText, TxsQuery())
+        query  = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {} RETURN count(r)".format(self.coin, self.coin, self.coin, addrText, TxsQuery())
 
         info["totalTxs"] = self.runFilters(query, filters).single().value()
         
@@ -158,7 +156,7 @@ class CoinController:
             addrsText = "({}) AND".format(self.getAddrsText(params['addr[]']))
 
 
-        query = "MATCH (a:{})-[r:{}TX]->(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
+        query = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
         
         txs   = self.runFilters(query, params)
         
@@ -176,7 +174,7 @@ class CoinController:
                 "balance": float(aNode['balance'] or 0),
                 "balVal": float(aNode['balance'] or 0),
                 "group": aNode['wallet'] or 'usdt',
-                "lastUpdate": aNode['epoch'] or time.time(),
+                "lastUpdate": time.time(),
                 "url": aKnown['url'],
                 "webUrl": self.urls['addr'] + aNode['addr'], # REMOVE
                 "value": float(aNode['balance'] or 0)/Satoshi(),
@@ -196,7 +194,7 @@ class CoinController:
                 "balance": float(bNode['balance'] or 0),
                 "balVal": float(bNode['balance'] or 0),
                 "group": bNode['wallet'] or 'usdt',
-                "lastUpdate": bNode['epoch'] or time.time(),
+                "lastUpdate": time.time(),
                 "url": bKnown['url'],
                 "webUrl": self.urls['addr'] + bNode['addr'], # REMOVE
                 "value": float(bNode['balance'] or 0)/Satoshi(),
@@ -334,9 +332,11 @@ class CoinController:
             string = ""
 
             string += "a.addr = '{}'".format(addr[x])
+
+            """
             if rel:
                 string = "({} or b.addr = '{}')".format(string, addr[x])
-            
+            """
 
             if x < len(extras):
                 string = "({} AND b.addr = '{}')".format(string, extras[x])

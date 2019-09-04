@@ -72,11 +72,11 @@ def Neo4j():
     Defualt query to get single transactions
 """
 def TxsQuery():
-    return (" a.balance >= {minBal} AND a.balance <= {maxBal} AND b.balance >= {minBal} AND b.balance <= {maxBal} AND r.amount >= {minTx} AND r.amount <= {maxTx} AND r.epoch >= {minTime} AND r.epoch <= {maxTime} "
-            "WITH a, b, r "
+    return (" a.balance >= {minBal} AND a.balance <= {maxBal} AND b.balance >= {minBal} AND b.balance <= {maxBal} AND r.amount >= {minTx} AND r.amount <= {maxTx} AND r.blocktime >= {minTime} AND r.blocktime <= {maxTime} "
+            "WITH startNode(r) as a, endNode(r) as b, r "
             "WITH {id: ID(a), addr: a.addr} AS a, {id: ID(b), addr: b.addr} AS b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} as r, COLLECT(r) as txs "
             "WITH CASE WHEN r.amount >= {minTotal} AND r.amount <= {maxTotal} AND r.txsNum >= {minTxsNum} AND r.txsNum <= {maxTxsNum} AND r.avgTxAmt >= {minAvg} AND r.avgTxAmt <= {maxAvg} THEN "
-            "REDUCE(vals = [], tx in txs | vals + [{from: a, to: b, txid: tx.txid, amount: tx.amount, epoch: tx.epoch, type: TYPE(tx), id: ID(tx)}]) ELSE NULL END AS result "
+            "REDUCE(vals = [], tx in txs | vals + [{from: a, to: b, txid: tx.txid, amount: tx.amount, epoch: tx.blocktime, type: TYPE(tx), id: ID(tx)}]) ELSE NULL END AS result "
             "UNWIND result as r ")
 
 """
@@ -84,5 +84,5 @@ def TxsQuery():
 """
 def GraphQuery():
     return  (" a.balance >= {minBal} AND a.balance <= {maxBal} AND b.balance >= {minBal} AND b.balance <= {maxBal} AND r.amount >= {minTx} "
-                  "AND r.amount <= {maxTx} AND r.epoch >= {minTime} AND r.epoch <= {maxTime} WITH a, b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} AS r "
-                  "RETURN CASE WHEN r.amount >= {minTotal} AND r.amount <= {maxTotal} AND r.txsNum >= {minTxsNum} AND r.txsNum <= {maxTxsNum} AND r.avgTxAmt >= {minAvg} AND r.avgTxAmt <= {maxAvg} THEN {from:a, to:b, r:r} ELSE null END AS result ") 
+            "AND r.amount <= {maxTx} AND r.blocktime >= {minTime} AND r.blocktime <= {maxTime} WITH startNode(r) as a, endNode(r) as b, {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} AS r "
+            "RETURN CASE WHEN r.amount >= {minTotal} AND r.amount <= {maxTotal} AND r.txsNum >= {minTxsNum} AND r.txsNum <= {maxTxsNum} AND r.avgTxAmt >= {minAvg} AND r.avgTxAmt <= {maxAvg} THEN {from:a, to:b, r:r} ELSE null END AS result ") 
