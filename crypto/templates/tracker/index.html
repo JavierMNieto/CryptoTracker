@@ -83,7 +83,7 @@
 	</nav>
 
 	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" aria-hidden="true">
-		<div ng-switch on="vm.overlay.type" class="modal-dialog modal-dialog-centered modal-sm" role="document">
+		<div ng-switch on="vm.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': vm.overlay.type == 'delete'}" role="document">
 			<form id="edit" method="post" action="{{ request.path }}/addr" ng-switch-when="edit"
 				class="modal-content bg-dark">
 				{% csrf_token %}
@@ -99,8 +99,8 @@
 				<div class="modal-body shadow-lg bg-secondary">
 					<input type="text" name="name" placeholder="Name" ng-readonly="vm.addrInput.name.state == 'load'"
 						autocomplete="off" class="shadow form-control w-75 mx-auto my-1 text-center"
-						ng-model="vm.addrInput.name.val" ng-blur="vm.checkName()">
-					<div style="position: absolute; top: 1.2rem; right: 3.35rem;" ng-switch
+						ng-model="vm.addrInput.name.val" ng-change="vm.checkName()" ng-focus="vm.addrFocusCheck('name')" ng-blur="vm.addrBlurCheck('name')">
+					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch
 						on="vm.addrInput.name.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
@@ -116,13 +116,51 @@
 					</div>
 					<input type="text" name="cat" list="categories"
 						class="shadow form-control w-75 mx-auto my-1 text-center" placeholder="Group Name" ngTrim="true"
-						ng-model="vm.addrInput.cat.val" ng-blur="vm.checkCat()" autocomplete="off" />
-					<div style="position: absolute; top: 3.8rem; right: 3.35rem;" ng-switch on="vm.addrInput.cat.state">
+						ng-model="vm.addrInput.cat.val" ng-change="vm.checkCat()" autocomplete="off" ng-focus="vm.addrFocusCheck('cat')" ng-blur="vm.addrBlurCheck('cat')">
+					<div style="position: absolute; top: 3.9rem; right: 4.9rem;" ng-switch on="vm.addrInput.cat.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
 						<div ng-switch-default>
 							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+					<div class="mt-3 p-2 text-center shadow-lg rounded">
+						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
+						<div class="row">
+							<div class="col-6">
+								<span>Balance</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minBal" ng-change="vm.addCommas('minBal')"
+										ng-focus="vm.filterFocusCheck('minBal')" ng-blur="vm.filterBlurCheck('minBal')" placeholder="Min Balance">
+								</div>
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxBal" ng-change="vm.addCommas('maxBal')" 
+										ng-focus="vm.filterFocusCheck('maxBal')" ng-blur="vm.filterBlurCheck('maxBal')" placeholder="Max Balance">
+								</div>
+							</div>
+							<div class="col-6">
+								<span>Transaction Amount</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTx" ng-change="vm.addCommas('minTx')"
+										ng-focus="vm.filterFocusCheck('minTx')" ng-blur="vm.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
+								</div>
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTx" ng-change="vm.addCommas('maxTx')"
+										ng-focus="vm.filterFocusCheck('maxTx')" ng-blur="vm.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
+								</div>
+							</div>
+						</div>
+						<div class="row m-2">
+							<span class="mx-auto">Transaction Time</span>
+							<div class="w-75 mx-auto mb-1">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTime" 
+									ng-focus="vm.filterFocusCheck('minTime')" ng-blur="vm.filterBlurCheck('minTime')" placeholder="Min Time">
+							</div>
+							<div class="w-75 mx-auto">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTime" 
+									ng-focus="vm.filterFocusCheck('maxTime')" ng-blur="vm.filterBlurCheck('maxTime')" placeholder="Max Time">
+							</div>
 						</div>
 					</div>
 				</div>
@@ -149,11 +187,10 @@
 					</button>
 				</div>
 				<div class="modal-body shadow-lg bg-secondary">
-					<input type="text" name="addr" style="font-size: 75%" placeholder="Address"
-						ng-blur="vm.checkAddr()" ng-readonly="vm.addrInput.addr.state == 'load'"
-						ng-model="vm.addrInput.addr.val" class="shadow form-control w-100 my-1 text-center text-muted"
-						autocomplete="off">
-					<div style="position: absolute; top: 1.2rem; right: 1.2rem;" ng-switch on="vm.addrInput.addr.state">
+					<input autocomplete="off" type="text" name="addr" placeholder="Address"
+						ng-change="vm.checkAddr()" ng-readonly="vm.addrInput.addr.state == 'load'"
+						ng-model="vm.addrInput.addr.val" class="shadow form-control w-100 mb-2 text-center text-muted">
+					<div style="position: absolute; top: 1rem; right: 1.2rem;" ng-switch on="vm.addrInput.addr.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
@@ -166,11 +203,11 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<input type="text" name="name" placeholder="Name" ngTrim="true"
-						class="shadow form-control w-75 mx-auto my-1 text-center"
-						ng-readonly="vm.addrInput.name.state == 'load'" ng-blur="vm.checkName()"
-						ng-model="vm.addrInput.name.val" autocomplete="off">
-					<div style="position: absolute; top: 3.45rem; right: 3.35rem;" ng-switch
+					<input autocomplete="off" type="text" name="name" placeholder="Name" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="vm.addrInput.name.state == 'load'" ng-change="vm.checkName()"
+						ng-model="vm.addrInput.name.val">
+					<div style="position: absolute; top: 3.9rem; right: 8.55rem;" ng-switch
 						on="vm.addrInput.name.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
@@ -184,10 +221,10 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<input type="text" name="cat" list="categories"
-						class="shadow form-control w-75 mx-auto my-1 text-center" placeholder="Group Name" ngTrim="true"
-						ng-model="vm.addrInput.cat.val" ng-blur="vm.checkCat()" autocomplete="off" />
-					<div style="position: absolute; top: 6.05rem; right: 3.35rem;" ng-switch on="vm.addrInput.cat.state">
+					<input autocomplete="off" type="text" name="cat" list="categories"
+						class="shadow form-control w-50 mx-auto my-1 text-center" placeholder="Group Name" ngTrim="true"
+						ng-model="vm.addrInput.cat.val" ng-change="vm.checkCat()">
+					<div style="position: absolute; top: 6.5rem; right: 8.55rem;" ng-switch on="vm.addrInput.cat.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
@@ -195,41 +232,41 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<div class="mt-3 text-center" style="mix-blend-mode: difference">
+					<div class="mt-3 p-2 text-center shadow-lg rounded">
 						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
 						<div class="row">
-							<div class="col-6 shadow">
+							<div class="col-6">
 								<span>Balance</span>
-								<div class="input-group w-100 mb-1">
-									<input type="number" name="minBal" class="form-control text-center" ng-model="vm.filterInput.minBal" 
-										ng-focus="vm.focusCheck('minBal')" ng-blur="vm.blurCheck('minBal')" placeholder="Min Balance" step="100000.0">
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minBal" ng-change="vm.addCommas('minBal')"
+										ng-focus="vm.filterFocusCheck('minBal')" ng-blur="vm.filterBlurCheck('minBal')" placeholder="Min Balance">
 								</div>
-								<div class="input-group w-100">
-									<input type="number" name="maxBal" class="form-control text-center" ng-model="vm.filterInput.maxBal" 
-										ng-focus="vm.focusCheck('maxBal')" ng-blur="vm.blurCheck('maxBal')" placeholder="Max Balance" step="100000.0">
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxBal" ng-change="vm.addCommas('maxBal')" 
+										ng-focus="vm.filterFocusCheck('maxBal')" ng-blur="vm.filterBlurCheck('maxBal')" placeholder="Max Balance">
 								</div>
 							</div>
-							<div class="col-6 shadow">
-								<span style="font-size: 75%">Transaction Amount</span>
-								<div class="input-group w-100 mb-1">
-									<input type="number" name="minTx" class="form-control text-center" ng-model="vm.filterInput.minTx" 
-										ng-focus="vm.focusCheck('minTx')" ng-blur="vm.blurCheck('minTx')" placeholder="Min Tx Amount" step="100000.0">
+							<div class="col-6">
+								<span>Transaction Amount</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTx" ng-change="vm.addCommas('minTx')"
+										ng-focus="vm.filterFocusCheck('minTx')" ng-blur="vm.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
 								</div>
-								<div class="input-group w-100">
-									<input type="number" name="maxTx" class="form-control text-center" ng-model="vm.filterInput.maxTx" 
-										ng-focus="vm.focusCheck('maxTx')" ng-blur="vm.blurCheck('maxTx')" placeholder="Max Tx Amount" step="100000.0">
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTx" ng-change="vm.addCommas('maxTx')"
+										ng-focus="vm.filterFocusCheck('maxTx')" ng-blur="vm.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
 								</div>
 							</div>
 						</div>
 						<div class="row m-2">
 							<span class="mx-auto">Transaction Time</span>
-							<div class="input-group w-100 mb-1">
-								<input type="text" name="minTime" class="form-control text-center" ng-model="vm.filterInput.minTime" 
-									ng-focus="vm.focusCheck('minTime')" ng-blur="vm.blurCheck('minTime')" placeholder="Min Time">
+							<div class="w-75 mx-auto mb-1">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTime" 
+									ng-focus="vm.filterFocusCheck('minTime')" ng-blur="vm.filterBlurCheck('minTime')" placeholder="Min Time">
 							</div>
-							<div class="input-group w-100">
-								<input type="text" name="maxTime" class="form-control text-center" ng-model="vm.filterInput.maxTime" 
-									ng-focus="vm.focusCheck('maxTime')" ng-blur="vm.blurCheck('maxTime')" placeholder="Max Time">
+							<div class="w-75 mx-auto">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTime" 
+									ng-focus="vm.filterFocusCheck('maxTime')" ng-blur="vm.filterBlurCheck('maxTime')" placeholder="Max Time">
 							</div>
 						</div>
 					</div>
@@ -240,8 +277,7 @@
 					<button type="button" class="btn btn-success"
 						ng-disabled="((vm.addrInput.addr.state != 'valid') || (vm.addrInput.name.state != 'valid') || (vm.addrInput.cat.state != 'valid'))"
 						ng-click="vm.submit('add')">
-						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status"
-							aria-hidden="true"></div>
+						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Add Address
 					</button>
 				</div>
@@ -286,8 +322,8 @@
 				<div class="modal-body shadow-lg bg-secondary text-center">
 					<input type="text" name="newCat" class="shadow form-control w-75 mx-auto my-1 text-center"
 						placeholder="New Group Name" ngTrim="true" ng-model="vm.addrInput.cat.val"
-						ng-blur="vm.checkCat()" autocomplete="off" />
-					<div style="position: absolute; top: 1.2rem; right: 3.35rem;" ng-switch on="vm.addrInput.cat.state">
+						ng-change="vm.checkCat()" autocomplete="off" ng-focus="vm.addrFocusCheck('cat')" ng-blur="vm.addrBlurCheck('cat')">
+					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch on="vm.addrInput.cat.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
@@ -295,11 +331,43 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<div class="mt-3" style="mix-blend-mode: difference">
-						Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Preset filters for faster searches."></i>
-					</div>
-					<div>
-
+					<div class="mt-3 p-2 text-center shadow-lg rounded">
+						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
+						<div class="row">
+							<div class="col-6">
+								<span>Balance</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minBal" ng-change="vm.addCommas('minBal')"
+										ng-focus="vm.filterFocusCheck('minBal')" ng-blur="vm.filterBlurCheck('minBal')" placeholder="Min Balance">
+								</div>
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxBal" ng-change="vm.addCommas('maxBal')" 
+										ng-focus="vm.filterFocusCheck('maxBal')" ng-blur="vm.filterBlurCheck('maxBal')" placeholder="Max Balance">
+								</div>
+							</div>
+							<div class="col-6">
+								<span>Transaction Amount</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTx" ng-change="vm.addCommas('minTx')"
+										ng-focus="vm.filterFocusCheck('minTx')" ng-blur="vm.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
+								</div>
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTx" ng-change="vm.addCommas('maxTx')"
+										ng-focus="vm.filterFocusCheck('maxTx')" ng-blur="vm.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
+								</div>
+							</div>
+						</div>
+						<div class="row m-2">
+							<span class="mx-auto">Transaction Time</span>
+							<div class="w-75 mx-auto mb-1">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTime" 
+									ng-focus="vm.filterFocusCheck('minTime')" ng-blur="vm.filterBlurCheck('minTime')" placeholder="Min Time">
+							</div>
+							<div class="w-75 mx-auto">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTime" 
+									ng-focus="vm.filterFocusCheck('maxTime')" ng-blur="vm.filterBlurCheck('maxTime')" placeholder="Max Time">
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -334,11 +402,11 @@
 					<button class="btn btn-success rounded shadow-none" ng-click="vm.makeGraph();">&#10003;</button>
 				</div>
 				<div ng-switch-default class="btn-group">
-					<button class="btn btn-info shadow-none" ng-click="vm.customGraph();"><img
-							src="{% static 'images/graph.png' %}" style="width: 24px; height: auto;"><span> Custom
+					<button class="btn btn-info shadow-none" ng-click="vm.customGraph();"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
+							style="width: 24px; height: auto;"><span> Custom
 							Graph</span></button>
 					<button class="btn btn-success shadow-none" ng-click="vm.showOverlay({type:'add'});"
-						data-toggle="modal" data-target="#overlay"><img src="{% static 'images/add.png' %}"
+						data-toggle="modal" data-target="#overlay"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 							style="width: 24px; height: auto;"><span> Add Address</span></button>
 				</div>
 			</div>
@@ -353,7 +421,7 @@
 					<div ng-switch on="vm.isCustom" data-addy="{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}">
 						<div ng-switch-when="true">
 							<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
-								<div class="d-inline-block w-80 justify-content-start align-items-center text-truncate">
+								<div class="d-inline-block w-75 justify-content-start align-items-center text-truncate">
 									<span class="menu-collapsed"
 										ng-attr-id="{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}">{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}</span>
 								</div>
@@ -394,7 +462,7 @@
 								<button
 									class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
 									ng-if="category.category != 'Home'" data-toggle="modal" data-target="#overlay"
-									ng-click="vm.showOverlay({type:'editCat',cat:category.category});">
+									ng-click="vm.showOverlay({type:'editCat',cat:category.category,url:category.url});">
 									<i class="fas fa-edit"></i>
 								</button>
 								<a href="{% verbatim %}{{category.url}}{% endverbatim %}" target="iframe_a"
@@ -439,7 +507,7 @@
 									<button
 										class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
 										data-toggle="modal" data-target="#overlay"
-										ng-click="vm.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.category});">
+										ng-click="vm.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.category,url:x.url});">
 										<i class="fas fa-edit"></i>
 									</button>
 									<a href="{% verbatim %}{{x.url}}{% endverbatim %}" id="addr" target="iframe_a"
@@ -465,7 +533,15 @@
 
 		<!-- MAIN -->
 		<div class="col" id="frame" style="flex-grow: 1; z-index: 1;">
+			<iframe id="iframe1" frameborder="0" name="iframe_a" src=""></iframe>
+			<div ng-if="!vm.loaded" style="position: absolute; display: block; left:40%; top:35%; z-index: 10000">
+				<div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status">
+					<span class="sr-only">Loading...</span>
+				</div>
+			</div>
+			<!--
 			<iframe id="iframe1" frameborder="0" name="iframe_a" src="{{coin}}/search/0"></iframe>
+			-->
 		</div>
 		<!-- Main Col END -->
 		{% else %}

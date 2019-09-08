@@ -38,6 +38,12 @@ function drawGraph(stop, graph) {
 
 		let vm = angular.element($('body')).scope();
 
+		var solver = "forceAtlas2Based";
+
+		if (totalTxs < 2000) {
+			solver = "repulsion";
+		}
+
 		var options = {
 			"nodes": {
 				"scaling": {
@@ -113,7 +119,7 @@ function drawGraph(stop, graph) {
 					"avoidOverlap": 0.85
 				},
 				"enabled": true,
-				"solver": (totalTxs > 2000) ? "forceAtlas2Based" : "repulsion"
+				"solver": solver
 			}
 		};
 		network = new vis.Network(container, data, options);
@@ -129,15 +135,16 @@ function drawGraph(stop, graph) {
 		});
 		
 		network.once("stabilizationIterationsDone", function () {
-			$('#text').text('100%')
+			$('#text').text('100%');
 			$('#bar').css('width', '496px');
 			$('loadingBar').css('opacity', 0);
-
+			vm.$apply(`vm.loadedGraph()`);
 			setTimeout(function () {
 				$('#loadingBar').hide();
 				if (stop) {
 					stopPhysics(graph);
 				}
+
 			}, 500);
 		});
 
@@ -184,5 +191,5 @@ function stopPhysics(graph) {
 		});
 		document.getElementById('graphContainer').style = "cursor: auto";
 		$('#filterBtn').prop('disabled', false);
-	}, graph.edges.length * 10);
+	}, graph.edges.length * 5);
 }
