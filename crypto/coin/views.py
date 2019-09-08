@@ -36,13 +36,13 @@ def addr(request, coin=None):
     method = request.POST.get('method') or ""
  
     if method == "add":
-        return JsonResponse(coinController.addAddr(request.POST.get('addr'), request.POST.get('name'), request.POST.get('cat') or ""), safe=False)
+        return JsonResponse(coinController.addAddr(request.POST.get('addr'), request.POST.get('name'), request.POST.get('cat') or "", getParams(request, isPost=True)), safe=False)
     elif method == "edit":
-        return JsonResponse(coinController.editAddr(request.POST.get('addr'), request.POST.get('name'), request.POST.get('cat') or ""), safe=False)
+        return JsonResponse(coinController.editAddr(request.POST.get('addr'), request.POST.get('name'), request.POST.get('cat') or "", getParams(request, isPost=True)), safe=False)
     elif method == "delete":
         return JsonResponse(coinController.delAddr(request.POST.get('addr')), safe=False)
     elif method == "editCat":
-        return JsonResponse(coinController.editCat(request.POST.get('prevCat'), request.POST.get('newCat')), safe=False)
+        return JsonResponse(coinController.editCat(request.POST.get('prevCat'), request.POST.get('newCat'), getParams(request, isPost=True)), safe=False)
     else:
         return "ERROR"
 
@@ -50,33 +50,46 @@ def search(request, id, coin=None):
     coinController.setCoin(coin)
 
     id = unquote(id)
-    
+
     data = coinController.getAddrInfo(id, getParams(request))
 
     return render(request, 'coin/coin.html', data)
 
-def getParams(request):
+def getParams(request, isPost=False):
     coinController.setCoin(request.build_absolute_uri())
     
     params = DParams()
     for p, val in params.items():
         temp = None
-        
+
         if '[]' in p:
-            temp = request.GET.getlist(p)
+            if isPost:
+                temp = request.POST.getlist(p)
+            else:
+                temp = request.GET.getlist(p)
         else:
-            temp = request.GET.get(p)
-        
-        if temp and temp != "max" and temp != "latest":
+            if isPost:
+                temp = request.POST.get(p)
+            else:
+                temp = request.GET.get(p)
+
+        if temp and temp != "max" and temp != "latest" and temp != "min" and temp != "oldest":
             try:
                 temp = float(temp.replace(" ", ""))
                 if p == 'page':
-                    temp = max(temp, 0)
+                    temp = max(int(temp), 0)
             except Exception:
+                if "max" in p or "min" in p or p == "page":
+                    continue
                 temp = temp
-            
+
+            if (p == "order" and val.lower() != "desc" and val.lower() != "desc") or (p == "sort" and val.lower() != "blocktime" and val.lower() != "amount" and val.lower() != "usdAmount"):
+                continue
+
             params[p] = temp
-            
+        elif not temp and p == "minTx":
+            params[p] = DMinTx()
+    
     return params
 
 def getGraphData(request, coin=None):    

@@ -152,7 +152,7 @@ a {
 	animation: spin 2s linear infinite;
 }
 
-.vertCenter {
-	position: fixed;
-	top: 50%;
+.filterChange {
+	border-color: rgb(56, 143, 194, 0.40);
+	border-width: 2px;
 }

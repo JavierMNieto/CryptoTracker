@@ -4,8 +4,10 @@ var main = angular
 
 function mainController($scope) {
 	vm = this;
-	vm.isCustom = false;
+	var dateFormat = "M/DD/YY hh:mm A";
+	vm.isCustom  = false;
 	vm.toggleBar = true;
+	vm.loaded 	 = true;
 	vm.ut = moment().utc().format('H:mm:ss');
 	vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
 	vm.addrs = []
@@ -24,10 +26,12 @@ function mainController($scope) {
 
 	vm.customGraph = function () {
 		vm.isCustom = true;
-		$('#searchBar').val('');
-		if ($('.show').length < 1) {
-			$('#Home').collapse('show');
-		}
+		resetSideBar();
+		vm.tempAddr = {
+			addr: '',
+			url: ''
+		};	
+		$("#Home").collapse("show");
 	}
 
 	vm.customOff = function () {
@@ -90,71 +94,146 @@ function mainController($scope) {
 		vm.overlay = obj;
 
 		vm.addrInput = {
-			'addr': {
-				'val': '',
-				'state': 'invalid'
+			addr: {
+				val: '',
+				state: 'invalid'
 			},
-			'name': {
-				'val': '',
-				'state': 'invalid'
+			name: {
+				val: '',
+				state: 'invalid'
 			},
-			'cat': {
-				'val': '',
-				'state': 'invalid'
+			cat: {
+				val: '',
+				state: 'invalid'
 			}
 		};
 
 		vm.filterInput = JSON.parse(JSON.stringify(dFilters));
-		vm.filterInput.maxTime = moment.unix(moment().unix()).format('M/DD/YY hh:mm A');
+		vm.filterInput['minTx'] = numberWithCommas(1000000);
+		vm.filterInput.minTime = "";
+		vm.filterInput.maxTime = "";
 
 		vm.filterInput['state'] = 'invalid';
 		
 		if (obj.type == "edit") {
 			vm.addrInput.name.val  = obj.name;
+			vm.addrInput.name.state = 'valid';
 			vm.addrInput.cat.val   = obj.cat;
 			vm.addrInput.cat.state = 'valid';
 		}
 
+		if (obj.type == "edit" || obj.type == "editCat") {
+			if (obj.type == "edit") {
+				vm.addrInput.name.val  = obj.name;
+				vm.addrInput.name.state = 'valid';
+			}
+			
+			vm.addrInput.cat.val   = obj.cat;
+			vm.addrInput.cat.state = 'valid';
+
+			var urlObj = new URL(location.href.replace("/usdt", "") + obj.url);
+			for (filter in vm.filterInput) {
+				if (obj.url.includes(filter)) {
+					vm.filterInput[filter] = numberWithCommas(urlObj.searchParams.get(filter));
+				}
+			}
+		}
+		
 		$(function () {
 			$('[data-toggle="tooltip"]').tooltip();
-			
-		});
 
-		$(function () {
 			$('input[name="minTime"]').daterangepicker({
 				singleDatePicker: true,
 				timePicker: true,
 				showDropdowns: true,
+				autoUpdateInput: false,
+				opens: "center",
 				parentEl: "#overlay",
-				minDate: moment.unix(dFilters.minTime).format('M/DD/YY hh:mm A'),
-				maxDate: moment.unix(moment().unix()).format('M/DD/YY hh:mm A'),
+				minDate: moment.unix(dFilters.minTime).format(dateFormat),
+				maxDate: moment.unix(moment().unix()).format(dateFormat),
 				locale: {
-					format: 'M/DD/YY hh:mm A'
+					format: dateFormat,
+					cancelLabel: 'Clear'
 				}
 			});
 			$('input[name="maxTime"]').daterangepicker({
 				singleDatePicker: true,
 				timePicker: true,
 				showDropdowns: true,
+				autoUpdateInput: false,
 				drops: "up",
+				opens: "center",
 				parentEl: "#overlay",
-				minDate: moment.unix(dFilters.minTime).format('M/DD/YY hh:mm A'),
+				minDate: moment.unix(dFilters.minTime).format(dateFormat),
 				locale: {
-					format: 'M/DD/YY hh:mm A'
+					format: dateFormat,
+					cancelLabel: 'Clear'
 				}
 			});
+
+			$('input[name="minTime"]').on('apply.daterangepicker', function(ev, picker) {
+				setTime('minTime', picker.startDate.format(dateFormat));
+			});
+
+			$('input[name="maxTime"]').on('apply.daterangepicker', function(ev, picker) {
+				setTime('maxTime', picker.startDate.format(dateFormat));
+			});
+		  
+			$('input[name="minTime"]').on('cancel.daterangepicker', function() {
+				setTime('minTime', 'oldest');
+			});
+
+			$('input[name="maxTime"]').on('cancel.daterangepicker', function() {
+				setTime('maxTime', 'latest');
+			});
+
+			if (dFilters['minTime'] != "oldest") {
+				vm.filterInput.minTime = moment.unix(dFilters['minTime']).format(dateFormat);
+			} else {
+				vm.filterInput.minTime = "oldest";
+			}
+			
+			if (dFilters['maxTime'] != "latest") {
+				vm.filterInput.maxTime = moment.unix(dFilters['maxTime']).format(dateFormat);
+			} else {
+				vm.filterInput.maxTime = "latest";
+			}
 		});
 	}
 
-	vm.focusCheck = function (filter) {
-		if (dFilters[filter] == vm.filterInput[filter]) {
+	// REVIEW TIME
+	function setTime(f, time) {
+		$scope.$apply(function() {
+			vm.filterInput[f] = time;
+		});
+	}
+
+
+	// REVIEW FOCUS AND BLUR CHECKS
+	vm.addrFocusCheck = function (prop) {
+		let val = vm.addrInput[prop].val;
+
+		if (vm.overlay[prop] == val) {
+			vm.addrInput[prop].val = "";
+		}
+	}
+
+	vm.addrBlurCheck = function (prop) {
+		if (vm.addrInput[prop].val == "") {
+			vm.addrInput[prop].val = vm.overlay[prop];
+		}
+	}
+
+	vm.filterFocusCheck = function (filter) {
+		let val = vm.filterInput[filter].toString();
+		if (dFilters[filter] == val.replace(/,/g, "") || val == "max" || val == "min" || val == "oldest" || val == "latest") {
 			vm.filterInput[filter] = "";
 		}
 	}
 
-	vm.blurCheck = function (filter) {
+	vm.filterBlurCheck = function (filter) {
 		if (vm.filterInput[filter] == "") {
-			vm.filterInput[filter] = dFilters[filter];
+			vm.filterInput[filter] = numberWithCommas(dFilters[filter]);
 		}
 	}
 
@@ -167,6 +246,10 @@ function mainController($scope) {
 
 	vm.submit = async function (type) {
 		vm.formState = "load";
+
+		for (let filter in vm.filterInput) {
+			$(`input[name='${filter}']`).val(vm.filterInput[filter].toString().replace(/,/g, ""));
+		}
 
 		let resp = await $.ajax({
 			url: $(`#${type}`).attr('action'),
@@ -181,6 +264,10 @@ function mainController($scope) {
 		if (resp.toLowerCase() == "success") {
 			updateKnown();
 			$(`.modal`).modal('hide');
+		}
+
+		for (let filter in vm.filterInput) {
+			vm.filterInput[filter] = numberWithCommas(vm.filterInput[filter]);
 		}
 	}
 
@@ -234,7 +321,7 @@ function mainController($scope) {
 			var i = 0;
 
 			while (i < addrs.length && !exists) {
-				if ($(addrs[i]).text().trim().toLowerCase() == val.toLowerCase()) {
+				if ($(addrs[i]).text().trim().toLowerCase() == val.toLowerCase() && $(addrs[i]).attr("data-addy") != vm.overlay.addr) {
 					exists = true;
 				}
 
@@ -261,7 +348,30 @@ function mainController($scope) {
 	}
 
 	vm.startLoader = function() { 
-		$('iframe').contents().find('body').html('<div style="min-height: 100vh; display: flex; align-items: center;"><div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status"><span class="sr-only">Loading...</span></div></div>');
+		vm.loaded = false;
+		$('iframe').contents().find('body').html("");
+	}
+
+	$('iframe').on('load', function() {
+		$scope.$apply(function() {
+			vm.loaded = true;
+		});
+	});
+
+	function numberWithCommas(x) {
+		var parts = x.toString().split(".");
+		parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		return parts.join(".");
+	}
+
+	vm.addCommas = function(name) {
+		var prevVal = vm.filterInput[name].replace(/,/g, "");
+
+		if (prevVal == "" || Number.isNaN(parseFloat(prevVal)) || (!isNaN(prevVal) && prevVal[prevVal.length - 1] == ".")) {
+			return;
+		}
+
+		vm.filterInput[name] = numberWithCommas(prevVal);
 	}
 
 	updateKnown();

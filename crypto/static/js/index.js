@@ -7,22 +7,32 @@ var prevVal 	= '';
 var addrPattern = new RegExp(/[a-zA-Z0-9\b]$/);
 var namePattern = new RegExp(/[a-zA-Z0-9\b_-]$/);
 
+function resetSideBar() {
+	$("#searchBar").val("");
+	$("#accordion .addr").toggle(true)
+	$("#accordion .category").filter(function () {
+		if ($(this).attr('name') != "Home") {
+			$('#' + $(this).attr('name')).collapse('hide');
+		}
+		
+		$(this).toggle(true);
+	});
+	prevVal 	= '';
+}
+
 $(document).ready(function () {
 	$("#searchBar").on("keyup", async function () {
 		var original = $(this).val();
 		var value    = original.toLowerCase();
+		var vm 		 = angular.element($('body')).scope();
 
 		if (value == prevVal) return;
 
 		prevVal = value;
 
 		if (value === "") {
-			$("#accordion .addr").toggle(true)
-			$("#accordion .category").filter(function () {
-				$('#' + $(this).attr('name')).collapse('hide');	
-				$(this).toggle(true);
-			});
-
+			resetSideBar();
+			vm.$apply(`vm.tempAddr={addr:'',url:''}`);
 			return;
 		}
 
@@ -66,11 +76,9 @@ $(document).ready(function () {
 			let isValid = await isValidAddr(original);
 			if (isValid) {
 				$('#spinner').hide();
-				let vm = angular.element($('body')).scope();
 				vm.$apply(`vm.tempAddr={addr:'${original}',url:'${window.location + "/search/" + original}'}`);
 			}
 		} else {
-			let vm = angular.element($('body')).scope();
 			vm.$apply(`vm.tempAddr={addr:'',url:''}`);
 		}
 	});

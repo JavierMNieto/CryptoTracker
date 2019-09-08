@@ -12,6 +12,7 @@ import requests
 import sys
 
 sys.path.append("../")
+from coin.query import formatFilters
 from coin.defaults import DParams
 
 def numWithCommas(num):
@@ -23,7 +24,7 @@ def search(request, coin=None):
 	cmc = ccxt.coinmarketcap()
 	btc = cmc.fetch_ticker('BTC/USD')
 
-	filters = DParams()
+	filters = formatFilters(DParams())
 
 	search = {'coin': coin, 'homeUrl': '/{}/search/0'.format(coin), 'btc': btc, 'dFilters': json.dumps(filters)}
 	return render(request, 'tracker/index.html', search)

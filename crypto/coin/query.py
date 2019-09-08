@@ -8,6 +8,31 @@ import os
 def numWithCommas(num):
     return ("{:,}".format(float(num)))
 
+def formatFilters(initFilters):
+    dFilters = DParams()
+
+    filters = {}
+
+    for f, val in initFilters.items():
+        if "min" in f:
+            if dFilters[f] == val:
+                if "time" in f.lower():
+                    filters[f] = 'oldest'
+                else: 
+                    filters[f] = 'min'
+            else:
+                filters[f] = val
+        elif "max" in f:
+            if dFilters[f] == val or (f == "maxTime" and time.time() - val < 60):
+                if "time" in f.lower():
+                    filters[f] = 'latest'
+                else: 
+                    filters[f] = 'max'
+            else:
+                filters[f] = val
+    
+    return filters
+
 class CoinController:
 
     def __init__(self):
@@ -127,9 +152,9 @@ class CoinController:
 
         info["totalTxs"] = self.runFilters(query, filters).single().value()
         
-        for f, val in filters.items():
-            if "min" in f or "max" in f:
-                info['filters'][f] = val
+        info['dFilters'] = DParams()
+
+        info['filters']  = formatFilters(filters)
 
         return {
             "search": info
@@ -154,7 +179,6 @@ class CoinController:
             """
 
             addrsText = "({}) AND".format(self.getAddrsText(params['addr[]']))
-
 
         query = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
         
@@ -259,7 +283,7 @@ class CoinController:
 
     def getKnownList(self):
         catDict = self.getKnownDict()
-
+        
         catList    = []
 
         for cat, info in catDict.items():
@@ -297,34 +321,6 @@ class CoinController:
             })
 
         return catList
-    
-    def addAddr(self, addr, name, cat):
-        try: 
-            if self.isValidName(name) and self.isValidAddr(addr) and not self.nameExists(name) and self.isValidName(cat):
-                catDict = self.getKnownDict()
-                with open(self.path + self.coin + ".json", "w") as f:
-                    node = {
-                            "name": name,
-                            "addr": addr,
-                            "url": "/{}/search/{}".format(self.coin, addr)
-                        }
-
-                    if cat in catDict:
-                        catDict[cat]['url'] += "&addr[]={}".format(addr)
-                        catDict[cat]['addrs'].append(node)
-                    else:
-                        catDict[cat] = {
-                            'url': "/{}/search/Home?addr[]={}".format(self.coin, addr),
-                            'addrs': [node]
-                        }
-
-                    json.dump(catDict, f)
-
-                    return "Success"
-        except Exception as e:
-            print(e)
-
-        return "ERROR"
         
     def getAddrsText(self, addr, extras=[], rel=True):
         addrsText = ""
@@ -355,7 +351,7 @@ class CoinController:
                 with open(self.path + self.coin + ".json", "w") as f:
                     for cat, info in catDict.items():
                         for i in range(len(info['addrs'])):
-                            if catDict[cat]['addrs'][i] == addr:
+                            if catDict[cat]['addrs'][i]['addr'] == addr:
                                 del catDict[cat]['addrs'][i]
                                 json.dump(catDict, f)
                                 return "Success"
@@ -367,11 +363,11 @@ class CoinController:
     def isValidName(self, name):            
         return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_-]*$', name) != None
 
-    def nameExists(self, name):
+    def nameExists(self, name, addr=""):
         addrs = self.getKnownList()[0]['addrs']
         
-        for addr in addrs:
-            if addr['name'].lower() == name.lower():
+        for node in addrs:
+            if node['name'].lower() == name.lower() and node['addr'] != addr:
                 return True
  
         return False
@@ -384,24 +380,69 @@ class CoinController:
                 return True
         return False
 
-    def editCat(self, prevCat, newCat):
-        try:
-            if self.isValidName(prevCat) and self.isValidName(newCat) and prevCat.lower() != "home":
-                catDict = self.getKnownDict()  
-                if prevCat in catDict:
-                    with open(self.path + self.coin + ".json", "w") as f:
-                        catDict[newCat] = catDict.pop(prevCat)
-                        json.dump(catDict, f)
-                        return "Success"
+    def addFilters(self, url, filters=DParams()):
+        filters = formatFilters(filters)
+        for f, val in filters.items():
+            url += "&{}={}".format(f, val)
+        
+        return url.replace("?&", "?")
+
+    def addAddr(self, addr, name, cat, filters):
+        try: 
+            if self.isValidName(name) and self.isValidAddr(addr) and not self.nameExists(name) and self.isValidName(cat):
+                catDict = self.getKnownDict()
+                with open(self.path + self.coin + ".json", "w") as f:
+                    node = {
+                            "name": name,
+                            "addr": addr,
+                            "url": "/{}/search/{}?".format(self.coin, addr)
+                        }
+
+                    node['url'] = self.addFilters(node['url'], filters=filters)
+
+                    if cat in catDict:
+                        catDict[cat]['url'] += "&addr[]={}".format(addr)
+                        catDict[cat]['addrs'].append(node)
+                    else:
+                        catDict[cat] = {
+                            'url': "/{}/search/{}?addr[]={}".format(self.coin, cat, addr),
+                            'addrs': [node]
+                        }
+
+                    json.dump(catDict, f)
+
+                    return "Success"
         except Exception as e:
             print(e)
 
         return "ERROR"
 
-    def editAddr(self, addr, name, cat):
-        try: 
-            if self.isValidAddr(addr) and self.isValidName(name) and not self.nameExists(name) and self.isValidName(cat):
-                if self.delAddr(addr) == "Success" and self.addAddr(addr, name, cat) == "Success":
+    def editCat(self, prevCat, newCat, filters):
+        catDict = self.getKnownDict()
+        try:
+            if self.isValidName(prevCat) and self.isValidName(newCat) and prevCat.lower() != "home":  
+                if prevCat in catDict:
+                    with open(self.path + self.coin + ".json", "w") as f:
+                        catDict[newCat] = catDict.pop(prevCat)
+                        catDict[newCat]['url'] = "/{}/search/{}?".format(self.coin, newCat)
+                        
+                        for addr in catDict[newCat]['addrs']:
+                            catDict[newCat]['url'] += "&addr[]=" + addr['addr']
+
+                        catDict[newCat]['url'] = self.addFilters(catDict[newCat]['url'], filters=filters)
+                        json.dump(catDict, f)
+                        return "Success"
+        except Exception as e:
+            with open(self.path + self.coin + ".json", "w") as f:
+                json.dump(catDict, f)
+            print(e)
+
+        return "ERROR"
+
+    def editAddr(self, addr, name, cat, filters):
+        try:
+            if self.isValidAddr(addr) and self.isValidName(name) and not self.nameExists(name, addr=addr) and self.isValidName(cat):
+                if self.delAddr(addr) == "Success" and self.addAddr(addr, name, cat, filters) == "Success":
                     return "Success"
         except Exception as e:
             print(e)
