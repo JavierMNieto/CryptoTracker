@@ -390,9 +390,10 @@
 			$('body').html('<div style="min-height: 100vh; display: flex; align-items: center;"><div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status"><span class="sr-only">Loading...</span></div></div>');
 		}
 
-		if (totalTxs < 2000) {
+		if (totalTxs < 500) {
 			vm.loadGraph();
 		}
+		
 
 		vm.setPage(1);
 

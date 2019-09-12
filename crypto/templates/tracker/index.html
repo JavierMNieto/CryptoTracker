@@ -110,7 +110,7 @@
 								<span class="sr-only">Loading...</span>
 							</div>
 						</div>
-						<div ng-switch-default>
+						<div ng-switch-default ng-title="vm.addrInput.name.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -121,7 +121,7 @@
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-default>
+						<div ng-switch-default ng-title="vm.addrInput.cat.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -199,7 +199,7 @@
 								<span class="sr-only">Loading...</span>
 							</div>
 						</div>
-						<div ng-switch-default>
+						<div ng-switch-default ng-title="vm.addrInput.addr.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -217,7 +217,7 @@
 								<span class="sr-only">Loading...</span>
 							</div>
 						</div>
-						<div ng-switch-default>
+						<div ng-switch-default ng-title="vm.addrInput.name.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -228,7 +228,7 @@
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-default>
+						<div ng-switch-default ng-title="vm.addrInput.cat.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -327,7 +327,7 @@
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-default>
+						<div ng-switch-default ng-title="vm.addrInput.cat.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -374,7 +374,7 @@
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<input type="hidden" name="method" value="editCat">
 					<input type="hidden" name="prevCat" value="{% verbatim %}{{ vm.overlay.cat }}{% endverbatim %}">
-					<button type="button" class="btn btn-success" ng-click="vm.submit('editCat')"
+					<button type="button" class="btn btn-info" ng-click="vm.submit('editCat')"
 						ng-disabled="((vm.addrInput.cat.state != 'valid'))">
 						Save Changes
 					</button>

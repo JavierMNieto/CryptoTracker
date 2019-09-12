@@ -87,8 +87,6 @@ def getParams(request, isPost=False):
                 continue
 
             params[p] = temp
-        elif not temp and p == "minTx":
-            params[p] = DMinTx()
     
     return params
 

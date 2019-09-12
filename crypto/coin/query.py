@@ -51,9 +51,62 @@ class CoinController:
         self.urls = Urls()[self.coin]
     
     def runFilters(self, query, filters=DParams()):
+        query = self.cleanQuery(query, filters)
+        print(query)
         return self.driver.session().run(query, minBal=filters['minBal'], maxBal=filters['maxBal'], minTx=filters['minTx'], maxTx=filters['maxTx'],
                                         minTime=filters['minTime'], maxTime=filters['maxTime'], minTotal=filters['minTotal'], maxTotal=filters['maxTotal'],
                                         minTxsNum=filters['minTxsNum'], maxTxsNum=filters['maxTxsNum'], minAvg=filters['minAvg'], maxAvg=filters['maxAvg'])
+
+    def cleanQuery(self, query, filters=DParams()):
+        dFilters = DParams()
+        query = " ".join(query.split())
+
+        for f, val in dFilters.items():
+            if f not in filters or filters[f] == val:
+                clearFilter = ""
+
+                if "Bal" in f:
+                    clearFilter += ".balance"
+                elif "Txs" in f:
+                    clearFilter += ".txsNum"
+                elif "Tx" in f:
+                    clearFilter += ".amount"
+                elif "Time" in f:
+                    clearFilter += ".blocktime"
+                elif "Total" in f:
+                    clearFilter += ".amount"
+                elif "Avg" in f:
+                    clearFilter += ".avgTxAmt"
+                
+                if "min" in f:
+                    clearFilter += " >= "
+                elif "max" in f:
+                    clearFilter += " <= "
+                
+                if clearFilter != "" and clearFilter in query:
+                    clearFilter += "{" + f + "}"
+
+                    nodeNames = ["r"]
+
+                    if "Bal" in f:
+                        nodeNames = ["a", "b"]
+                    
+                    for name in nodeNames:
+                        tempClear = name + clearFilter
+
+                        if "AND " + tempClear in query:
+                            tempClear = "AND " + tempClear
+                        
+                        query = query.replace(tempClear, "", 1)
+
+        query = " ".join(query.split())
+
+        if "CASE WHEN THEN" in query:
+            query = query.replace("CASE WHEN THEN", "")
+            query = query.replace("ELSE NULL END", "")
+
+        return query
+
 
     def getTxs(self, params=DParams()):
         query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))

@@ -1,6 +1,18 @@
 var main = angular
 	.module('main', [])
-	.controller('mainController', ['$scope', mainController]);
+	.controller('mainController', ['$scope', mainController])
+	.directive('ngTitle', function($parse) {
+		return {
+			restrict: "A",
+			link: function(scope, element, attr) {
+				scope.$watch(attr.ngTitle, function (v) {
+					element.tooltip({
+						title: v
+					})
+				});
+			}
+		};
+	});
 
 function mainController($scope) {
 	vm = this;
@@ -91,25 +103,29 @@ function mainController($scope) {
 	}
 
 	vm.showOverlay = function (obj) {
+		$(".alert").remove();
 		vm.overlay = obj;
 
 		vm.addrInput = {
 			addr: {
 				val: '',
-				state: 'invalid'
+				state: 'invalid',
+				reason: 'Invalid USDT Address!'
 			},
 			name: {
 				val: '',
-				state: 'invalid'
+				state: 'invalid',
+				reason: 'Must contain 3 or more characters!'
 			},
 			cat: {
 				val: '',
-				state: 'invalid'
+				state: 'invalid',
+				reason: 'Must contain 3 or more characters!'
 			}
 		};
 
 		vm.filterInput = JSON.parse(JSON.stringify(dFilters));
-		vm.filterInput['minTx'] = numberWithCommas(1000000);
+		vm.filterInput['minTx'] = numberWithCommas(1000000); // 1 Mil
 		vm.filterInput.minTime = "";
 		vm.filterInput.maxTime = "";
 
@@ -264,6 +280,8 @@ function mainController($scope) {
 		if (resp.toLowerCase() == "success") {
 			updateKnown();
 			$(`.modal`).modal('hide');
+		} else {
+			$("#overlay").prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error!</strong> You should check in on some of those fields below.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
 		}
 
 		for (let filter in vm.filterInput) {
@@ -280,7 +298,9 @@ function mainController($scope) {
 	}
 
 	vm.checkAddr = async function () {
+		$('.tooltip').remove();
 		var val = vm.addrInput.addr.val;
+		var valid = false;
 
 		if (val.length == 34 && !val.includes(" ") && addrPattern.test(val)) {
 			vm.addrInput.addr.state = "load";
@@ -300,19 +320,25 @@ function mainController($scope) {
 				}
 
 				if (!exists) {
-					vm.addrInput.addr.state = "valid";
-					return;
+					valid = true;
 				}
 			}
 		}
 
-		vm.addrInput.addr.state = "invalid";
+		if (valid) {
+			vm.addrInput.addr.state = "valid";
+		} else {
+			vm.addrInput.name.reason = "Invalid USDT Address!";
+			vm.addrInput.addr.state = "invalid";
+		}
 	}
 
 	vm.checkName = function () {
-		var val = vm.addrInput.name.val;
+		$('.tooltip').remove();
+		var val   = vm.addrInput.name.val;
+		var valid = false;
 
-		if (val.length < 16 && val.length > 2 && namePattern.test(val)) {
+		if (val.length <= 16 && val.length > 2 && namePattern.test(val)) {
 
 			vm.addrInput.name.state = "load";
 
@@ -329,18 +355,39 @@ function mainController($scope) {
 			}
 
 			if (!exists) {
-				vm.addrInput.name.state = "valid";
-				return;
+				valid = true;
 			}
+		} else if (val.length > 16) {
+			vm.addrInput.name.reason = "Must only contain 16 characters or less!";
+		} else if (val.length < 3) {
+			vm.addrInput.name.reason = "Must contain 3 or more characters!";
+		} else if (!namePattern.test(val)) {
+			vm.addrInput.name.reason = "Must only contain numbers or letters!";
 		}
 
-		vm.addrInput.name.state = "invalid";
+		if (valid) {
+			vm.addrInput.name.state = "valid";
+		} else {
+			vm.addrInput.name.state = "invalid";
+		}
 	}
 
 	vm.checkCat = function () {
-		var val = vm.addrInput.cat.val;
+		$('.tooltip').remove();
+		var val   = vm.addrInput.cat.val;
+		var valid = false;
 
 		if (val.length < 16 && val.length > 2 && namePattern.test(val)) {
+			valid = true;
+		} else if (val.length > 16) {
+			vm.addrInput.cat.reason = "Must only contain 16 characters or less!";
+		} else if (val.length < 3) {
+			vm.addrInput.cat.reason = "Must contain 3 or more characters!";
+		} else if (!namePattern.test(val)) {
+			vm.addrInput.cat.reason = "Must only contain numbers or letters!";
+		}
+
+		if (valid) {
 			vm.addrInput.cat.state = "valid";
 		} else {
 			vm.addrInput.cat.state = "invalid";
