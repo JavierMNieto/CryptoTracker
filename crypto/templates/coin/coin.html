@@ -20,6 +20,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
 	<script src="https://morgul.github.io/ui-bootstrap4/ui-bootstrap-tpls-3.0.6.min.js"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+	<script type="text/javascript" src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 	<script src="https://kit.fontawesome.com/af6506c08e.js"></script>
 	<script src="{% static 'js/clipboard.min.js' %}"></script>
@@ -130,13 +131,13 @@
 			{% for f, val in search.filters.items %}
 				{% if val|isNum and search.dFilters|dict_key:f != val %}
 					<button class="btn badge badge-pill badge-danger mx-2 mb-2 shadow-none" name="{{f}}" data-value="{{f|getDefault}}" ng-click="vm.removeFilter($event)">
-						<span class="font-weight-lighter">
-							{% if f|contains:"time" %}
-								{{f|filterName}}: {{val|formatTime:"%m/%d/%y %H:%M %p"}}
-							{% else %}
+						{% if f|contains:"time" %}
+							<span class="font-weight-lighter" ng-init-time callback-fn="vm.formatTime(time)" data-unix="{{val}}" data-name="{{f|filterName}}"></span>
+						{% else %}
+							<span class="font-weight-lighter">
 								{{f|filterName}}: {{val|numCommas}}
-							{% endif %}
-						</span>
+							</span>
+						{% endif %}
 						<i class="fa fa-times fa-sm ml-1"></i>
 					</button>
 				{% endif %}
@@ -205,16 +206,8 @@
 						</button>
 					</div>
 				</div>
-				<div ng-switch="vm.selection.group">
-					<div ng-switch-when="usdt">
-	
-					</div>
-					<div ng-switch-when="">
-	
-					</div>
-					<div ng-switch-default class="text-center">
-						Wallet: <a href="https://www.walletexplorer.com/wallet/{% verbatim %}{{ vm.selection.group }}{% endverbatim %}/addresses">{% verbatim %}{{ vm.selection.walletName }}{% endverbatim %}</a>
-					</div>
+				<div ng-if="!vm.selection.group.includes('usdt') && vm.selection.group != ''" class="text-center">
+					Wallet: <a href="https://www.walletexplorer.com/wallet/{% verbatim %}{{ vm.selection.group }}{% endverbatim %}/addresses">{% verbatim %}{{ vm.selection.walletName }}{% endverbatim %}</a>
 				</div>
 				<div class="row align-items-start" style="padding-bottom: 1vh;">
 					<div class="col-sm-1">
@@ -238,7 +231,7 @@
 							<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
 						</svg>
 					</button>
-				</div>			
+				</div>		
 			</div>
 		</div>
 		<div class="row justify-content-center mx-auto" style="padding-top: 2vh; width: 90%">
@@ -309,7 +302,7 @@
 								<i class="far fa-copy fa-lg"></i>
 							</button>
 						</div>
-						<div class="col-sm-4 h5 font-italic text-right">{% verbatim %}{{ tx.time*1000 | date:'yyyy-MM-dd h:mm:ss a' }}{% endverbatim %}</div>
+						<div class="col-sm-4 h5 font-italic text-right">{% verbatim %}{{ vm.formatTime(tx.time) }}{% endverbatim %}</div>
 					</div>
 					<div class="justify-content-center" ng-class="{row: vm.rowTxs, 'text-center': !vm.rowTxs}" style="padding-bottom: 1rem;">
 						<div class="block" ng-class="{'col-6': vm.rowTxs, 'ml-n4': vm.rowTxs, 'text-right': vm.rowTxs}" style="position: relative; whitespace: nowrap;">
@@ -318,7 +311,7 @@
 								title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
 								<i class="fas fa-highlighter"></i>
 							</button>
-							<a href="{% verbatim %}{{ tx.sourceUrl }}{% endverbatim %}" ng-click="vm.startLoader();" class="h6">
+							<a href="{% verbatim %}{{ tx.sourceUrl }}{{ vm.dURLParams }}{% endverbatim %}" ng-click="vm.startLoader();" class="h6">
 								{% verbatim %}{{ tx.source }}{% endverbatim %}
 							</a>
 							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.sourceAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Sender Address">
@@ -333,7 +326,7 @@
 								title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
 								<i class="fas fa-highlighter"></i>
 							</button>
-							<a href="{% verbatim %}{{ tx.targetUrl }}{% endverbatim %}" ng-click="vm.startLoader();" class="h6">
+							<a href="{% verbatim %}{{ tx.targetUrl }}{{ vm.dURLParams }}{% endverbatim %}" ng-click="vm.startLoader();" class="h6">
 								{% verbatim %}{{ tx.target }}{% endverbatim %}
 							</a>
 							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.targetAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Reference Address">
@@ -440,7 +433,7 @@
 
 		$(".dropdown-hover input").focus(e => {
 			var el   = e.target;
-			if ($(el).val() == "max" || $(el).val() == "min" || $(el).val() == "oldest" || $(el).val() == "latest" || dFilters[el.name] == $(el).val().replace(/,/g, "")) {
+			if ($(el).val() == "max" || $(el).val() == "min" || $(el).val() == "oldest" || $(el).val() == "latest" /*|| dFilters[el.name] == $(el).val().replace(/,/g, "")*/) {
 				$(el).val("");
 				$(el).removeClass("filterChange");
 				tempFilters[$(el).attr("name")] = $(el).val();

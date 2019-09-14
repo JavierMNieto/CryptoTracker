@@ -99,7 +99,7 @@
 				<div class="modal-body shadow-lg bg-secondary">
 					<input type="text" name="name" placeholder="Name" ng-readonly="vm.addrInput.name.state == 'load'"
 						autocomplete="off" class="shadow form-control w-75 mx-auto my-1 text-center"
-						ng-model="vm.addrInput.name.val" ng-change="vm.checkName()" ng-focus="vm.addrFocusCheck('name')" ng-blur="vm.addrBlurCheck('name')">
+						ng-model="vm.addrInput.name.val" ng-change="vm.checkName()">
 					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch
 						on="vm.addrInput.name.state">
 						<div ng-switch-when="valid">
@@ -116,7 +116,7 @@
 					</div>
 					<input type="text" name="cat" list="categories"
 						class="shadow form-control w-75 mx-auto my-1 text-center" placeholder="Group Name" ngTrim="true"
-						ng-model="vm.addrInput.cat.val" ng-change="vm.checkCat()" autocomplete="off" ng-focus="vm.addrFocusCheck('cat')" ng-blur="vm.addrBlurCheck('cat')">
+						ng-model="vm.addrInput.cat.val" ng-change="vm.checkCat()" autocomplete="off">
 					<div style="position: absolute; top: 3.9rem; right: 4.9rem;" ng-switch on="vm.addrInput.cat.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>
@@ -322,7 +322,7 @@
 				<div class="modal-body shadow-lg bg-secondary text-center">
 					<input type="text" name="newCat" class="shadow form-control w-75 mx-auto my-1 text-center"
 						placeholder="New Group Name" ngTrim="true" ng-model="vm.addrInput.cat.val"
-						ng-change="vm.checkCat()" autocomplete="off" ng-focus="vm.addrFocusCheck('cat')" ng-blur="vm.addrBlurCheck('cat')">
+						ng-change="vm.checkCat()" autocomplete="off">
 					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch on="vm.addrInput.cat.state">
 						<div ng-switch-when="valid">
 							<i class="far fa-check-circle fa-sm text-success"></i>

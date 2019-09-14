@@ -33,6 +33,13 @@ def formatFilters(initFilters):
     
     return filters
 
+def isInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 class CoinController:
 
     def __init__(self):
@@ -52,7 +59,6 @@ class CoinController:
     
     def runFilters(self, query, filters=DParams()):
         query = self.cleanQuery(query, filters)
-        print(query)
         return self.driver.session().run(query, minBal=filters['minBal'], maxBal=filters['maxBal'], minTx=filters['minTx'], maxTx=filters['maxTx'],
                                         minTime=filters['minTime'], maxTime=filters['maxTime'], minTotal=filters['minTotal'], maxTotal=filters['maxTotal'],
                                         minTxsNum=filters['minTxsNum'], maxTxsNum=filters['maxTxsNum'], minAvg=filters['minAvg'], maxAvg=filters['maxAvg'])
@@ -102,14 +108,20 @@ class CoinController:
         query = " ".join(query.split())
 
         if "CASE WHEN THEN" in query:
+            query = query.replace(" {amount: SUM(r.amount),txsNum: count(r),avgTxAmt: SUM(r.amount)/count(r)} as r, COLLECT(r) as txs WITH CASE WHEN THEN REDUCE(vals = [], tx in txs | vals + [{from: a, to: b, txid: tx.txid, amount: tx.amount, epoch: tx.blocktime, type: TYPE(tx), id: ID(tx)}]) ELSE NULL END AS result UNWIND result", 
+                                " r WITH {from: a, to: b, txid: r.txid, amount: r.amount, epoch: r.blocktime, type: TYPE(r), id: ID(r)}")
             query = query.replace("CASE WHEN THEN", "")
             query = query.replace("ELSE NULL END", "")
 
         return query
 
-
     def getTxs(self, params=DParams()):
-        query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
+        sFilter = ""
+
+        if params['sSort']:
+            sFilter = ", r.{} {}".format(params['sSort'], params['sOrder'])
+
+        query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + sFilter + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
 
         addrsText = ''
 
@@ -213,9 +225,11 @@ class CoinController:
             "search": info
         }
     
-    def getGraphData(self, params):
+    def getGraphData(self, params, lastId=0):
         query = GraphQuery()
         
+        lastId = int(lastId) if isInt(lastId) else 0
+
         addrsText = ''
 
         data = {
@@ -234,10 +248,11 @@ class CoinController:
             addrsText = "({}) AND".format(self.getAddrsText(params['addr[]']))
 
         query = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {}".format(self.coin, self.coin, self.coin, addrsText, query)
-        
+
         txs   = self.runFilters(query, params)
-        
-        id = 0
+
+        id = lastId
+
         for nodes in txs:
             nodes = nodes.get('result')
             if nodes is None:
@@ -250,14 +265,15 @@ class CoinController:
                 "addr": aNode['addr'],
                 "balance": float(aNode['balance'] or 0),
                 "balVal": float(aNode['balance'] or 0),
-                "group": aNode['wallet'] or 'usdt',
-                "lastUpdate": time.time(),
+                "group": 'usdt' if lastId == 0 else 'temp', #aNode['wallet'] or 
+                "lastUpdate": time.time(), # REMOVE
                 "url": aKnown['url'],
                 "webUrl": self.urls['addr'] + aNode['addr'], # REMOVE
                 "value": float(aNode['balance'] or 0)/Satoshi(),
                 "img": self.urls['img'],
                 "title": ("Address: {}<br> "
-                        "Balance: ${}<br> ").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")))
+                        "Balance: ${}<br> "
+                        "<b>Double Click to Load Transactions! (May Lag Site!)</br> ").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")))
             }
             if aNode['label'] != aNode['addr']:
                 aNode['title'] = "Name: {}<br>".format(aNode['label']) + aNode['title']
@@ -270,14 +286,15 @@ class CoinController:
                 "addr": bNode['addr'],
                 "balance": float(bNode['balance'] or 0),
                 "balVal": float(bNode['balance'] or 0),
-                "group": bNode['wallet'] or 'usdt',
+                "group": 'usdt' if lastId == 0 else 'tempusdt', #bNode['wallet'] or 
                 "lastUpdate": time.time(),
                 "url": bKnown['url'],
                 "webUrl": self.urls['addr'] + bNode['addr'], # REMOVE
                 "value": float(bNode['balance'] or 0)/Satoshi(),
                 "img": self.urls['img'],
                 "title": ("Address: {}<br> "
-                        "Balance: ${}<br> ").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0")))
+                        "Balance: ${}<br> "
+                        "<b>Double Click to Load Transactions! (May Lag Site!)</br> ").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0")))
             }
             if bNode['label'] != bNode['addr']:
                 bNode['title'] = "Name: {}<br>".format(bNode['label']) + bNode['title']
@@ -298,7 +315,7 @@ class CoinController:
                 "avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
                 "img": self.urls['img'],
                 "color": {
-                    "color": "#26A17B"
+                    "color": "#26A17B" if lastId == 0 else "#AEB6BF"
                 },
                 "sourceUrl": self.urls['addr'] + aNode['addr'],
                 "targetUrl": self.urls['addr'] + bNode['addr']
@@ -380,7 +397,10 @@ class CoinController:
         for x in range(len(addr)):
             string = ""
 
-            string += "a.addr = '{}'".format(addr[x])
+            if "!" in addr[x]:
+                string += "NOT (a.addr = '{}') AND NOT (b.addr='{}')".format(addr[x].replace("!", ""), addr[x].replace("!", ""))
+            else:
+                string += "a.addr = '{}'".format(addr[x])
 
             """
             if rel:
@@ -391,7 +411,10 @@ class CoinController:
                 string = "({} AND b.addr = '{}')".format(string, extras[x])
 
             if addrsText != "":
-                string = " OR " + string
+                if "NOT" in string:
+                    string = " AND " + string
+                else:
+                    string = " OR " + string
 
             addrsText += string
 
@@ -414,7 +437,7 @@ class CoinController:
         return "ERROR"
 
     def isValidName(self, name):            
-        return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_-]*$', name) != None
+        return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_- ]*$', name) != None
 
     def nameExists(self, name, addr=""):
         addrs = self.getKnownList()[0]['addrs']
