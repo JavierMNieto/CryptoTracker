@@ -262,6 +262,7 @@ function mainController($scope) {
 	}, 1000);
 
 	vm.submit = async function (type) {
+		$(".alert").remove();
 		vm.formState = "load";
 
 		for (let filter in vm.filterInput) {
@@ -285,9 +286,11 @@ function mainController($scope) {
 			$("#overlay").prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error!</strong> You should check in on some of those fields below.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
 		}
 
+		/*
 		for (let filter in vm.filterInput) {
 			vm.filterInput[filter] = numberWithCommas(vm.filterInput[filter]);
 		}
+		*/
 	}
 
 	async function updateKnown() {

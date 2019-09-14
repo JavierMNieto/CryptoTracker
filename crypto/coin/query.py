@@ -116,12 +116,7 @@ class CoinController:
         return query
 
     def getTxs(self, params=DParams()):
-        sFilter = ""
-
-        if params['sSort']:
-            sFilter = ", r.{} {}".format(params['sSort'], params['sOrder'])
-
-        query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + sFilter + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
+        query = (TxsQuery() + "RETURN r ORDER BY r." + params['sort'] + " " + params['order'] + " SKIP " + str(int(params['page']*TxsPerPage())) + " LIMIT " + str(TxsPerPage()))
 
         addrsText = ''
 
@@ -265,7 +260,7 @@ class CoinController:
                 "addr": aNode['addr'],
                 "balance": float(aNode['balance'] or 0),
                 "balVal": float(aNode['balance'] or 0),
-                "group": 'usdt' if lastId == 0 else 'temp', #aNode['wallet'] or 
+                "group": 'usdt' if lastId == 0 else 'tempusdt', #aNode['wallet'] or 
                 "lastUpdate": time.time(), # REMOVE
                 "url": aKnown['url'],
                 "webUrl": self.urls['addr'] + aNode['addr'], # REMOVE
@@ -437,7 +432,7 @@ class CoinController:
         return "ERROR"
 
     def isValidName(self, name):            
-        return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_- ]*$', name) != None
+        return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_ -]*$', name) != None
 
     def nameExists(self, name, addr=""):
         addrs = self.getKnownList()[0]['addrs']
