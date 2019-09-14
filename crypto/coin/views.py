@@ -83,7 +83,7 @@ def getParams(request, isPost=False):
                     continue
                 temp = temp
 
-            if (p == "order" and val.lower() != "desc" and val.lower() != "desc") or (p == "sort" and val.lower() != "blocktime" and val.lower() != "amount" and val.lower() != "usdAmount"):
+            if ("order" in p.lower() and val.lower() != "desc" and val.lower() != "asc") or ("sort" in p.lower() and val.lower() != "blocktime" and val.lower() != "amount" and val.lower() != "usdAmount"):
                 continue
 
             params[p] = temp
@@ -91,4 +91,4 @@ def getParams(request, isPost=False):
     return params
 
 def getGraphData(request, coin=None):    
-    return JsonResponse(coinController.getGraphData(getParams(request)), safe=False)
+    return JsonResponse(coinController.getGraphData(getParams(request), request.GET.get("lastId") or 0), safe=False)

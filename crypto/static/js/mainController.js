@@ -16,12 +16,12 @@ var main = angular
 
 function mainController($scope) {
 	vm = this;
-	var dateFormat = "M/DD/YY hh:mm A";
+	var dateFormat = "M/DD/YY h:mm A";
 	vm.isCustom  = false;
 	vm.toggleBar = true;
 	vm.loaded 	 = true;
-	vm.ut = moment().utc().format('H:mm:ss');
-	vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
+	vm.ut = moment().utc().format('HH:mm:ss');
+	vm.hk = moment().tz('Asia/Hong_Kong').format('HH:mm:ss');
 	vm.addrs = []
 	vm.known = []
 	vm.categories = []
@@ -166,7 +166,7 @@ function mainController($scope) {
 				opens: "center",
 				parentEl: "#overlay",
 				minDate: moment.unix(dFilters.minTime).format(dateFormat),
-				maxDate: moment.unix(moment().unix()).format(dateFormat),
+				maxDate: moment().format(dateFormat),
 				locale: {
 					format: dateFormat,
 					cancelLabel: 'Clear'
@@ -225,7 +225,7 @@ function mainController($scope) {
 	}
 
 
-	// REVIEW FOCUS AND BLUR CHECKS
+	/* REVIEW FOCUS AND BLUR CHECKS
 	vm.addrFocusCheck = function (prop) {
 		let val = vm.addrInput[prop].val;
 
@@ -239,10 +239,11 @@ function mainController($scope) {
 			vm.addrInput[prop].val = vm.overlay[prop];
 		}
 	}
+	*/
 
 	vm.filterFocusCheck = function (filter) {
 		let val = vm.filterInput[filter].toString();
-		if (dFilters[filter] == val.replace(/,/g, "") || val == "max" || val == "min" || val == "oldest" || val == "latest") {
+		if (/*dFilters[filter] == val.replace(/,/g, "") ||*/ val == "max" || val == "min" || val == "oldest" || val == "latest") {
 			vm.filterInput[filter] = "";
 		}
 	}
@@ -255,8 +256,8 @@ function mainController($scope) {
 
 	setInterval(function () {
 		$scope.$apply(function () {
-			vm.ut = moment().utc().format('H:mm:ss');
-			vm.hk = moment().tz('Asia/Hong_Kong').format('H:mm:ss');
+			vm.ut = moment().utc().format('HH:mm:ss');
+			vm.hk = moment().tz('Asia/Hong_Kong').format('HH:mm:ss');
 		});
 	}, 1000);
 

@@ -36,8 +36,6 @@ function drawGraph(stop, graph) {
 			edges: new vis.DataSet(graph.edges)
 		};
 
-		let vm = angular.element($('body')).scope();
-
 		var solver = "forceAtlas2Based";
 
 		if (totalTxs < 2000) {
@@ -92,6 +90,12 @@ function drawGraph(stop, graph) {
 						"background": "#26A17B",
 						"border": "#1f8766",
 					}
+				},
+				"tempusdt": {
+					"color": {
+						"background": "#AEB6BF",
+						"border": "#1f8766",
+					}
 				}
 			},
 			"interaction": {
@@ -133,8 +137,10 @@ function drawGraph(stop, graph) {
 			document.getElementById('bar').style.width = width + 'px';
 			document.getElementById('text').innerHTML = Math.round(widthFactor * 100) + '%';
 		});
-		
+
 		network.once("stabilizationIterationsDone", function () {
+			let vm = angular.element($('body')).scope();
+
 			$('#text').text('100%');
 			$('#bar').css('width', '496px');
 			$('loadingBar').css('opacity', 0);
@@ -149,31 +155,47 @@ function drawGraph(stop, graph) {
 		});
 
 		network.on('click', properties => {
+			let vm = angular.element($('body')).scope();
+
 			vm.$apply(`vm.select(${JSON.stringify(properties)})`);
 		});
 
-		network.on('deselectEdge', () => {
-			var tempNum = 0;
-			data.edges.forEach(edge => {
-				tempNum += edge.txsNum;
-			});
-			totalTxs = tempNum;
-			vm.$apply('vm.selCollapsed = [];vm.setPage(1);');
-			clicked  = false;
+		network.on('doubleClick', properties => {
+			let vm = angular.element($('body')).scope();
+
+			vm.$apply(`vm.addTempGraph(${JSON.stringify(properties)})`);
 		});
 
-		network.on('deselectNode', () => {
-			var tempNum = 0;
-			data.edges.forEach(edge => {
-				tempNum += edge.txsNum;
-			});
-			totalTxs = tempNum;
-			vm.$apply('vm.selection = undefined;');
-			clicked  = false;
-		});
+		network.on('deselectEdge', onDeselectEdges);
+
+		network.on('deselectNode', onDeselectNodes);
 
 		//return resolve(network);
 	//});
+}
+
+function getGraphTotalTxs() {
+	var tempNum = 0;
+
+	data.edges.forEach(edge => {
+		tempNum += edge.txsNum;
+	});
+
+	return tempNum;
+}
+
+function onDeselectEdges() {
+	let vm = angular.element($('body')).scope();
+
+	totalTxs = getGraphTotalTxs();
+	vm.$apply('vm.selCollapsed = [];vm.setPage(1);');
+}
+
+function onDeselectNodes() {
+	let vm = angular.element($('body')).scope();
+
+	totalTxs = getGraphTotalTxs();
+	vm.$apply('vm.selection = undefined;');
 }
 
 ////////////////////

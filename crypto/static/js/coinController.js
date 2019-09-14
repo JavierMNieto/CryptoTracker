@@ -4,13 +4,24 @@
 	angular
 		.module('txs', [])
 		.factory('PagerService', PagerService)
-		.controller('txsController', ['PagerService', 'filterFilter', '$scope', txs]);
+		.controller('txsController', ['PagerService', 'filterFilter', '$scope', txs])
+		.directive('ngInitTime', function($parse) {
+			return {
+				scope: { 
+					formatTime: "&callbackFn" 
+				},
+				link: function(scope, element, attr) {
+					$(element).html(`${attr.name}: ${scope.formatTime({time: attr.unix})}`);
+				}
+			};
+		});;
 
 	function txs(PagerService, filter, $scope) {
 		var vm = this;
 		var order      = 'DESC';
 		var sort 	   = 'blocktime';
-		var dateFormat = "M/DD/YY hh:mm A"; // REVIEW
+		var dateFormat = "M/DD/YY h:mm A"; // REVIEW
+		var tempAddrs  = [];
 		$('#loadingBar').hide();
 		$('#iframe').hide();
 		$('#body').show();
@@ -36,9 +47,10 @@
 		vm.rowTxs	  = true;
 
 		vm.graphFilters = JSON.parse(JSON.stringify(dFilters));
-		
 		vm.graphFilters.minTime = "";
 		vm.graphFilters.maxTime = "";
+
+		vm.dURLParams = formatFilters(vm.graphFilters, "").replace("&", "?");
 
 		$(function () {
 			$('[data-toggle="tooltip"]').tooltip({
@@ -53,7 +65,7 @@
 				autoUpdateInput: false,
 				parentEl: "#time .dropdown-menu",
 				minDate: moment.unix(lastTx).format(dateFormat),
-				maxDate: moment.unix(moment().unix()).format(dateFormat),
+				maxDate: moment().format(dateFormat),
 				locale: {
 					format: dateFormat,
 					cancelLabel: 'Clear'
@@ -66,7 +78,6 @@
 				autoUpdateInput: false,
 				parentEl: "#time .dropdown-menu",
 				minDate: moment.unix(lastTx).format(dateFormat),
-				maxDate: moment.unix(moment().unix()).format(dateFormat),
 				locale: {
 					format: dateFormat,
 					cancelLabel: 'Clear'
@@ -116,12 +127,14 @@
 			$("#time").attr("data-lastEdit", f);
 		}
 		
-		function isSearchAddr(addr) {
-			for (var i; i < _addr.length; i++) {
-				if (_addr[i] == addr) {
-					return true;
+		function isInArr(arr, val) {
+			if (arr) {
+				for (var i = 0; i < arr.length; i++) {
+					if (arr[i] == val) {
+						return true;
+					}
 				}
-			}
+			}			
 
 			return false;
 		}
@@ -136,7 +149,11 @@
 			vm.graphFilters[name] = numberWithCommas(prevVal);
 		}
 
-		vm.setPage = function setPage(page) {
+		vm.formatTime = function(mill) {
+			return moment.unix(mill).format(dateFormat) + " " + moment.tz(moment.tz.guess()).format("z");
+		}
+
+		vm.setPage = async function(page) {
 			if (vm.pager.totalPages < 1) {
 				vm.pager = PagerService.GetPager(totalTxs, page);
 			}
@@ -151,7 +168,11 @@
 			// get current page of items
 			var url = `../getTxs?page=${vm.pager.currentPage - 1}&sort=${sort}&order=${order}`;
 
-			if (_addr !== 0 && vm.selection !== undefined && isSearchAddr(vm.selection.addr)) {
+			let isSelected  = vm.selection !== undefined;
+			let isKnown 	= isSelected && isInArr(_addr, vm.selection.addr);
+			let isTemp  	= isSelected && isInArr(tempAddrs, vm.selection.addr);
+
+			if (isKnown || isTemp) {
 				url += `&addr[]=${vm.selection.addr}`;
 			} else if (vm.selCollapsed.length > 0) {
 				for (var i = 0; i < vm.selCollapsed.length; i++) {
@@ -173,23 +194,27 @@
 				
 				url = formatFilters(vm.graphFilters, url);
 
-				$.get(url, data => {
-					$scope.$apply(() => {
-						vm.txs 		  = data;
-						vm.txLoading  = false;
-					});
-					vm.savedTxs[reqSig] = data;
-					
-					$(function () {
-						$('[data-toggle="tooltip"]').tooltip({
-							trigger: 'hover'
-						});
+				var data = await $.get(url);
+
+				$scope.$apply(() => {
+					vm.txs 		  = data;
+					vm.txLoading  = false;
+				});
+				vm.savedTxs[reqSig] = data;
+				
+				$(function () {
+					$('[data-toggle="tooltip"]').tooltip({
+						trigger: 'hover'
 					});
 				});
 			}
 		}
 
 		function formatFilters(filters, url) {
+			if (filters['minTime'].trim() === "") {
+				filters = JSON.parse(JSON.stringify(dFilters));
+			}
+
 			for (let filter in filters) {
 
 				var urlFilter = `${filter}=`;
@@ -207,8 +232,8 @@
 					url = url.replace(temp, "");
 				}
 
-				var val = vm.graphFilters[filter].toString().replace(/,/g, "");
-				if (filter.toLowerCase().includes('time')) {
+				var val = filters[filter].toString().replace(/,/g, "");
+				if (filter.toLowerCase().includes('time') && isNaN(val)) {
 					val = moment(val, dateFormat).valueOf()/1000;
 					if (isNaN(val)) {
 						if (filter.includes("min")) {
@@ -273,7 +298,7 @@
 			$(el).fadeOut();
 		}
 
-		vm.loadGraph = function () {
+		vm.loadGraph = async function () {
 			document.getElementById('graphContainer').style = "cursor: wait";
 			$('#text').text('0%')
 			$('#bar').css('width', '20px');
@@ -290,23 +315,22 @@
 			}
 			
 			url = formatFilters(vm.graphFilters, url);
-			$.get(url, resp => {
-				if (resp.nodes.length == 0 && resp.edges.length == 0) {
-					$('#loadingBar').hide();
-					$('#graph').html('<div style="margin-top: 20%">Nothing Found.</div>');
-					document.getElementById('graphContainer').style = "cursor: auto";
-					$('#filterBtn').prop('disabled', false);
-					$('#resetBtn').prop('disabled', false);
-				} else {
-					vm.graph = {
-						nodes: resp.nodes,
-						edges: resp.edges
-					}
-					totalTxs = resp.totalTxs;
-					drawGraph(true, vm.graph);
+			var resp = await $.get(url);
+
+			if (resp.nodes.length == 0 && resp.edges.length == 0) {
+				$('#loadingBar').hide();
+				$('#graph').html('<div style="margin-top: 20%">Nothing Found.</div>');
+				document.getElementById('graphContainer').style = "cursor: auto";
+				$('#filterBtn').prop('disabled', false);
+				$('#resetBtn').prop('disabled', false);
+			} else {
+				vm.graph = {
+					nodes: resp.nodes,
+					edges: resp.edges
 				}
-			});
-			
+				totalTxs = resp.totalTxs;
+				drawGraph(true, vm.graph);
+			}
 		}
 
 		vm.loadedGraph = function () {
@@ -343,29 +367,27 @@
 			}
 		}
 
+		// REVIEW
 		vm.select = function (properties) {
 			var isCatKnown = false;
+			var node;
 			if (properties.nodes.length > 0) {
 				let id = properties.nodes[0];
-				let node = data.nodes.get(id);
-				if (_addr !== null && _addr.length == 1 && _addr[0] == node.addr) {
-					return;
+				node = data.nodes.get(id);
+				isCatKnown = isInArr(_addr, node.addr);
+				if (isCatKnown && _addr.length == 1) {
+					return; // review
 				}
 				vm.selection = node;
-				for (var i = 0; i < _addr.length; i++) {
-					if (_addr[i] == vm.selection.addr) {
-						isCatKnown = true;
-						break;
-					}
-				}
-			} 
+			}
+
 			if (properties.edges.length > 0) {
 				var tempTxs = properties.edges
 				var tempNum = 0;
 				for (var i = 0; i < tempTxs.length; i++) {
 					let tx = data.edges.get(tempTxs[i]);
 
-					if (!isCatKnown) {
+					if (!isCatKnown || (vm.selection && isInArr(tempAddrs, vm.selection.addr))) {
 						vm.selCollapsed.push({
 							sender: tx.sourceAddr,
 							receiver: tx.targetAddr
@@ -376,6 +398,7 @@
 				}
 				totalTxs = tempNum;
 			}
+
 			if (properties.edges.length > 0 || properties.nodes.length > 0) {
 				vm.setPage(1);
 				$(function () {
@@ -383,6 +406,90 @@
 						trigger: 'hover'
 					});
 				});
+			}
+		}
+
+		function getAddrConnections(addr) {
+			var distinctAddrs = [];
+
+			var rels = data.edges.get();
+
+			for (var i = 0; i < rels.length; i++) {
+				let source   = rels[i].sourceAddr;
+				let target   = rels[i].targetAddr
+				let isSource = target === addr && !isInArr(distinctAddrs, source);
+				let isTarget = source === addr && !isInArr(distinctAddrs, target);
+
+				if (isSource) {
+					distinctAddrs.push(source);
+				} else if (isTarget) {
+					distinctAddrs.push(target);
+				}
+			}
+
+			return distinctAddrs;
+		}
+
+		vm.addTempGraph = async function(properties) {
+			if (properties.nodes.length > 0) {
+				let id = properties.nodes[0];
+				let node = data.nodes.get(id);
+
+				var addr = node.addr;
+
+				if (!isInArr(tempAddrs, addr) && !isInArr(_addr, addr)) {
+					var url = `../getGraph?`;
+					url += `&addr[]=${addr}&lastId=${data.edges.get().length}`;
+	
+					document.getElementById('graphContainer').style = "cursor: wait";
+	
+					var connections = getAddrConnections(addr);
+	
+					for (var i = 0; i < connections.length; i++) {
+						url += `&addr[]=!${connections[i]}`;
+					}
+				
+					url = formatFilters(vm.graphFilters, url);
+	
+					var resp = await $.get(url);
+	
+					network.setOptions({
+						"physics": {
+							"enabled": true
+						}
+					});
+	
+					var tempNodes = resp.nodes;
+	
+					for (var i = tempNodes.length - 1; i > -1; i--) {
+						if (data.nodes.get(tempNodes[i].id) !== null) {
+							tempNodes.splice(i, 1);
+						}
+					}
+	
+					data.nodes.add(tempNodes);
+					data.edges.add(resp.edges);
+	
+					node.title = node.title.replace("Double Click to Load Transactions! (May Lag Site!)", "");
+					data.nodes.update(node);
+	
+					vm.graph = {
+						nodes: data.nodes.get(),
+						edges: data.edges.get()
+					}
+					
+					tempAddrs.push(addr);
+	
+					network.selectEdges([]);
+					network.selectNodes([]);
+	
+					onDeselectNodes();
+					onDeselectEdges();
+	
+					setTimeout(function() {
+						stopPhysics(vm.graph);
+					}, 1000);
+				}
 			}
 		}
 
