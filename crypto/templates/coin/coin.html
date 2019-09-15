@@ -53,17 +53,14 @@
 	<div id="body" class="ng-cloak">
 		<div id="name" class="font-weight-bold text-center h1">
 			{% if search.address is not None and search.label == search.address %}
-			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{search.address}}'}, window.location.href.substring(0, window.location.href.indexOf('/search')))" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="right" title="Add Address">
+			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{search.address}}'}, window.location.href.substring(0, window.location.href.indexOf('/search')))" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Add Address">
 				<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 					style="width: 24px; height: auto;">
 			</button>
 			{% endif %}
 			{{search.label}}
-			<button width="30" height="30" onclick="location.reload();" ng-click="vm.startLoader();" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="right" title="Refresh Page">
-				<svg width="30" height="30" viewBox="0 0 65 65">
-					<path d="m32.5 4.999c-5.405 0-10.444 1.577-14.699 4.282l-5.75-5.75v16.11h16.11l-6.395-6.395c3.18-1.787 6.834-2.82 10.734-2.82 12.171 0 22.073 9.902 22.073 22.074 0 2.899-0.577 5.664-1.599 8.202l4.738 2.762c1.47-3.363 2.288-7.068 2.288-10.964 0-15.164-12.337-27.501-27.5-27.501z" fill="#555753"/>
-					<path d="m43.227 51.746c-3.179 1.786-6.826 2.827-10.726 2.827-12.171 0-22.073-9.902-22.073-22.073 0-2.739 0.524-5.35 1.439-7.771l-4.731-2.851c-1.375 3.271-2.136 6.858-2.136 10.622 0 15.164 12.336 27.5 27.5 27.5 5.406 0 10.434-1.584 14.691-4.289l5.758 5.759v-16.112h-16.111l6.389 6.388z" fill="#555753"/>
-				</svg>
+			<button width="30" height="30" onclick="location.reload()" ng-click="vm.startLoader();" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Refresh Page">
+				<i class="fas fa-sync-alt fa-lg"></i>
 			</button>
 		</div>
 		{% if search.label != 'All Addresses' %}
@@ -72,18 +69,14 @@
 			<div class="h5">
 				Address:&nbsp <span class="h6">{{search.address}}</span>
 				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.address }}" data-toggle="tooltip" data-placement="top" title="Copy Address">
-					<svg width="16" height="16" viewBox="0 0 67 67">
-						<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
-					</svg>
+					<i class="far fa-copy" aria-hidden="true"></i>
 				</button>
 			</div>
 			{% endif %}
 			<div class="px-5 h5">
 				Balance: {{search.balance | numCommas}}
 				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
-					<svg width="16" height="16" viewBox="0 0 67 67">
-						<path d="M61.559,16.528L44.432,0.713C44.064,0.377,43.583,0,43.083,0H25.446c-5.407,0-9.134,2.81-9.134,6.877V12h-3.358    c-4.946,0-8.642,3.124-8.642,7.369V59.37c0,4.492,4.077,7.63,8.642,7.63h29.231c4.677,0,8.127-3.288,8.127-7.63V55h4.365    c4.41,0,7.635-3.513,7.635-8.122V18.555c0-0.029,0.242-0.057,0.241-0.085c0.001-0.03,0.134-0.059,0.134-0.089    C62.688,17.541,62.293,16.824,61.559,16.528z M44.312,6.665L55.462,16H44.312V6.665z M46.312,59.37c0,2.363-1.938,3.63-4.127,3.63    H12.955c-2.323,0-4.642-1.381-4.642-3.63V19.369c0-2.6,3.095-3.369,4.642-3.369h15.358v15.381c0,1.104,1.396,1.619,2.5,1.619h15.5    V59.37z M44.028,29H32.312v-9.878L44.028,29z M54.677,51h-4.365V31.047c0-0.562,0.014-1.097-0.4-1.476l-17.43-16.059    c-0.324-0.667-0.94-1.132-1.732-1.132c-0.036,0-0.039-0.182-0.075-0.18c-0.038-0.002-0.044-0.201-0.083-0.201h-10.28V6.876    c0-2.063,3.02-2.877,5.134-2.877h14.866V18.38c0,1.104,1.396,1.619,2.5,1.619h15.5v26.878C58.312,49.276,56.881,51,54.677,51z" fill="#639dc7"/>
-					</svg>
+					<i class="far fa-copy" aria-hidden="true"></i>
 				</button>
 			</div>
 		</div>
@@ -154,14 +147,16 @@
 				<div style="margin-top: 35vh;color: grey; mix-blend-mode: difference">
 					Large Graph! Site May Lag While Loading! <br>
 					Press
-					<svg height="36" viewBox="-14 0 277 277.50116" width="36">
-						<path
-							d="m194.421875 185.890625c1.742187-.828125 2.851563-2.582031 2.851563-4.511719v-59.960937c0-2.761719-2.238282-5-5-5-2.761719 0-5 2.238281-5 5v56.800781l-58 27.601562v-74.164062l65.132812-31.019531c2.492188-1.183594 3.554688-4.167969 2.367188-6.664063-.40625-.792968-1.023438-1.464844-1.785157-1.933594-.160156-.183593-.359375-.332031-.582031-.429687l-68-32.375c-1.359375-.648437-2.941406-.648437-4.300781 0l-68 32.375c-.0625.035156-.089844.082031-.152344.113281-.121094.0625-.25.101563-.367187.171875-1.449219.917969-2.328126 2.511719-2.328126 4.226563v85.253906c0 1.925781 1.109376 3.683594 2.847657 4.511719l68 32.375c1.320312.648437 2.863281.648437 4.183593 0h.117188zm-133.121094-81.847656 20.945313 9.972656c2.488281 1.164063 5.449218.101563 6.632812-2.378906 1.179688-2.480469.136719-5.449219-2.332031-6.648438l-18.617187-8.867187 56.359374-26.835938 56.355469 26.835938-56.355469 26.839844-17.527343-8.347657c-2.488281-1.164062-5.449219-.097656-6.632813 2.378907-1.179687 2.480468-.140625 5.449218 2.332032 6.652343l16.832031 8v74.1875l-58-27.601562zm0 0" fill="#9a9ca0"/>
-						<path
-							d="m143.855469 16.332031 12.46875-6.964843c2.414062-1.347657 3.277343-4.394532 1.929687-6.804688-1.347656-2.410156-4.394531-3.273438-6.804687-1.929688l-26 14.511719c-1.339844.746094-2.257813 2.066407-2.5 3.582031-.238281 1.515626.230469 3.054688 1.273437 4.179688l20.640625 22.246094c1.199219 1.359375 3.046875 1.960937 4.820313 1.570312 1.773437-.386718 3.195312-1.707031 3.714844-3.449218.523437-1.738282.058593-3.621094-1.207032-4.921876l-11.457031-12.359374c54.632813 8.082031 95.675781 54.066406 97.519531 109.261718 1.847656 55.199219-36.03125 103.824219-90.003906 115.535156-2.5.539063-4.191406 2.875-3.917969 5.417969.269531 2.542969 2.414063 4.472657 4.96875 4.472657.355469 0 .710938-.039063 1.0625-.117188 58.394531-12.664062 99.523438-65.082031 97.933594-124.816406-1.59375-59.734375-45.449219-109.886719-104.4375-119.425782zm0 0" fill="#9a9ca0"/>
-						<path
-							d="m103.722656 232.351562c-1.214844-1.320312-3.039062-1.886718-4.785156-1.492187s-3.148438 1.695313-3.675781 3.40625c-.527344 1.714844-.09375 3.578125 1.128906 4.886719l11.457031 12.347656c-54.808594-8.09375-95.921875-54.324219-97.566406-109.699219-1.640625-55.378906 36.664062-103.960937 90.894531-115.285156 2.707031-.5625 4.441407-3.210937 3.878907-5.914063-.5625-2.703124-3.210938-4.441406-5.914063-3.878906-58.664063 12.261719-100.230469 64.632813-98.859375 124.550782 1.375 59.914062 45.296875 110.324218 104.460938 119.890624l-12.492188 6.96875c-2.410156 1.347657-3.273438 4.394532-1.929688 6.804688 1.347657 2.414062 4.394532 3.277344 6.804688 1.929688l26-14.507813c1.339844-.75 2.261719-2.070313 2.5-3.585937.238281-1.511719-.230469-3.054688-1.269531-4.179688zm0 0" fill="#9a9ca0"/>
-					</svg>
+					<button id="resetBtn" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.loadGraph()" data-toggle="tooltip" data-placement="top" title="Load Graph">
+						<svg height="24" viewBox="-14 0 277 277.50116" width="24">
+							<path
+								d="m194.421875 185.890625c1.742187-.828125 2.851563-2.582031 2.851563-4.511719v-59.960937c0-2.761719-2.238282-5-5-5-2.761719 0-5 2.238281-5 5v56.800781l-58 27.601562v-74.164062l65.132812-31.019531c2.492188-1.183594 3.554688-4.167969 2.367188-6.664063-.40625-.792968-1.023438-1.464844-1.785157-1.933594-.160156-.183593-.359375-.332031-.582031-.429687l-68-32.375c-1.359375-.648437-2.941406-.648437-4.300781 0l-68 32.375c-.0625.035156-.089844.082031-.152344.113281-.121094.0625-.25.101563-.367187.171875-1.449219.917969-2.328126 2.511719-2.328126 4.226563v85.253906c0 1.925781 1.109376 3.683594 2.847657 4.511719l68 32.375c1.320312.648437 2.863281.648437 4.183593 0h.117188zm-133.121094-81.847656 20.945313 9.972656c2.488281 1.164063 5.449218.101563 6.632812-2.378906 1.179688-2.480469.136719-5.449219-2.332031-6.648438l-18.617187-8.867187 56.359374-26.835938 56.355469 26.835938-56.355469 26.839844-17.527343-8.347657c-2.488281-1.164062-5.449219-.097656-6.632813 2.378907-1.179687 2.480468-.140625 5.449218 2.332032 6.652343l16.832031 8v74.1875l-58-27.601562zm0 0" fill="#9a9ca0"/>
+							<path
+								d="m143.855469 16.332031 12.46875-6.964843c2.414062-1.347657 3.277343-4.394532 1.929687-6.804688-1.347656-2.410156-4.394531-3.273438-6.804687-1.929688l-26 14.511719c-1.339844.746094-2.257813 2.066407-2.5 3.582031-.238281 1.515626.230469 3.054688 1.273437 4.179688l20.640625 22.246094c1.199219 1.359375 3.046875 1.960937 4.820313 1.570312 1.773437-.386718 3.195312-1.707031 3.714844-3.449218.523437-1.738282.058593-3.621094-1.207032-4.921876l-11.457031-12.359374c54.632813 8.082031 95.675781 54.066406 97.519531 109.261718 1.847656 55.199219-36.03125 103.824219-90.003906 115.535156-2.5.539063-4.191406 2.875-3.917969 5.417969.269531 2.542969 2.414063 4.472657 4.96875 4.472657.355469 0 .710938-.039063 1.0625-.117188 58.394531-12.664062 99.523438-65.082031 97.933594-124.816406-1.59375-59.734375-45.449219-109.886719-104.4375-119.425782zm0 0" fill="#9a9ca0"/>
+							<path
+								d="m103.722656 232.351562c-1.214844-1.320312-3.039062-1.886718-4.785156-1.492187s-3.148438 1.695313-3.675781 3.40625c-.527344 1.714844-.09375 3.578125 1.128906 4.886719l11.457031 12.347656c-54.808594-8.09375-95.921875-54.324219-97.566406-109.699219-1.640625-55.378906 36.664062-103.960937 90.894531-115.285156 2.707031-.5625 4.441407-3.210937 3.878907-5.914063-.5625-2.703124-3.210938-4.441406-5.914063-3.878906-58.664063 12.261719-100.230469 64.632813-98.859375 124.550782 1.375 59.914062 45.296875 110.324218 104.460938 119.890624l-12.492188 6.96875c-2.410156 1.347657-3.273438 4.394532-1.929688 6.804688 1.347657 2.414062 4.394532 3.277344 6.804688 1.929688l26-14.507813c1.339844-.75 2.261719-2.070313 2.5-3.585937.238281-1.511719-.230469-3.054688-1.269531-4.179688zm0 0" fill="#9a9ca0"/>
+						</svg>
+					</button>
 					to Load Graph
 				</div>
 			</div>
@@ -202,7 +197,7 @@
 						</button>
 					</div>
 					<div ng-switch-default class="text-center text-truncate">
-						<a href="{% verbatim %}{{ vm.selection.url }}{% endverbatim %}" class="h2 font-weight-bold">
+						<a href="{% verbatim %}{{ vm.selection.url }}{{ vm.dURLParams }}{% endverbatim %}" class="h2 font-weight-bold">
 							{% verbatim %}{{ vm.selection.label }}{% endverbatim %}
 						</a>
 						<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.label }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Name">
@@ -229,7 +224,7 @@
 					</div>
 				</div>
 				<div class="row align-items-end justify-content-center">
-					<a href="{% verbatim %}{{ vm.selection.webUrl }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
+					<a href="{% verbatim %}{{ vm.selection.url }}{{ vm.dURLParams }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
 						{% verbatim %}{{ vm.selection.addr }}{% endverbatim %}
 					</a>
 					<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.addr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Address">
@@ -357,7 +352,7 @@
 			</div>
 		</div>
 		<div class="row mx-auto justify-content-center mt-3">
-			<div class="ml-3">
+			<div>
 				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect">
 					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(1)" class="page-link">First</a>
@@ -449,7 +444,7 @@
 			if ($(el).val() == "") {
 				$(el).val(numberWithCommas(dFilters[el.name]));
 				$(el).removeClass("filterChange");
-			} else {
+			} else if (dFilters[el.name] != $(el).val().replace(/,/g, "")) {
 				$(el).addClass("filterChange");
 			}
 

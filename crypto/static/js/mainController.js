@@ -127,6 +127,7 @@ function mainController($scope) {
 
 		vm.filterInput = JSON.parse(JSON.stringify(dFilters));
 		vm.filterInput['minTx'] = numberWithCommas(1000000); // 1 Mil
+		
 		vm.filterInput.minTime = "";
 		vm.filterInput.maxTime = "";
 
@@ -283,11 +284,9 @@ function mainController($scope) {
 			$("#overlay").prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error!</strong> You should check in on some of those fields below.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
 		}
 
-		/*
 		for (let filter in vm.filterInput) {
-			vm.filterInput[filter] = numberWithCommas(vm.filterInput[filter]);
+			$(`input[name='${filter}']`).val(numberWithCommas(vm.filterInput[filter]));
 		}
-		*/
 	}
 
 	async function updateKnown() {
@@ -422,5 +421,7 @@ function mainController($scope) {
 		vm.filterInput[name] = numberWithCommas(prevVal);
 	}
 
-	updateKnown();
+	if (window.location.pathname != "/") {
+		updateKnown();
+	}
 }

@@ -25,47 +25,21 @@
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 	<script src="https://kit.fontawesome.com/af6506c08e.js"></script>
 	<script src="{% static 'js/mainController.js' %}"></script>
+	{% if coin != 'home' %}
 	<script>
 		const dFilters = {{dFilters | safe}};
 	</script>
+	{% endif %}
 </head>
 
 <body ng-controller="mainController as vm">
 	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top" style="z-index: 100;">
-		<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
-			data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false"
-			aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
 		<div class="navbar-header">
-			<ul class="nav navbar-nav d-inline-block">
-				<li class="dropdown">
-					<a class="navbar-brand dropdown nav-link dropdown-toggle" style="cursor: pointer;"
-						data-toggle="dropdown" id="navbarDropdownMenuLink" aria-haspopup="true" aria-expanded="false">
-						{% if coin == 'home' %}
-						<img src="{% static 'images/tracking.png' %}" width="30" height="30"
-							class="d-inline-block align-top" alt="">
-						<span class="menu-collapsed">Home</span><span class="caret"></span>
-						{% elif coin == 'usdt' %}
-						<img src="{% static 'images/usdt.png' %}" width="30" height="30"
-							class="d-inline-block align-top" alt="">
-						<span class="menu-collapsed">USDT</span><span class="caret"></span>
-						{% endif %}
-					</a>
-					<div class="dropdown-menu" id="BrandDropdown" role="menu" style="z-index: 10000">
-						<a class="dropdown-item" href="{% url 'home' %}" id='home'>
-							<img src="{% static 'images/tracking.png' %}" width="30" height="30"
-								class="d-inline-block align-top" alt="">
-							<span class="menu-collapsed">Home</span><span class="caret"></span>
-						</a>
-						<a class="dropdown-item" href="{% url 'usdt' %}" id='usdt'>
-							<img src="{% static 'images/usdt.png' %}" width="30" height="30"
-								class="d-inline-block align-top" alt="">
-							<span class="menu-collapsed">USDT</span><span class="caret"></span>
-						</a>
-					</div>
-				</li>
-			</ul>
+			<a class="navbar-brand nav-link" style="cursor: pointer;" href="/">
+				<img src="{% static 'images/tracking.png' %}" width="30" height="30"
+					class="d-inline-block align-top">
+				<span class="text-light">Site Name</span>
+			</a>
 		</div>
 		<div class="text-center mx-auto ng-cloak">
 			<span class='text-dark'>Hong Kong Time: </span><span
@@ -82,6 +56,7 @@
 		</div>
 	</nav>
 
+	{% if coin != 'home' %}
 	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" aria-hidden="true">
 		<div ng-switch on="vm.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': vm.overlay.type == 'delete'}" role="document">
 			<form id="edit" method="post" action="{{ request.path }}/addr" ng-switch-when="edit"
@@ -388,6 +363,7 @@
 			<option ng-repeat="cat in vm.categories">{% verbatim %}{{cat}}{% endverbatim %}</option>
 		</datalist>
 	</div>
+	{% endif %}
 
 	<!-- Bootstrap row -->
 	<div id="body-row ng-cloak" style="display: flex">
@@ -461,8 +437,7 @@
 							<div ng-switch-default>
 								<button
 									class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
-									ng-if="category.category != 'Home'" data-toggle="modal" data-target="#overlay"
-									ng-click="vm.showOverlay({type:'editCat',cat:category.category,url:category.url});">
+									data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'editCat',cat:category.category,url:category.url});">
 									<i class="fas fa-edit"></i>
 								</button>
 								<a href="{% verbatim %}{{category.url}}{% endverbatim %}" target="iframe_a"
@@ -477,7 +452,7 @@
 						data-parent="#accordion">
 						<div class="list-group sticky-top sticky-offset"
 							aria-labelledby="{% verbatim %}{{category.category}}{% endverbatim %}_heading"
-							ng-repeat="x in category.addrs">
+							ng-repeat="x in category.addrs | orderBy:'name'">
 							<div ng-switch on="vm.isCustom" class="addr"
 								data-addy="{% verbatim %}{{x.addr}}{% endverbatim %}">
 								<div ng-switch-when="true">
@@ -500,13 +475,11 @@
 								<div ng-switch-default style="white-space: nowrap;">
 									<button
 										class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow-none'
-										data-toggle="modal" data-target="#overlay"
 										ng-click="vm.showOverlay({type:'delete',name:x.name,addr:x.addr});">
 										<i class="fas fa-trash"></i>
 									</button>
 									<button
 										class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
-										data-toggle="modal" data-target="#overlay"
 										ng-click="vm.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.category,url:x.url});">
 										<i class="fas fa-edit"></i>
 									</button>
