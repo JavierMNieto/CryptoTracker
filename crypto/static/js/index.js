@@ -175,3 +175,14 @@ $('#accordion').on('show.bs.collapse', e => {
 
 	$(el).attr("class", "fas fa-caret-down open");
 });
+
+function receiveMessage(event) {
+	if (event.origin == window.location.origin) {
+		if (event.data.type == "add") {
+			let vm = angular.element($('body')).scope();
+			vm.$apply(`vm.showOverlay(${JSON.stringify(event.data)})`);
+		}
+	}
+}
+
+window.addEventListener("message", receiveMessage, false);

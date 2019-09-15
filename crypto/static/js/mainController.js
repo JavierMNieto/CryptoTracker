@@ -103,6 +103,7 @@ function mainController($scope) {
 	}
 
 	vm.showOverlay = function (obj) {
+		$('#overlay').modal('show');
 		$(".alert").remove();
 		vm.overlay = obj;
 
@@ -130,13 +131,6 @@ function mainController($scope) {
 		vm.filterInput.maxTime = "";
 
 		vm.filterInput['state'] = 'invalid';
-		
-		if (obj.type == "edit") {
-			vm.addrInput.name.val  = obj.name;
-			vm.addrInput.name.state = 'valid';
-			vm.addrInput.cat.val   = obj.cat;
-			vm.addrInput.cat.state = 'valid';
-		}
 
 		if (obj.type == "edit" || obj.type == "editCat") {
 			if (obj.type == "edit") {
@@ -153,6 +147,9 @@ function mainController($scope) {
 					vm.filterInput[filter] = numberWithCommas(urlObj.searchParams.get(filter));
 				}
 			}
+		} else if (obj.type == "add" && obj.addr) {
+			vm.addrInput.addr.val  = obj.addr;
+			vm.checkAddr();
 		}
 		
 		$(function () {

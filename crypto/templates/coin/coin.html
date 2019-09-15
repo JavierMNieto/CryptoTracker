@@ -52,6 +52,12 @@
 <body ng-controller="txsController as vm" class="container-fluid">
 	<div id="body" class="ng-cloak">
 		<div id="name" class="font-weight-bold text-center h1">
+			{% if search.address is not None and search.label == search.address %}
+			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{search.address}}'}, window.location.href.substring(0, window.location.href.indexOf('/search')))" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="right" title="Add Address">
+				<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
+					style="width: 24px; height: auto;">
+			</button>
+			{% endif %}
 			{{search.label}}
 			<button width="30" height="30" onclick="location.reload();" ng-click="vm.startLoader();" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="right" title="Refresh Page">
 				<svg width="30" height="30" viewBox="0 0 65 65">
