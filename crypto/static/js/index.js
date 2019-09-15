@@ -153,7 +153,6 @@ $(document).mouseup(function(e) {
 	}
 });
 
-
 function rotate(el) {
 	el = $(el).find("i");
 	if ($(el).hasClass("open")) {

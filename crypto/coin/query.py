@@ -33,6 +33,13 @@ def formatFilters(initFilters):
     
     return filters
 
+def inArr(arr, val):
+    for item in arr:
+        if item == val:
+            return True
+    
+    return False
+
 def isInt(s):
     try: 
         int(s)
@@ -203,14 +210,7 @@ class CoinController:
         if 'address' in info:
             info['url'] = self.urls['addr'] + info['address']
 
-        addrText = ""
-
-        if info['addr']:
-            addrText = self.getAddrsText(info['addr']) + " AND "
-
-        query  = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {} RETURN count(r)".format(self.coin, self.coin, self.coin, addrText, TxsQuery())
-
-        info["totalTxs"] = self.runFilters(query, filters).single().value()
+        info["totalTxs"] = self.getNumTxs(info['addr'], filters)
         
         info['dFilters'] = DParams()
 
@@ -220,6 +220,17 @@ class CoinController:
             "search": info
         }
     
+    def getNumTxs(self, addrs, filters):
+        addrText = ""
+
+        if addrs:
+            addrText = self.getAddrsText(addrs) + " AND "
+
+        query  = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {} RETURN count(r)".format(self.coin, self.coin, self.coin, addrText, TxsQuery())
+
+        return self.runFilters(query, filters).single().value()
+
+
     def getGraphData(self, params, lastId=0):
         query = GraphQuery()
         
@@ -261,18 +272,18 @@ class CoinController:
                 "balance": float(aNode['balance'] or 0),
                 "balVal": float(aNode['balance'] or 0),
                 "group": 'usdt' if lastId == 0 else 'tempusdt', #aNode['wallet'] or 
-                "lastUpdate": time.time(), # REMOVE
                 "url": aKnown['url'],
-                "webUrl": self.urls['addr'] + aNode['addr'], # REMOVE
                 "value": float(aNode['balance'] or 0)/Satoshi(),
                 "img": self.urls['img'],
                 "title": ("Address: {}<br> "
-                        "Balance: ${}<br> "
-                        "<b>Double Click to Load Transactions! (May Lag Site!)</br> ").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")))
+                        "Balance: ${} ").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")))
             }
             if aNode['label'] != aNode['addr']:
                 aNode['title'] = "Name: {}<br>".format(aNode['label']) + aNode['title']
-                
+
+            if params['addr[]'] and not inArr(params['addr[]'], aNode['addr']):
+                aNode['title'] += "<br> <b>Double Click to Load Transactions!</b>"
+            
             bNode  = nodes['to']
             bKnown = self.getKnown(bNode['addr'])
             bNode = {
@@ -282,18 +293,18 @@ class CoinController:
                 "balance": float(bNode['balance'] or 0),
                 "balVal": float(bNode['balance'] or 0),
                 "group": 'usdt' if lastId == 0 else 'tempusdt', #bNode['wallet'] or 
-                "lastUpdate": time.time(),
                 "url": bKnown['url'],
-                "webUrl": self.urls['addr'] + bNode['addr'], # REMOVE
                 "value": float(bNode['balance'] or 0)/Satoshi(),
                 "img": self.urls['img'],
                 "title": ("Address: {}<br> "
-                        "Balance: ${}<br> "
-                        "<b>Double Click to Load Transactions! (May Lag Site!)</br> ").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0")))
+                        "Balance: ${} ").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0")))
             }
             if bNode['label'] != bNode['addr']:
                 bNode['title'] = "Name: {}<br>".format(bNode['label']) + bNode['title']
-                
+            
+            if params['addr[]'] and not inArr(params['addr[]'], bNode['addr']):
+                bNode['title'] += "<br> <b>Double Click to Load Transactions!</b>"
+
             rel = nodes['r']
             id += 1
             rel = {
@@ -476,7 +487,7 @@ class CoinController:
                         catDict[cat]['addrs'].append(node)
                     else:
                         catDict[cat] = {
-                            'url': "/{}/search/{}?addr[]={}".format(self.coin, cat, addr),
+                            'url': "/{}/search/{}?addr[]={}&minTx={}".format(self.coin, cat, addr, DMinTx()),
                             'addrs': [node]
                         }
 
@@ -491,7 +502,7 @@ class CoinController:
     def editCat(self, prevCat, newCat, filters):
         catDict = self.getKnownDict()
         try:
-            if self.isValidName(prevCat) and self.isValidName(newCat) and prevCat.lower() != "home":  
+            if self.isValidName(prevCat) and self.isValidName(newCat):  
                 if prevCat in catDict:
                     with open(self.path + self.coin + ".json", "w") as f:
                         catDict[newCat] = catDict.pop(prevCat)

@@ -470,7 +470,7 @@
 					data.nodes.add(tempNodes);
 					data.edges.add(resp.edges);
 	
-					node.title = node.title.replace("Double Click to Load Transactions! (May Lag Site!)", "");
+					node.title = node.title.replace("Double Click to Load Transactions!", "");
 					data.nodes.update(node);
 	
 					vm.graph = {
