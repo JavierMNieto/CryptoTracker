@@ -17,13 +17,26 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'coin'
 urlpatterns = [
-    path('search/<str:id>', views.search, name='search'),
-    path('getTxs', views.getTxs, name='getTxs'),
-    path('getGraph', views.getGraphData, name='getGraph'),
-    path('getKnown', views.getKnown, name="getKnown"),
-    path('addr', views.addr, name='addr'),
+    path('', views.home, name="home"),
+    path('<uuid:session_id>', views.session, name='session'),
+    path('basic', views.goToDefaultSession),
+    path('<uuid:session_id>/getKnown', views.getKnown, name="getKnown"),
+    path('<uuid:session_id>/change', views.change), #Change
+    path('<uuid:session_id>/group/c', views.customGroup, name='group'),
+    path('<uuid:session_id>/getTxs', views.getTxs, name='getTxs'),
+    path('<uuid:session_id>/getGraph', views.getGraphData, name='getGraph'),
+    path('<uuid:session_id>/addr/<str:addr>', views.addr, name='addr'),
+    path('<uuid:session_id>/group/<uuid:group_id>', views.group, name='group'),
+    path('<uuid:session_id>/addSession', views.copySession, name="copySession"),
+    path('getTx/<str:tx>', views.getTx),
+    path('isUniqSession', views.isUniqSession),
+    path('isValidAddr', views.isValidAddr),
+    path('addSession', views.addSession),
+    path('delSession', views.delSession),
+    path('editSession', views.editSession),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -144,7 +144,7 @@ function drawGraph(stop, graph) {
 			$('#text').text('100%');
 			$('#bar').css('width', '496px');
 			$('loadingBar').css('opacity', 0);
-			vm.$apply(`vm.loadedGraph()`);
+			//vm.$apply(`vm.loadedGraph()`);
 			setTimeout(function () {
 				$('#loadingBar').hide();
 				if (stop) {
@@ -174,32 +174,31 @@ function drawGraph(stop, graph) {
 	//});
 }
 
+/*
 function getGraphTotalTxs() {
 	var tempNum = 0;
 
 	data.edges.forEach(edge => {
-		tempNum += edge.txsNum;
+		if (!data.nodes.get(edge.from).group.includes("temp") && !data.nodes.get(edge.to).group.includes("temp")) {
+			tempNum += edge.txsNum;
+		}
 	});
 
 	return tempNum;
 }
+*/
 
 function onDeselectEdges() {
 	let vm = angular.element($('body')).scope();
 
-	totalTxs = getGraphTotalTxs();
-	vm.$apply('vm.selCollapsed = [];vm.setPage(1);');
+	vm.$apply('vm.resetTotalTxs();vm.selCollapsed = [];vm.setPage(1);');
 }
 
 function onDeselectNodes() {
 	let vm = angular.element($('body')).scope();
 
-	totalTxs = getGraphTotalTxs();
-	vm.$apply('vm.selection = undefined;');
+	vm.$apply('vm.resetTotalTxs();vm.selection = undefined;');
 }
-
-////////////////////
-//drawGraph();
 
 function stopPhysics(graph) {
 	setTimeout(function () {

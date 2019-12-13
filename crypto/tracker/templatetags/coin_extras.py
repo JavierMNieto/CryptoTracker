@@ -1,5 +1,5 @@
 from django import template
-import time
+from datetime import datetime
 
 register = template.Library()
 
@@ -9,7 +9,12 @@ def times(num):
 
 @register.filter(name='numCommas')
 def numCommas(num):
-    num = round(num, 2)
+    #num = round(num, 2)
+    if not isNum(num):
+        return num
+    num = float(num)
+    if num == int(num):
+        num = int(num)
     return ("{:,}".format(num))
 
 @register.filter(name='dict_key')
@@ -45,9 +50,12 @@ def getDefault(f):
 
 @register.filter(name="formatTime")
 def formatTime(t, f):
-    print(t, f)
-    return time.strftime(f, time.localtime(t))
+    return datetime.utcfromtimestamp(t).strftime(f)
 
 @register.filter(name="contains")
 def contains(string, word):
     return word.lower() in string.lower()
+
+@register.filter(name="index")
+def index(indexable, i):
+    return indexable[i]

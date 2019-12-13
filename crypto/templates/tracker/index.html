@@ -25,17 +25,24 @@
 	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 	<script src="https://kit.fontawesome.com/af6506c08e.js"></script>
 	<script src="{% static 'js/mainController.js' %}"></script>
+{% if coin and coin != 'home' %}
+	<script src="{% static 'js/groupsController_basic.js' %}"></script>
+{% endif %}
+{% if coin and request.user.is_authenticated and request.user.settings.premium %}
+	<script src="{% static 'js/sessionController.js' %}"></script>
 	{% if coin != 'home' %}
+	<script src="{% static 'js/groupsController_prem.js' %}"></script>
 	<script>
 		const dFilters = {{dFilters | safe}};
 	</script>
 	{% endif %}
+{% endif %}
 </head>
 
-<body ng-controller="mainController as vm">
-	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top" style="z-index: 100;">
+<body ng-controller="mainController as main" session-controller basic-controller prem-controller>
+	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top shadow-lg" style="z-index: 100;">
 		<div class="navbar-header">
-			<a class="navbar-brand nav-link" style="cursor: pointer;" href="/">
+			<a class="navbar-brand nav-link" style="cursor: pointer;" href="./">
 				<img src="{% static 'images/tracking.png' %}" width="30" height="30"
 					class="d-inline-block align-top">
 				<span class="text-light">Site Name</span>
@@ -43,60 +50,77 @@
 		</div>
 		<div class="text-center mx-auto ng-cloak">
 			<span class='text-dark'>Hong Kong Time: </span><span
-				class="font-weight-bold text-light">{% verbatim %}{{ vm.hk }}{% endverbatim %}</span>
+				class="font-weight-bold text-light">{% verbatim %}{{ main.hk }}{% endverbatim %}</span>
 			<span style="color:#F8A33D" class='pl-5'>BTC: </span><span
-				class='font-weight-bold'>${{ btc.last | numCommas }}</span>
+				class='font-weight-bold'>${{ btc.last | floatformat:2 | numCommas}}</span>
 			{% if btc.percentage < 0 %}
 			<span class="font-weight-italic pr-5" style="color:#c74242"> ({{btc.percentage}}%)</span>
 			{% else %}
 			<span class="font-weight-italic pr-5" style="color:#009e73"> (+{{btc.percentage}}%)</span>
 			{% endif %}
 			<span class='text-dark'>UTC Time: </span><span
-				class="font-weight-bold text-light">{% verbatim %}{{ vm.ut }}{% endverbatim %}</span>
+				class="font-weight-bold text-light">{% verbatim %}{{ main.ut }}{% endverbatim %}</span>
+		</div>
+		<div class="float-right" style="white-space: nowrap;">
+			{% if user.is_authenticated %}
+				<div class="row text-center">
+					<span class="h5 mx-2">{{ user.username }}</span>
+					<form id="signOut" action="/signout">
+						{% csrf_token %}
+						<button ng-click="main.submit('signOut');" class="btn btn-sm btn-danger shadow mx-2" type="submit">Log Out</button>
+					</form>
+				</div>
+			{% else %}
+				<div class="btn-group"></div>
+					<button class="btn btn-dark shadow" ng-click="main.showAcct('signUp')">Create Account</button>
+					<button class="btn btn-dark shadow" ng-click="main.showAcct('signIn')">Log In</button>
+				</div>
+			{% endif %}
 		</div>
 	</nav>
 
-	{% if coin != 'home' %}
 	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" aria-hidden="true">
-		<div ng-switch on="vm.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': vm.overlay.type == 'delete'}" role="document">
-			<form id="edit" method="post" action="{{ request.path }}/addr" ng-switch-when="edit"
+		<div ng-switch on="main.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': main.overlay.type == 'delete' || main.overlay.type.indexOf('Session') > 0}" role="document">
+		{% if user.is_authenticated and user.settings.premium and session and session != "Basic Session" %}	
+			<form id="edit" method="post" action="{{ request.path }}/change" ng-switch-when="edit"
 				class="modal-content bg-dark">
 				{% csrf_token %}
 				<div class="py-2 px-3">
 					<h5 class="modal-title d-inline-block text-muted mr-3 mt-2">Edit <span
-							class="text-light">{% verbatim %}{{ vm.overlay.name }}{% endverbatim %}</span></h5>
+							class="text-light">{% verbatim %}{{ main.overlay.name }}{% endverbatim %}</span></h5>
 					<button type="button" class="close mt-2 btn shadow-none" data-dismiss="modal" aria-label="Close">
 						&times;
 					</button>
 					<div class="text-center text-muted text-truncate">
-						<small>{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}</small></div>
+						<small>{% verbatim %}{{ main.overlay.addr }}{% endverbatim %}</small>
+					</div>
 				</div>
 				<div class="modal-body shadow-lg bg-secondary">
-					<input type="text" name="name" placeholder="Name" ng-readonly="vm.addrInput.name.state == 'load'"
+					<input type="text" name="name" placeholder="Name" ng-readonly="prem.addrInput.name.valid === null"
 						autocomplete="off" class="shadow form-control w-75 mx-auto my-1 text-center"
-						ng-model="vm.addrInput.name.val" ng-change="vm.checkName()">
+						ng-model="prem.addrInput.name.val" ng-change="prem.checkName()">
 					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch
-						on="vm.addrInput.name.state">
-						<div ng-switch-when="valid">
+						on="prem.addrInput.name.valid">
+						<div ng-switch-when="true">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-when="load">
+						<div ng-switch-when="null">
 							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
 								<span class="sr-only">Loading...</span>
 							</div>
 						</div>
-						<div ng-switch-default ng-title="vm.addrInput.name.reason">
+						<div ng-switch-default ng-title="prem.addrInput.name.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
 					<input type="text" name="cat" list="categories"
 						class="shadow form-control w-75 mx-auto my-1 text-center" placeholder="Group Name" ngTrim="true"
-						ng-model="vm.addrInput.cat.val" ng-change="vm.checkCat()" autocomplete="off">
-					<div style="position: absolute; top: 3.9rem; right: 4.9rem;" ng-switch on="vm.addrInput.cat.state">
-						<div ng-switch-when="valid">
+						ng-model="prem.addrInput.cat.val" ng-change="prem.checkCat()" autocomplete="off">
+					<div style="position: absolute; top: 3.9rem; right: 4.9rem;" ng-switch on="prem.addrInput.cat.valid">
+						<div ng-switch-when="true">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-default ng-title="vm.addrInput.cat.reason">
+						<div ng-switch-default ng-title="prem.addrInput.cat.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -106,54 +130,54 @@
 							<div class="col-6">
 								<span>Balance</span>
 								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minBal" ng-change="vm.addCommas('minBal')"
-										ng-focus="vm.filterFocusCheck('minBal')" ng-blur="vm.filterBlurCheck('minBal')" placeholder="Min Balance">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
+										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
 								</div>
 								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxBal" ng-change="vm.addCommas('maxBal')" 
-										ng-focus="vm.filterFocusCheck('maxBal')" ng-blur="vm.filterBlurCheck('maxBal')" placeholder="Max Balance">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
+										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
 								</div>
 							</div>
 							<div class="col-6">
 								<span>Transaction Amount</span>
 								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTx" ng-change="vm.addCommas('minTx')"
-										ng-focus="vm.filterFocusCheck('minTx')" ng-blur="vm.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
+										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
 								</div>
 								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTx" ng-change="vm.addCommas('maxTx')"
-										ng-focus="vm.filterFocusCheck('maxTx')" ng-blur="vm.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
+										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
 								</div>
 							</div>
 						</div>
 						<div class="row m-2">
 							<span class="mx-auto">Transaction Time</span>
 							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTime" 
-									ng-focus="vm.filterFocusCheck('minTime')" ng-blur="vm.filterBlurCheck('minTime')" placeholder="Min Time">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
+									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
 							</div>
 							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTime" 
-									ng-focus="vm.filterFocusCheck('maxTime')" ng-blur="vm.filterBlurCheck('maxTime')" placeholder="Max Time">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
+									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
 					<input type="hidden" name="method" value="edit">
-					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
+					<input type="hidden" name="session" value="{{session}}">
+					<input type="hidden" name="prevCat" value="{% verbatim %}{{ main.overlay.catId }}{% endverbatim %}">
+					<input type="hidden" name="addr" value="{% verbatim %}{{ main.overlay.addr }}{% endverbatim %}">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<button type="button" class="btn btn-info"
-						ng-disabled="((vm.addrInput.name.state != 'valid') || (vm.addrInput.cat.state != 'valid'))"
-						ng-click="vm.submit('edit')">
-						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status"
-							aria-hidden="true"></div>
+						ng-disabled="(!prem.addrInput.name.valid || !prem.addrInput.cat.valid)"
+						ng-click="prem.submit('edit')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Save Changes
 					</button>
 				</div>
 			</form>
-			<form id="add" method="post" action="{{ request.path }}/addr" ng-switch-when="add"
-				class="modal-content bg-dark">
+			<form id="add" method="post" action="{{ request.path }}/change" ng-switch-when="add" class="modal-content bg-dark">
 				{% csrf_token %}
 				<div class="modal-header text-light">
 					<h5 class="modal-title">Add New Address</h5>
@@ -163,47 +187,47 @@
 				</div>
 				<div class="modal-body shadow-lg bg-secondary">
 					<input autocomplete="off" type="text" name="addr" placeholder="Address"
-						ng-change="vm.checkAddr()" ng-readonly="vm.addrInput.addr.state == 'load'"
-						ng-model="vm.addrInput.addr.val" class="shadow form-control w-100 mb-2 text-center text-muted">
-					<div style="position: absolute; top: 1rem; right: 1.2rem;" ng-switch on="vm.addrInput.addr.state">
-						<div ng-switch-when="valid">
+						ng-change="prem.checkAddr()" ng-readonly="prem.addrInput.addr.valid === null"
+						ng-model="prem.addrInput.addr.val" class="shadow form-control w-100 mb-2 text-center text-muted">
+					<div style="position: absolute; top: 1rem; right: 1.2rem;" ng-switch on="prem.addrInput.addr.valid">
+						<div ng-switch-when="true">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-when="load">
+						<div ng-switch-when="null">
 							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
 								<span class="sr-only">Loading...</span>
 							</div>
 						</div>
-						<div ng-switch-default ng-title="vm.addrInput.addr.reason">
+						<div ng-switch-default ng-title="prem.addrInput.addr.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
 					<input autocomplete="off" type="text" name="name" placeholder="Name" ngTrim="true"
 						class="shadow form-control w-50 mx-auto my-1 text-center"
-						ng-readonly="vm.addrInput.name.state == 'load'" ng-change="vm.checkName()"
-						ng-model="vm.addrInput.name.val">
+						ng-readonly="prem.addrInput.name.valid === null" ng-change="prem.checkName()"
+						ng-model="prem.addrInput.name.val">
 					<div style="position: absolute; top: 3.9rem; right: 8.55rem;" ng-switch
-						on="vm.addrInput.name.state">
-						<div ng-switch-when="valid">
+						on="prem.addrInput.name.valid">
+						<div ng-switch-when="true">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-when="load">
+						<div ng-switch-when="null">
 							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
 								<span class="sr-only">Loading...</span>
 							</div>
 						</div>
-						<div ng-switch-default ng-title="vm.addrInput.name.reason">
+						<div ng-switch-default ng-title="prem.addrInput.name.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
 					<input autocomplete="off" type="text" name="cat" list="categories"
 						class="shadow form-control w-50 mx-auto my-1 text-center" placeholder="Group Name" ngTrim="true"
-						ng-model="vm.addrInput.cat.val" ng-change="vm.checkCat()">
-					<div style="position: absolute; top: 6.5rem; right: 8.55rem;" ng-switch on="vm.addrInput.cat.state">
-						<div ng-switch-when="valid">
+						ng-model="prem.addrInput.cat.val" ng-change="prem.checkCat()">
+					<div style="position: absolute; top: 6.5rem; right: 8.55rem;" ng-switch on="prem.addrInput.cat.valid">
+						<div ng-switch-when="true">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-default ng-title="vm.addrInput.cat.reason">
+						<div ng-switch-default ng-title="prem.addrInput.cat.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -213,96 +237,94 @@
 							<div class="col-6">
 								<span>Balance</span>
 								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minBal" ng-change="vm.addCommas('minBal')"
-										ng-focus="vm.filterFocusCheck('minBal')" ng-blur="vm.filterBlurCheck('minBal')" placeholder="Min Balance">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
+										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
 								</div>
 								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxBal" ng-change="vm.addCommas('maxBal')" 
-										ng-focus="vm.filterFocusCheck('maxBal')" ng-blur="vm.filterBlurCheck('maxBal')" placeholder="Max Balance">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
+										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
 								</div>
 							</div>
 							<div class="col-6">
 								<span>Transaction Amount</span>
 								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTx" ng-change="vm.addCommas('minTx')"
-										ng-focus="vm.filterFocusCheck('minTx')" ng-blur="vm.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
+										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
 								</div>
 								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTx" ng-change="vm.addCommas('maxTx')"
-										ng-focus="vm.filterFocusCheck('maxTx')" ng-blur="vm.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
+										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
 								</div>
 							</div>
 						</div>
 						<div class="row m-2">
 							<span class="mx-auto">Transaction Time</span>
 							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTime" 
-									ng-focus="vm.filterFocusCheck('minTime')" ng-blur="vm.filterBlurCheck('minTime')" placeholder="Min Time">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
+									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
 							</div>
 							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTime" 
-									ng-focus="vm.filterFocusCheck('maxTime')" ng-blur="vm.filterBlurCheck('maxTime')" placeholder="Max Time">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
+									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
 					<input type="hidden" name="method" value="add">
+					<input type="hidden" name="session" value="{{session}}">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<button type="button" class="btn btn-success"
-						ng-disabled="((vm.addrInput.addr.state != 'valid') || (vm.addrInput.name.state != 'valid') || (vm.addrInput.cat.state != 'valid'))"
-						ng-click="vm.submit('add')">
-						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						ng-disabled="(!prem.addrInput.addr.valid || !prem.addrInput.name.valid || !prem.addrInput.cat.valid)"
+						ng-click="prem.submit('add')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Add Address
 					</button>
 				</div>
 			</form>
-			<form id="delete" method="post" action="{{ request.path }}/addr" post="post"
-				action="{% verbatim %}{{ vm.url }}{% endverbatim %}/addr" ng-switch-when="delete"
-				class="modal-content bg-dark">
+			<form id="delete" method="post" action="{{ request.path }}/change" post="post" ng-switch-when="delete" class="modal-content bg-dark">
 				{% csrf_token %}
 				<div class="modal-header text-light">
 					<h5 class="modal-title text-muted">Delete <span
-							class="text-light">{% verbatim %}{{ vm.overlay.name }}{% endverbatim %}</span>?</h5>
+							class="text-light">{% verbatim %}{{ main.overlay.name }}{% endverbatim %}</span>?</h5>
 					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
 						&times;
 					</button>
 				</div>
 				<div class="modal-body shadow-lg bg-secondary text-center">
 					Are you sure you want to delete <small
-						class="font-weight-bold">{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}</small>?
+						class="font-weight-bold">{% verbatim %}{{ main.overlay.addr }}{% endverbatim %}</small>?
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<input type="hidden" name="method" value="delete">
-					<input type="hidden" name="addr" value="{% verbatim %}{{ vm.overlay.addr }}{% endverbatim %}">
-					<button type="button" class="btn btn-danger" ng-click="vm.submit('delete')">
-						<div ng-if="vm.formState == 'load'" class="spinner-border spinner-border-sm" role="status"
-							aria-hidden="true"></div>
+					<input type="hidden" name="prevCat" value="{% verbatim %}{{ main.overlay.cat }}{% endverbatim %}">
+					<input type="hidden" name="session" value="{{session}}">
+					<input type="hidden" name="addr" value="{% verbatim %}{{ main.overlay.addr }}{% endverbatim %}">
+					<button type="button" class="btn btn-danger" ng-click="prem.submit('delete')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Delete
 					</button>
 				</div>
 			</form>
-			<form id="editCat" method="post" action="{{ request.path }}/addr" post="post"
-				action="{% verbatim %}{{ vm.url }}{% endverbatim %}/addr" ng-switch-when="editCat"
-				class="modal-content bg-dark">
+			<form id="editCat" method="post" action="{{ request.path }}/change" post="post" ng-switch-when="editCat" class="modal-content bg-dark">
 				{% csrf_token %}
 				<div class="modal-header text-light">
 					<h5 class="modal-title text-muted">Edit <span
-							class="text-light">{% verbatim %}{{ vm.overlay.cat }}{% endverbatim %}</span> Group</h5>
+							class="text-light">{% verbatim %}{{ main.overlay.cat }}{% endverbatim %}</span> Group</h5>
 					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
 						&times;
 					</button>
 				</div>
 				<div class="modal-body shadow-lg bg-secondary text-center">
 					<input type="text" name="newCat" class="shadow form-control w-75 mx-auto my-1 text-center"
-						placeholder="New Group Name" ngTrim="true" ng-model="vm.addrInput.cat.val"
-						ng-change="vm.checkCat()" autocomplete="off">
-					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch on="vm.addrInput.cat.state">
-						<div ng-switch-when="valid">
+						placeholder="New Group Name" ngTrim="true" ng-model="prem.addrInput.cat.val"
+						ng-change="prem.checkCat()" autocomplete="off" ng-readonly="prem.addrInput.cat.val == 'Home'">
+					<div style="position: absolute; top: 1.25rem; right: 4.9rem;" ng-switch on="prem.addrInput.cat.valid">
+						<div ng-switch-when="true">
 							<i class="far fa-check-circle fa-sm text-success"></i>
 						</div>
-						<div ng-switch-default ng-title="vm.addrInput.cat.reason">
+						<div ng-switch-default ng-title="prem.addrInput.cat.reason">
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
@@ -312,35 +334,35 @@
 							<div class="col-6">
 								<span>Balance</span>
 								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minBal" ng-change="vm.addCommas('minBal')"
-										ng-focus="vm.filterFocusCheck('minBal')" ng-blur="vm.filterBlurCheck('minBal')" placeholder="Min Balance">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
+										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
 								</div>
 								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxBal" ng-change="vm.addCommas('maxBal')" 
-										ng-focus="vm.filterFocusCheck('maxBal')" ng-blur="vm.filterBlurCheck('maxBal')" placeholder="Max Balance">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
+										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
 								</div>
 							</div>
 							<div class="col-6">
 								<span>Transaction Amount</span>
 								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTx" ng-change="vm.addCommas('minTx')"
-										ng-focus="vm.filterFocusCheck('minTx')" ng-blur="vm.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
+										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
 								</div>
 								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTx" ng-change="vm.addCommas('maxTx')"
-										ng-focus="vm.filterFocusCheck('maxTx')" ng-blur="vm.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
+										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
 								</div>
 							</div>
 						</div>
 						<div class="row m-2">
 							<span class="mx-auto">Transaction Time</span>
 							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.minTime" 
-									ng-focus="vm.filterFocusCheck('minTime')" ng-blur="vm.filterBlurCheck('minTime')" placeholder="Min Time">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
+									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
 							</div>
 							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="vm.filterInput.maxTime" 
-									ng-focus="vm.filterFocusCheck('maxTime')" ng-blur="vm.filterBlurCheck('maxTime')" placeholder="Max Time">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
+									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
 							</div>
 						</div>
 					</div>
@@ -348,112 +370,398 @@
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<input type="hidden" name="method" value="editCat">
-					<input type="hidden" name="prevCat" value="{% verbatim %}{{ vm.overlay.cat }}{% endverbatim %}">
-					<button type="button" class="btn btn-info" ng-click="vm.submit('editCat')"
-						ng-disabled="((vm.addrInput.cat.state != 'valid'))">
+					<input type="hidden" name="session" value="{{session}}">
+					<input type="hidden" name="cat" value="{% verbatim %}{{ main.overlay.id }}{% endverbatim %}">
+					<button type="button" class="btn btn-info" ng-click="prem.submit('editCat')"
+						ng-disabled="(!prem.addrInput.cat.valid)">
 						Save Changes
 					</button>
 				</div>
 			</form>
+			<div id="customGraph" ng-switch-when="customGraph" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title text-light">Custom Graph Filters</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg bg-secondary text-center">
+					<div class="p-2 text-center">
+						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
+						<div class="row">
+							<div class="col-6">
+								<span>Balance</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
+										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
+								</div>
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
+										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
+								</div>
+							</div>
+							<div class="col-6">
+								<span>Transaction Amount</span>
+								<div class="w-100 mb-1">
+									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
+										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
+								</div>
+								<div class="w-100">
+									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
+										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
+								</div>
+							</div>
+						</div>
+						<div class="row m-2">
+							<span class="mx-auto">Transaction Time</span>
+							<div class="w-75 mx-auto mb-1">
+								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
+									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
+							</div>
+							<div class="w-75 mx-auto">
+								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
+									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal" ng-click="prem.customOff();">Cancel</button>
+					<button type="button" class="btn btn-success" ng-click="prem.makeGraph();">
+						Create Graph
+					</button>
+				</div>
+			</div>
+			<datalist id="categories">
+				<option ng-repeat="cat in basic.categories">{% verbatim %}{{cat}}{% endverbatim %}</option>
+			</datalist>
+		{% endif %}
+		{% if not user.is_authenticated %}
+			<form id="signUp" method="post" action="/signup" ng-switch-when="signUp" class="modal-content bg-dark">
+				{% csrf_token %}
+				{{ form.as_p }}
+				<div class="modal-header text-light">
+					<h5 class="modal-title">Create Account</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg">
+					<input autocomplete="off" type="text" name="user" placeholder="Username" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="main.acctInput.user.valid === null" ng-change="main.checkUser()"
+						ng-model="main.acctInput.user.val">
+					<div style="position: absolute; top: 1.25rem; right: 8.5rem;" ng-switch
+						on="main.acctInput.user.valid">
+						<div ng-switch-when="true">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-when="null">
+							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
+						<div ng-switch-default ng-title="main.acctInput.user.reason">
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+					<input autocomplete="off" type="text" name="email" placeholder="Email" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="main.acctInput.email.valid === null" ng-change="main.checkEmail()"
+						ng-model="main.acctInput.email.val">
+					<div style="position: absolute; top: 3.9rem; right: 8.5rem;" ng-switch
+						on="main.acctInput.email.valid">
+						<div ng-switch-when="true">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-default ng-title="main.acctInput.email.reason">
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+					<input autocomplete="off" type="password" name="pass" placeholder="Password" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="main.acctInput.pass.valid === null" ng-change="main.checkPass()"
+						ng-model="main.acctInput.pass.val">
+					<div style="position: absolute; top: 6.45rem; right: 8.5rem;" ng-switch
+						on="main.acctInput.pass.valid">
+						<div ng-switch-when="true">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-default ng-title="main.acctInput.pass.reason">
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-success"
+						ng-disabled="(!main.acctInput.user.valid || !main.acctInput.email.valid || !main.acctInput.pass.valid)"
+						ng-click="main.submit('signUp')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						Sign Up
+					</button>
+				</div>
+			</form>
+			<form id="signIn" method="post" action="/signin" ng-switch-when="signIn" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title">Sign In</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg text-center">
+					<input autocomplete="off" type="text" name="name" placeholder="Username/Email" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-model="main.acctInput.user.val">
+					<input autocomplete="off" type="password" name="pass" placeholder="Password" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-model="main.acctInput.pass.val">
+					<a class="btn btn-dark shadow-lg mt-2 text-center text-white" style="cursor: pointer">Forgot Password?</a>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-success" ng-click="main.submit('signIn')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						Sign In
+					</button>
+				</div>
+			</form>
+		{% endif %}
+		{% if user.is_authenticated and user.settings.premium %}
+			<form id="addSession" action="{{ request.path }}/addSession" ng-switch-when="addSession" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="py-2 px-3">
+					<h5 class="modal-title d-inline-block text-light mr-3 mt-2">Add Session</h5>
+					<button type="button" class="close mt-2 btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				{% if session %}
+					<div class="text-center text-muted text-truncate">
+						<small>Copy of {{session}}</small>
+					</div>
+				{% endif %}
+				</div>
+				<div class="modal-body shadow-lg bg-secondary text-center">
+					<input autocomplete="off" type="text" name="name" placeholder="Name" ngTrim="true"
+						class="shadow form-control w-75 mx-auto my-1 text-center"
+						ng-readonly="session.valid === null" ng-change="session.checkSession()"
+						ng-model="session.val">
+					<div style="position: absolute; top: 1.25rem; right: 3.3rem;" ng-switch
+						on="session.valid">
+						<div ng-switch-when="true">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-when="null">
+							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
+						<div ng-switch-default ng-title="session.reason">
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-success"
+						ng-disabled="(!session.valid || !session.valid || !session.valid)"
+						ng-click="session.submit('addSession');">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						Add Session
+					</button>
+				</div>
+			</form>
+			<form id="delSession" method="post" action="delSession" post="post" ng-switch-when="delSession" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title text-muted">Delete <span
+							class="text-light">{% verbatim %}{{ main.overlay.name }}{% endverbatim %}</span>?</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg bg-secondary text-center">
+					Are you sure you want to delete <span
+						class="font-weight-bold">{% verbatim %}{{ main.overlay.name }}{% endverbatim %}</span>?
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<input type="hidden" name="session_id" value="{% verbatim %}{{ main.overlay.uuid }}{% endverbatim %}">
+					<button type="button" class="btn btn-danger" ng-click="session.submit('delSession')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						Delete
+					</button>
+				</div>
+			</form>
+			<form id="editSession" method="post" action="editSession" post="post" ng-switch-when="editSession" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title text-muted">Edit <span
+							class="text-light">{% verbatim %}{{ main.overlay.name }}{% endverbatim %}</span></h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg bg-secondary text-center">
+					<input autocomplete="off" type="text" name="name" placeholder="Name" ngTrim="true"
+						class="shadow form-control w-75 mx-auto my-1 text-center"
+						ng-readonly="session.valid === null" ng-change="session.checkSession()"
+						ng-model="session.val">
+					<div style="position: absolute; top: 1.25rem; right: 3.3rem;" ng-switch
+						on="session.valid">
+						<div ng-switch-when="true">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-when="null">
+							<div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+								<span class="sr-only">Loading...</span>
+							</div>
+						</div>
+						<div ng-switch-default ng-title="session.reason">
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<input type="hidden" name="session_id" value="{% verbatim %}{{ main.overlay.uuid }}{% endverbatim %}">
+					<button type="button" class="btn btn-success" ng-click="session.submit('editSession')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						Submit
+					</button>
+				</div>
+			</form>
+		{% endif %}
 			<div ng-switch-default>
 				You shouldn't be seeing this.
 			</div>
 		</div>
-		<datalist id="categories">
-			<option ng-repeat="cat in vm.categories">{% verbatim %}{{cat}}{% endverbatim %}</option>
-		</datalist>
 	</div>
-	{% endif %}
 
-	<!-- Bootstrap row -->
+{% if coin and coin != 'home' %}
 	<div id="body-row ng-cloak" style="display: flex">
-		<!-- Sidebar -->
-		{% if coin != 'home' %}
 		<div id="sidebar-container" class="pre-scrollable" style="z-index: 10; position: relative; width: 250px">
-			<div ng-switch on="vm.isCustom" class="btn-group w-100" style="white-space: nowrap;">
+			<div class="text-center text-white h5 m-1 text-truncate">
+				{{session}}
+				{% if user.is_authenticated and user.settings.premium %}
+					<button class="btn btn-xs btn-outline-light ml-2 px-1 py-0 shadow-none text-center" data-toggle="tooltip" title="Copy into new session"
+					style="position: absolute; font-size: 0.8em; text-align: center;" ng-click="session.showSession({type:'addSession'});">
+						<i class="fas fa-external-link-alt fa-sm"></i>
+					</button>
+				{% endif %}
+			</div>
+			<div ng-switch on="basic.isCustom" class="btn-group w-100" style="white-space: nowrap;">
 				<input class="form-control block" id="searchBar" style="height: auto" type="text"
 					placeholder="Search...">
 				<div ng-switch-when="true" class="btn-group">
-					<button class="btn btn-danger rounded shadow-none" ng-click="vm.customOff();">&#10005;</button>
-					<button class="btn btn-success rounded shadow-none" ng-click="vm.makeGraph();">&#10003;</button>
+					<button class="btn btn-danger rounded shadow-none" ng-click="prem.customOff();">&#10005;</button>
+					<button class="btn btn-success rounded shadow-none" ng-click="prem.showOverlay({type: 'customGraph'});">&#10003;</button>
 				</div>
 				<div ng-switch-default class="btn-group">
-					<button class="btn btn-info shadow-none" ng-click="vm.customGraph();"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
-							style="width: 24px; height: auto;"><span> Custom
+				{% if user.is_authenticated and user.settings.premium %}	
+					<button class="btn btn-info shadow-none" ng-click="prem.customGraph();"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
+							style="width: 24px; height: auto;"><span class="openup"> Custom
 							Graph</span></button>
-					<button class="btn btn-success shadow-none" ng-click="vm.showOverlay({type:'add'});">
+					{% if session == "Basic Session" %}
+						<button class="btn btn-success shadow-none disabled" disabled="disabled">
+							<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
+								style="width: 24px; height: auto;"><span class="openup" data-toggle="tooltip" title="Cannot add custom addresses to Basic Session"> Add Address</span></button>
+					{% else %}
+						<button class="btn btn-success shadow-none" ng-click="prem.showOverlay({type:'add'});">
+							<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
+								style="width: 24px; height: auto;"><span class="openup"> Add Address</span></button>
+					{% endif %}
+				{% else %}
+					<button class="btn btn-info shadow-none disabled" disabled="disabled"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
+						style="width: 24px; height: auto;"><span class="openup" data-toggle="tooltip" title="Premium required to create custom graphs"> Custom
+						Graph</span></button>
+					<button class="btn btn-success shadow-none disabled" disabled="disabled">
 						<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
-							style="width: 24px; height: auto;"><span> Add Address</span></button>
+							style="width: 24px; height: auto;"><span class="openup" data-toggle="tooltip" title="Premium required to add custom addresses"> Add Address</span></button>
+				{% endif %}
 				</div>
 			</div>
 
-			<div id='accordion' style="margin-bottom: 75px" class="accordion">
-				<div class="text-center" id="spinner" style="display: none">
+			<div id='accordion' style="margin-bottom: 75px" class="accordion shadow">
+				<div class="text-center mt-1" id="spinner" style="display: none;">
 					<div class="spinner-grow text-success" role="status">
 						<span class="sr-only">Loading...</span>
 					</div>
 				</div>
-				<div ng-if="vm.tempAddr.addr.length == 34" class="list-group sticky-top sticky-offset">
-					<div ng-switch on="vm.isCustom" data-addy="{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}">
+				<div ng-if="basic.tempAddr.addr.length == 34" class="list-group sticky-top sticky-offset">
+					<div ng-switch on="basic.isCustom" data-addy="{% verbatim %}{{ basic.tempAddr.addr }}{% endverbatim %}">
 						<div ng-switch-when="true">
 							<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
 								<div class="d-inline-block w-75 justify-content-start align-items-center text-truncate">
 									<span class="menu-collapsed"
-										ng-attr-id="{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}">{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}</span>
+										ng-attr-id="{% verbatim %}{{ basic.tempAddr.addr }}{% endverbatim %}">{% verbatim %}{{ basic.tempAddr.addr }}{% endverbatim %}</span>
 								</div>
 								<div class="custom-control custom-radio custom-control-inline float-right">
 									<input type="checkbox" id="tempRadio" class="custom-control-input"
-										ng-click="vm.toggle('{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}')">
+										ng-click="prem.toggle(basic.tempAddr.addr)">
 									<label class="custom-control-label" for="tempRadio"
 										style='cursor: pointer;'></label>
 								</div>
 							</div>
 						</div>
 						<div ng-switch-default>
-							<a href="{% verbatim %}{{ vm.tempAddr.url }}{% endverbatim %}" target="iframe_a"
+							<a href="{% verbatim %}{{ basic.tempAddr.url }}{% endverbatim %}" target="iframe_a"
 								class="bg-dark list-group-item list-group-item-action text-truncate">
-								{% verbatim %}{{ vm.tempAddr.addr }}{% endverbatim %}
+								{% verbatim %}{{ basic.tempAddr.addr }}{% endverbatim %}
 							</a>
 						</div>
 					</div>
 				</div>
-				<div ng-repeat="category in vm.known">
-					<div class="category" name="{% verbatim %}{{category.category}}{% endverbatim %}">
+				<div ng-repeat="category in basic.known | orderBy:basic.sortGroups">
+					<div class="category shadow" name="{% verbatim %}{{category.name}}{% endverbatim %}">
 						<button class='btn btn-dark btn-group float-right m-1 mr-2 ml-2 shadow-none'
 							style='z-index: 100; height: 42px' data-toggle="collapse"
-							data-target="#{% verbatim %}{{category.category}}{% endverbatim %}" aria-expanded="false"
-							aria-controls="{% verbatim %}{{category.category}}{% endverbatim %}"
+							data-target="#{% verbatim %}{{category.name}}{% endverbatim %}" aria-expanded="false"
+							aria-controls="{% verbatim %}{{category.name}}{% endverbatim %}"
 							ng-disabled="category.addrs.length < 1">
 							<i class="fas fa-caret-down"></i>
 						</button>
-						<div ng-switch on="vm.isCustom" class="ng-cloak text-truncate"
+						<div ng-switch on="basic.isCustom" class="ng-cloak text-truncate"
 							style="overflow: visible !important;"
-							ng-attr-id='{% verbatim %}{{category.category}}{% endverbatim %}_heading'>
+							ng-attr-id='{% verbatim %}{{category.name}}{% endverbatim %}_heading'>
 							<div ng-switch-when="true">
 								<div class="bg-secondary list-group-item list-group-item-action" style="color: white;">
-									{% verbatim %}{{category.category}}{% endverbatim %}
+									{% verbatim %}{{category.name}}{% endverbatim %}
 								</div>
 							</div>
 							<div ng-switch-default>
+							{% if user.is_authenticated and user.settings.premium and session != "Basic Session" %}	
 								<button
 									class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
-									data-toggle="modal" data-target="#overlay" ng-click="vm.showOverlay({type:'editCat',cat:category.category,url:category.url});">
+									data-toggle="modal" data-target="#overlay" ng-click="prem.showOverlay({type:'editCat',cat:category.name, id:category.uuid,url:category.url,filters:category.filters});">
 									<i class="fas fa-edit"></i>
 								</button>
+							{% else %}
+								<!--
+								<button class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'>
+									<span class="fa-layers fa-fw">
+										<i class="fas fa-edit"></i>
+										<i class="fas fa-lock fa-lg" style="opacity: 0.25; color: black"></i>
+									</span>
+								</button>
+								-->
+							{% endif %}
 								<a href="{% verbatim %}{{category.url}}{% endverbatim %}" target="iframe_a"
 									class="bg-secondary list-group-item list-group-item-action" style="color: white;"
-									ng-class="{disabled: category.addrs.length < 1}" ng-click="vm.startLoader()">
-									{% verbatim %}{{category.category}}{% endverbatim %}
+									ng-class="{disabled: category.addrs.length < 1}" ng-click="basic.startLoader()">
+									{% verbatim %}{{category.name}}{% endverbatim %}
 								</a>
 							</div>
 						</div>
 					</div>
-					<div class="collapse" ng-attr-id="{% verbatim %}{{category.category}}{% endverbatim %}"
+					<div class="collapse" ng-attr-id="{% verbatim %}{{category.name}}{% endverbatim %}"
 						data-parent="#accordion">
 						<div class="list-group sticky-top sticky-offset"
-							aria-labelledby="{% verbatim %}{{category.category}}{% endverbatim %}_heading"
-							ng-repeat="x in category.addrs | orderBy:'name'">
-							<div ng-switch on="vm.isCustom" class="addr"
+							aria-labelledby="{% verbatim %}{{category.name}}{% endverbatim %}_heading"
+							ng-repeat="x in category.addrs | orderBy:'name' track by $index">
+							<div ng-switch on="basic.isCustom" class="addr"
 								data-addy="{% verbatim %}{{x.addr}}{% endverbatim %}">
 								<div ng-switch-when="true">
 									<div class="bg-dark list-group-item list-group-item-action" style="height: 50px">
@@ -465,7 +773,7 @@
 										<div class="custom-control custom-radio custom-control-inline float-right">
 											<input type="checkbox"
 												ng-attr-id="customRadioInline{% verbatim %}{{$index}}{% endverbatim %}"
-												class="custom-control-input" ng-click="vm.toggle(x.addr)">
+												class="custom-control-input" ng-click="prem.toggle(x.addr)">
 											<label class="custom-control-label"
 												for="customRadioInline{% verbatim %}{{$index}}{% endverbatim %}"
 												style='cursor: pointer;'></label>
@@ -473,19 +781,21 @@
 									</div>
 								</div>
 								<div ng-switch-default style="white-space: nowrap;">
+								{% if user.is_authenticated and user.settings.premium and session != "Basic Session" %}	
 									<button
 										class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow-none'
-										ng-click="vm.showOverlay({type:'delete',name:x.name,addr:x.addr});">
+										ng-click="prem.showOverlay({type:'delete',name:x.name,addr:x.addr,cat:category.uuid});">
 										<i class="fas fa-trash"></i>
 									</button>
 									<button
 										class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
-										ng-click="vm.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.category,url:x.url});">
+										ng-click="prem.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.name,catId:category.uuid,url:x.url,filters:x.filters});">
 										<i class="fas fa-edit"></i>
 									</button>
+								{% endif %}
 									<a href="{% verbatim %}{{x.url}}{% endverbatim %}" id="addr" target="iframe_a"
 										class="bg-dark list-group-item list-group-item-action"
-										ng-click="vm.startLoader()">
+										ng-click="prem.startLoader()">
 										{% verbatim %}{{x.name}}{% endverbatim %}
 									</a>
 								</div>
@@ -500,14 +810,14 @@
 
 		<div style="position: relative; align-items:center; display: flex;">
 			<div id="dragbar"></div>
-			<a id="dragcircle" href="" class="justify-content-center d-inline-flex text-white"><i
+			<a id="dragcircle" href="" class="justify-content-center d-inline-flex text-white drag"><i
 					class="fas fa-caret-left"></i></a>
 		</div>
 
 		<!-- MAIN -->
 		<div class="col" id="frame" style="flex-grow: 1; z-index: 1;">
 			<iframe id="iframe1" frameborder="0" name="iframe_a" src=""></iframe>
-			<div ng-if="!vm.loaded" style="position: absolute; display: block; left:40%; top:35%; z-index: 10000">
+			<div ng-if="!basic.loaded" style="position: absolute; display: block; left:40%; top:35%; z-index: 10000">
 				<div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status">
 					<span class="sr-only">Loading...</span>
 				</div>
@@ -516,13 +826,58 @@
 			<iframe id="iframe1" frameborder="0" name="iframe_a" src="{{coin}}/search/0"></iframe>
 			-->
 		</div>
-		<!-- Main Col END -->
-		{% else %}
-		<div id="frame">
-			<iframe id="iframe1" class="fixFrame" src="" frameborder="0" width="100%" height="100%"></iframe>
-		</div>
-		{% endif %}
 	</div>
+{% elif not coin %}
+	<div id="iframe1" class="fixFrame text-center">
+
+	</div>
+{% else %}
+		<div id="iframe1" class="fixFrame text-center">
+			<h2>USDT Statistics</h2>
+			<h2>Sessions</h2>
+			<div class="card-group justify-content-center">
+				<a href="basic" style="text-decoration:none">
+					<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
+						<h5 class="card-header">
+							{{basic_session.name}}
+						</h5>
+						<div class="card-body">
+							<h5 class="card-title">Special title treatment</h5>
+							<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+						</div>
+					</div>
+				</a>
+		{% if request.user.is_authenticated and request.user.settings.premium %}
+			{% for session in sessions %}
+				<a href="{{session.url}}" style="text-decoration:none">
+					<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
+						<h5 class="card-header">
+							<button class="btn btn-xs btn-outline-info px-1 py-0 shadow-none text-center"
+							style="font-size: 0.8em;" ng-click="session.showSession({type:'editSession', uuid:'{{session.uuid}}', name:'{{session.name}}'});">
+								<i class="fas fa-edit"></i>
+							</button>
+							<span>{{ session.name }}</span>
+							<button class="btn btn-xs btn-outline-danger px-1 py-0 shadow-none text-center"
+							style="font-size: 0.8em;" ng-click="session.showSession({type:'delSession', uuid:'{{session.uuid}}', name:'{{session.name}}'})">
+								<i class="fas fa-trash"></i>
+							</button>
+						</h5>
+						<div class="card-body">
+							<h5 class="card-title">Special title treatment</h5>
+							<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+						</div>
+					</div>
+				</a>
+			{% endfor %}
+				<a ng-click="session.showSession({type:'addSession'});" style="text-decoration:none;cursor:pointer;">
+					<div class="card m-4 text-white border-dark justify-content-center" style="width: 18rem; height: 12rem;background-color: rgba(0,0,0,0.0);">
+						<i class="far fa-plus-square fa-3x mx-auto" style="z-index: 100; color: black"></i>
+					</div>
+				</a>
+		{% endif %}
+			</div>
+		</div>
+{% endif %}
 	<script src="{% static 'js/index.js' %}"></script>
 </body>
 </html>
