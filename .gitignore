@@ -61,3 +61,4 @@ $RECYCLE.BIN/
 /src/
 /crypto/coin/defaults.py
 /crypto/coin/USDT.json
+crypto/static/py/defaults.py

@@ -27,20 +27,21 @@
 	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 	<link rel="stylesheet" href="{% static 'css/coin.css' %}">
 </head>
-{%if search.totalTxs < 1 %}
-	<div class="h2 text-center mx-auto">{{search.address}}</div>
+{%if totalTxs < 1 %}
+	<div class="h2 text-center mx-auto">{{label}} ({{addr.0}})</div>
 	<div class="h1 text-center">No Transactions</div>
 {% else %}
 	<script>
-		{%if search.addr %}
-			const _addr = {{search.addr | safe}};
+		{%if addr %}
+			const _addr = {{addr | safe}};
 		{% else %}
 			const _addr = null;
 		{% endif %}
-		var totalTxs   = {{search.totalTxs}};
-		const dFilters = {{search.filters | safe}};
+		const totalTxs   = {{totalTxs}};
+		const dFilters = {{filters | safe}};
 		const minTx    = dFilters.minTx;
-		const lastTx   = {{search.lastTx}}; // Change
+		const lastTx   = 1230940800; // Change
+		const session  = "{{session}}";
 		var network;
 		var container;
 		var options, data;
@@ -52,30 +53,37 @@
 <body ng-controller="txsController as vm" class="container-fluid">
 	<div id="body" class="ng-cloak">
 		<div id="name" class="font-weight-bold text-center h1">
-			{% if search.address is not None and search.label == search.address %}
-			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{search.address}}'}, window.location.href.substring(0, window.location.href.indexOf('/search')))" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Add Address">
+			{% if addr|length == 1 and label == addr.0 and session != "Basic Session" and user.is_authenticated and user.settings.premium %}
+			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{addr.0}}'}, window.location.origin)" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Add Address">
 				<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 					style="width: 24px; height: auto;">
 			</button>
 			{% endif %}
-			{{search.label}}
+			{{label}}
 			<button width="30" height="30" onclick="location.reload()" ng-click="vm.startLoader();" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Refresh Page">
 				<i class="fas fa-sync-alt fa-lg"></i>
 			</button>
 		</div>
-		{% if search.label != 'All Addresses' %}
+		{% if names %}
+		<div class="justify-content-center text-center h6">
+			{% for name in names %}
+				<a class="mx-1" href="../addr/{{addr|index:forloop.counter0}}{%verbatim%}{{vm.dURLParams}}{% endverbatim %}">{{name}}</a>
+			{% endfor %}
+		</div>
+		{% endif %}
+		{% if label != 'All Addresses' %}
 		<div class="row justify-content-center" id='info'>
-			{% if search.address is not None %}
+			{% if addr|length == 1 %}
 			<div class="h5">
-				Address:&nbsp <span class="h6">{{search.address}}</span>
-				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.address }}" data-toggle="tooltip" data-placement="top" title="Copy Address">
+				Address:&nbsp <span class="h6">{{addr.0}}</span>
+				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ addr.0 }}" data-toggle="tooltip" data-placement="top" title="Copy Address">
 					<i class="far fa-copy" aria-hidden="true"></i>
 				</button>
 			</div>
 			{% endif %}
 			<div class="px-5 h5">
-				Balance: {{search.balance | numCommas}}
-				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ search.balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
+				Balance: {{balance | floatformat:2 | numCommas}}
+				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
 					<i class="far fa-copy" aria-hidden="true"></i>
 				</button>
 			</div>
@@ -84,7 +92,7 @@
 		<div class="row mx-auto p-1" style="width: 95%" id='filters'>
 			<div class="row mx-auto">
 				<div class="dropdown dropdown-hover mx-2">
-					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					<button class="btn btn-dark dropdown-toggle shadow" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Balance
 					</button>
 					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
@@ -94,7 +102,7 @@
 				</div>
 
 				<div class="dropdown dropdown-hover mx-2" id="time">
-					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					<button class="btn btn-dark dropdown-toggle shadow" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Time
 					</button>
 					<div class="dropdown-menu mt-n1" name="dateTimes" style="min-width: 15vw">
@@ -103,7 +111,7 @@
 					</div>
 				</div> 
 				<div class="dropdown dropdown-hover mx-2">
-					<button class="btn btn-dark dropdown-toggle shadow-none" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					<button class="btn btn-dark dropdown-toggle shadow" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						Transaction Amount
 					</button>
 					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
@@ -112,9 +120,9 @@
 					</div>
 				</div>
 			</div>
-			<div class="btn-group block" style="position: absolute; right: 3.5%;">
+			<div class="btn-group block shadow" style="position: absolute; right: 3.5%;">
 				<button ng-click="vm.setFilters()" class="btn btn-primary block" id="filterBtn">Set Filters</button>
-				<button id="resetBtn" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.loadGraph()" data-toggle="tooltip" data-placement="top" title="Load Graph">
+				<button id="resetBtn" ng-if="vm.tempAddrs.length < 1" ng-disabled="vm.pager.totalItems > 6000 || vm.isGraph" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.loadGraph()" data-toggle="tooltip" data-placement="top" title="Load Graph">
 					<svg height="24" viewBox="-14 0 277 277.50116" width="24">
 						<path
 							d="m194.421875 185.890625c1.742187-.828125 2.851563-2.582031 2.851563-4.511719v-59.960937c0-2.761719-2.238282-5-5-5-2.761719 0-5 2.238281-5 5v56.800781l-58 27.601562v-74.164062l65.132812-31.019531c2.492188-1.183594 3.554688-4.167969 2.367188-6.664063-.40625-.792968-1.023438-1.464844-1.785157-1.933594-.160156-.183593-.359375-.332031-.582031-.429687l-68-32.375c-1.359375-.648437-2.941406-.648437-4.300781 0l-68 32.375c-.0625.035156-.089844.082031-.152344.113281-.121094.0625-.25.101563-.367187.171875-1.449219.917969-2.328126 2.511719-2.328126 4.226563v85.253906c0 1.925781 1.109376 3.683594 2.847657 4.511719l68 32.375c1.320312.648437 2.863281.648437 4.183593 0h.117188zm-133.121094-81.847656 20.945313 9.972656c2.488281 1.164063 5.449218.101563 6.632812-2.378906 1.179688-2.480469.136719-5.449219-2.332031-6.648438l-18.617187-8.867187 56.359374-26.835938 56.355469 26.835938-56.355469 26.839844-17.527343-8.347657c-2.488281-1.164062-5.449219-.097656-6.632813 2.378907-1.179687 2.480468-.140625 5.449218 2.332032 6.652343l16.832031 8v74.1875l-58-27.601562zm0 0" fill="#9a9ca0"/>
@@ -124,12 +132,15 @@
 							d="m103.722656 232.351562c-1.214844-1.320312-3.039062-1.886718-4.785156-1.492187s-3.148438 1.695313-3.675781 3.40625c-.527344 1.714844-.09375 3.578125 1.128906 4.886719l11.457031 12.347656c-54.808594-8.09375-95.921875-54.324219-97.566406-109.699219-1.640625-55.378906 36.664062-103.960937 90.894531-115.285156 2.707031-.5625 4.441407-3.210937 3.878907-5.914063-.5625-2.703124-3.210938-4.441406-5.914063-3.878906-58.664063 12.261719-100.230469 64.632813-98.859375 124.550782 1.375 59.914062 45.296875 110.324218 104.460938 119.890624l-12.492188 6.96875c-2.410156 1.347657-3.273438 4.394532-1.929688 6.804688 1.347657 2.414062 4.394532 3.277344 6.804688 1.929688l26-14.507813c1.339844-.75 2.261719-2.070313 2.5-3.585937.238281-1.511719-.230469-3.054688-1.269531-4.179688zm0 0" fill="#9a9ca0"/>
 					</svg>
 				</button>
+				<button id="resetBtn" ng-if="vm.tempAddrs.length > 0" type="button" class="btn btn-dark dropdown-toggle-split popout" ng-click="vm.openAsCustom()" data-toggle="tooltip" data-placement="top" title="Open as Custom Graph">
+					<i class="fas fa-external-link-alt"></i>
+				</button>
 			</div>
 		</div>
 		<div class="row mx-auto w-75">
-			{% for f, val in search.filters.items %}
-				{% if val|isNum and search.dFilters|dict_key:f != val %}
-					<button class="btn badge badge-pill badge-danger mx-2 mb-2 shadow-none" name="{{f}}" data-value="{{f|getDefault}}" ng-click="vm.removeFilter($event)">
+			{% for f, val in filters.items %}
+				{% if val|isNum and dFilters|dict_key:f != val %}
+					<button class="btn badge badge-pill badge-danger mx-2 mb-2 shadow" name="{{f}}" data-value="{{f|getDefault}}" ng-click="vm.removeFilter($event)">
 						{% if f|contains:"time" %}
 							<span class="font-weight-lighter" ng-init-time callback-fn="vm.formatTime(time)" data-unix="{{val}}" data-name="{{f|filterName}}"></span>
 						{% else %}
@@ -143,21 +154,26 @@
 			{% endfor %}
 		</div>
 		<div class="row mx-auto text-center" id='graphContainer'>
-			<div id="graph">
+			<div id="graph" class="shadow-lg">
 				<div style="margin-top: 35vh;color: grey; mix-blend-mode: difference">
-					Large Graph! Site May Lag While Loading! <br>
-					Press
-					<button id="resetBtn" type="button" class="btn btn-dark dropdown-toggle-split" ng-click="vm.loadGraph()" data-toggle="tooltip" data-placement="top" title="Load Graph">
-						<svg height="24" viewBox="-14 0 277 277.50116" width="24">
-							<path
-								d="m194.421875 185.890625c1.742187-.828125 2.851563-2.582031 2.851563-4.511719v-59.960937c0-2.761719-2.238282-5-5-5-2.761719 0-5 2.238281-5 5v56.800781l-58 27.601562v-74.164062l65.132812-31.019531c2.492188-1.183594 3.554688-4.167969 2.367188-6.664063-.40625-.792968-1.023438-1.464844-1.785157-1.933594-.160156-.183593-.359375-.332031-.582031-.429687l-68-32.375c-1.359375-.648437-2.941406-.648437-4.300781 0l-68 32.375c-.0625.035156-.089844.082031-.152344.113281-.121094.0625-.25.101563-.367187.171875-1.449219.917969-2.328126 2.511719-2.328126 4.226563v85.253906c0 1.925781 1.109376 3.683594 2.847657 4.511719l68 32.375c1.320312.648437 2.863281.648437 4.183593 0h.117188zm-133.121094-81.847656 20.945313 9.972656c2.488281 1.164063 5.449218.101563 6.632812-2.378906 1.179688-2.480469.136719-5.449219-2.332031-6.648438l-18.617187-8.867187 56.359374-26.835938 56.355469 26.835938-56.355469 26.839844-17.527343-8.347657c-2.488281-1.164062-5.449219-.097656-6.632813 2.378907-1.179687 2.480468-.140625 5.449218 2.332032 6.652343l16.832031 8v74.1875l-58-27.601562zm0 0" fill="#9a9ca0"/>
-							<path
-								d="m143.855469 16.332031 12.46875-6.964843c2.414062-1.347657 3.277343-4.394532 1.929687-6.804688-1.347656-2.410156-4.394531-3.273438-6.804687-1.929688l-26 14.511719c-1.339844.746094-2.257813 2.066407-2.5 3.582031-.238281 1.515626.230469 3.054688 1.273437 4.179688l20.640625 22.246094c1.199219 1.359375 3.046875 1.960937 4.820313 1.570312 1.773437-.386718 3.195312-1.707031 3.714844-3.449218.523437-1.738282.058593-3.621094-1.207032-4.921876l-11.457031-12.359374c54.632813 8.082031 95.675781 54.066406 97.519531 109.261718 1.847656 55.199219-36.03125 103.824219-90.003906 115.535156-2.5.539063-4.191406 2.875-3.917969 5.417969.269531 2.542969 2.414063 4.472657 4.96875 4.472657.355469 0 .710938-.039063 1.0625-.117188 58.394531-12.664062 99.523438-65.082031 97.933594-124.816406-1.59375-59.734375-45.449219-109.886719-104.4375-119.425782zm0 0" fill="#9a9ca0"/>
-							<path
-								d="m103.722656 232.351562c-1.214844-1.320312-3.039062-1.886718-4.785156-1.492187s-3.148438 1.695313-3.675781 3.40625c-.527344 1.714844-.09375 3.578125 1.128906 4.886719l11.457031 12.347656c-54.808594-8.09375-95.921875-54.324219-97.566406-109.699219-1.640625-55.378906 36.664062-103.960937 90.894531-115.285156 2.707031-.5625 4.441407-3.210937 3.878907-5.914063-.5625-2.703124-3.210938-4.441406-5.914063-3.878906-58.664063 12.261719-100.230469 64.632813-98.859375 124.550782 1.375 59.914062 45.296875 110.324218 104.460938 119.890624l-12.492188 6.96875c-2.410156 1.347657-3.273438 4.394532-1.929688 6.804688 1.347657 2.414062 4.394532 3.277344 6.804688 1.929688l26-14.507813c1.339844-.75 2.261719-2.070313 2.5-3.585937.238281-1.511719-.230469-3.054688-1.269531-4.179688zm0 0" fill="#9a9ca0"/>
-						</svg>
-					</button>
-					to Load Graph
+					<div ng-if="vm.pager.totalItems < 6000">
+						Large Graph! Site May Lag While Loading! <br>
+						Press
+						<button id="resetBtn" type="button" class="btn btn-icon" style="background:rgba(0, 0, 0, 0)" ng-click="vm.loadGraph()">
+							<svg height="28" viewBox="-14 0 277 277.50116" width="28">
+								<path
+									d="m194.421875 185.890625c1.742187-.828125 2.851563-2.582031 2.851563-4.511719v-59.960937c0-2.761719-2.238282-5-5-5-2.761719 0-5 2.238281-5 5v56.800781l-58 27.601562v-74.164062l65.132812-31.019531c2.492188-1.183594 3.554688-4.167969 2.367188-6.664063-.40625-.792968-1.023438-1.464844-1.785157-1.933594-.160156-.183593-.359375-.332031-.582031-.429687l-68-32.375c-1.359375-.648437-2.941406-.648437-4.300781 0l-68 32.375c-.0625.035156-.089844.082031-.152344.113281-.121094.0625-.25.101563-.367187.171875-1.449219.917969-2.328126 2.511719-2.328126 4.226563v85.253906c0 1.925781 1.109376 3.683594 2.847657 4.511719l68 32.375c1.320312.648437 2.863281.648437 4.183593 0h.117188zm-133.121094-81.847656 20.945313 9.972656c2.488281 1.164063 5.449218.101563 6.632812-2.378906 1.179688-2.480469.136719-5.449219-2.332031-6.648438l-18.617187-8.867187 56.359374-26.835938 56.355469 26.835938-56.355469 26.839844-17.527343-8.347657c-2.488281-1.164062-5.449219-.097656-6.632813 2.378907-1.179687 2.480468-.140625 5.449218 2.332032 6.652343l16.832031 8v74.1875l-58-27.601562zm0 0" fill="#9a9ca0"/>
+								<path
+									d="m143.855469 16.332031 12.46875-6.964843c2.414062-1.347657 3.277343-4.394532 1.929687-6.804688-1.347656-2.410156-4.394531-3.273438-6.804687-1.929688l-26 14.511719c-1.339844.746094-2.257813 2.066407-2.5 3.582031-.238281 1.515626.230469 3.054688 1.273437 4.179688l20.640625 22.246094c1.199219 1.359375 3.046875 1.960937 4.820313 1.570312 1.773437-.386718 3.195312-1.707031 3.714844-3.449218.523437-1.738282.058593-3.621094-1.207032-4.921876l-11.457031-12.359374c54.632813 8.082031 95.675781 54.066406 97.519531 109.261718 1.847656 55.199219-36.03125 103.824219-90.003906 115.535156-2.5.539063-4.191406 2.875-3.917969 5.417969.269531 2.542969 2.414063 4.472657 4.96875 4.472657.355469 0 .710938-.039063 1.0625-.117188 58.394531-12.664062 99.523438-65.082031 97.933594-124.816406-1.59375-59.734375-45.449219-109.886719-104.4375-119.425782zm0 0" fill="#9a9ca0"/>
+								<path
+									d="m103.722656 232.351562c-1.214844-1.320312-3.039062-1.886718-4.785156-1.492187s-3.148438 1.695313-3.675781 3.40625c-.527344 1.714844-.09375 3.578125 1.128906 4.886719l11.457031 12.347656c-54.808594-8.09375-95.921875-54.324219-97.566406-109.699219-1.640625-55.378906 36.664062-103.960937 90.894531-115.285156 2.707031-.5625 4.441407-3.210937 3.878907-5.914063-.5625-2.703124-3.210938-4.441406-5.914063-3.878906-58.664063 12.261719-100.230469 64.632813-98.859375 124.550782 1.375 59.914062 45.296875 110.324218 104.460938 119.890624l-12.492188 6.96875c-2.410156 1.347657-3.273438 4.394532-1.929688 6.804688 1.347657 2.414062 4.394532 3.277344 6.804688 1.929688l26-14.507813c1.339844-.75 2.261719-2.070313 2.5-3.585937.238281-1.511719-.230469-3.054688-1.269531-4.179688zm0 0" fill="#9a9ca0"/>
+							</svg>
+						</button>
+						to Load Graph
+					</div>
+					<div ng-if="vm.pager.totalItems > 6000">
+						Too Large of Graph! Narrow Search! <br>
+					</div>
 				</div>
 			</div>
 			<div id="loadingBar">
@@ -170,14 +186,14 @@
 			</div>
 			<div style="position: absolute; left: 97.5%">
 				<div>
-					<button ng-disabled="!vm.isGraph" ngsf-toggle-fullscreen width="16px" height="16px" class="btn position-relative btn-sm" onclick="fullGraph()" data-toggle="tooltip" data-placement="top" title="Fullscreen Graph">
+					<button ng-disabled="!vm.isGraph" ngsf-toggle-fullscreen width="16px" height="16px" class="btn position-relative btn-sm shadow-none" onclick="fullGraph()" data-toggle="tooltip" data-placement="top" title="Fullscreen Graph">
 						<svg width="16px" height="16px" viewBox="0 0 438.543 438.543">
 							<path d="M407.42,159.029c3.62,3.616,7.898,5.428,12.847,5.428c2.282,0,4.668-0.476,7.139-1.429   c7.426-3.235,11.136-8.853,11.136-16.846V18.276c0-4.949-1.807-9.231-5.428-12.847c-3.61-3.617-7.898-5.424-12.847-5.424H292.36   c-7.991,0-13.607,3.805-16.848,11.419c-3.23,7.423-1.902,13.99,4,19.698l41.111,41.112L219.271,173.589L117.917,72.231   l41.112-41.112c5.901-5.708,7.232-12.275,3.999-19.698C159.789,3.807,154.175,0,146.182,0H18.276C13.324,0,9.041,1.809,5.425,5.426   c-3.617,3.616-5.424,7.898-5.424,12.847v127.907c0,7.996,3.809,13.61,11.419,16.846c2.285,0.948,4.57,1.429,6.855,1.429   c4.948,0,9.229-1.812,12.847-5.427l41.112-41.109l101.354,101.354L72.234,320.622l-41.112-41.113   c-5.711-5.903-12.275-7.231-19.702-4.001c-7.614,3.241-11.419,8.856-11.419,16.854v127.906c0,4.948,1.807,9.229,5.424,12.847   c3.619,3.614,7.902,5.421,12.851,5.421h127.906c7.996,0,13.61-3.806,16.846-11.416c3.234-7.427,1.903-13.99-3.999-19.705   l-41.112-41.106L219.271,264.95l101.353,101.361l-41.114,41.11c-5.899,5.708-7.228,12.279-3.997,19.698   c3.237,7.617,8.856,11.423,16.851,11.423h127.907c4.948,0,9.232-1.813,12.847-5.428c3.613-3.613,5.42-7.898,5.42-12.847V292.362   c0-7.994-3.709-13.613-11.136-16.851c-7.802-3.23-14.462-1.903-19.985,4.004l-41.106,41.106L264.952,219.271L366.31,117.917   L407.42,159.029z"/>
 						</svg>
 					</button>
 				</div>
 				<div class="row mx-auto">
-					<button ng-disabled="!vm.isGraph" width="16px" height="16px" class="btn position-absolute btn-sm" onclick="toggleDarkMode()" data-toggle="tooltip" data-placement="top" title="Toggle Graph Dark Mode">
+					<button ng-disabled="!vm.isGraph" width="16px" height="16px" class="btn position-absolute btn-sm shadow-none" onclick="toggleDarkMode()" data-toggle="tooltip" data-placement="top" title="Toggle Graph Dark Mode">
 						<svg width="16px" height="16px" viewBox="-12 0 448 448.04455">
 							<path d="m224.023438 448.03125c85.714843.902344 164.011718-48.488281 200.117187-126.230469-22.722656 9.914063-47.332031 14.769531-72.117187 14.230469-97.15625-.109375-175.890626-78.84375-176-176 .972656-65.71875 37.234374-125.832031 94.910156-157.351562-15.554688-1.980469-31.230469-2.867188-46.910156-2.648438-123.714844 0-224.0000005 100.289062-224.0000005 224 0 123.714844 100.2851565 224 224.0000005 224zm0 0"/>
 						</svg>
@@ -239,23 +255,23 @@
 			<div class="h5 text-center block">
 				<div ng-switch="vm.pager.totalItems">
 					<div ng-switch-when="1">
-						{% verbatim %}{{ vm.pager.totalItems }}{% endverbatim %} Transaction
+						{% verbatim %}{{ vm.pager.totalItems | number : fractionSize }}{% endverbatim %} Transaction
 					</div>
 					<div ng-switch-default> 
-						{% verbatim %}{{ vm.pager.totalItems }}{% endverbatim %} Transactions
+						{% verbatim %}{{ vm.pager.totalItems | number : fractionSize }}{% endverbatim %} Transactions
 					</div>
 				</div>
 				<div ng-switch="vm.pager.totalPages">
 					<div ng-switch-when="1">
-						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages }}{% endverbatim %} Page)</span>
+						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages | number : fractionSize }}{% endverbatim %} Page)</span>
 					</div>
 					<div ng-switch-default>
-						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages }}{% endverbatim %} Pages)</span>
+						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages | number : fractionSize }}{% endverbatim %} Pages)</span>
 					</div>
 				</div>
 			</div>
 			<div class="px-5">
-				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect">
+				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect shadow">
 					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(1)" class="page-link">First</a>
 					</li>
@@ -263,7 +279,7 @@
 						<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
 					</li>
 					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled: vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page}}{% endverbatim %}</a>
+						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page | number : fractionSize}}{% endverbatim %}</a>
 					</li>                
 					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
@@ -291,7 +307,7 @@
 				</div>
 			</div>
 			<div ng-switch-default class="list-group" id="txList" style="position: relative">
-				<div ng-repeat="tx in vm.txs" class="list-group-item mx-auto" style="width: 90%;">
+				<div ng-repeat="tx in vm.txs" class="list-group-item mx-auto shadow-lg" style="width: 90%;">
 					<div class="row align-items-start" style="padding-bottom: 1vh;">
 						<div class="col-sm-1">
 							<img ng-src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
@@ -353,7 +369,7 @@
 		</div>
 		<div class="row mx-auto justify-content-center mt-3">
 			<div>
-				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect">
+				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect shadow">
 					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(1)" class="page-link">First</a>
 					</li>
@@ -361,7 +377,7 @@
 						<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
 					</li>
 					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled:vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page}}{% endverbatim %}</a>
+						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page | number : fractionSize}}{% endverbatim %}</a>
 					</li>                
 					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
 						<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
@@ -429,6 +445,18 @@
 		}
 
 		$('.dropdown-menu').on('click', e => {
+			if ($(e.target).attr("class").includes("select")) {
+				$(e.target).on('change', e => {
+					if ($("#time").hasClass("show")) {
+						setTimeout(function() {
+							if (!$("#time").hasClass("show")) {
+								$("#time .dropdown-toggle").dropdown('toggle');
+							}
+						}, 50);
+					}
+					$(e.target).off('change');
+				})
+			}
 			e.stopPropagation();
 		});
 

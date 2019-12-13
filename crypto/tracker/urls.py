@@ -22,7 +22,10 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('', views.home, name="home"),
     path('admin/', admin.site.urls),
-    path('usdt', views.usdt_home, name="usdt"),
-    path('btc', views.btc_home, name="btc"),
     path('<str:coin>/', include('coin.urls')),
+    path('signup', views.signup, name="signup"),
+    path('signin', views.signin, name="signin"),
+    path('signout', views.signout, name="signout"),
+    path('isUniqEmail', views.isUniqEmail, name="isUniqEmail"),
+    path('isUniqUser', views.isUniqUserName, name="isUniqUserName"),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

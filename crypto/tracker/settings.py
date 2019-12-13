@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'compressor',
+    'tracker',
     'coin'
 ]
 
@@ -49,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'custom_anonymous.middleware.AuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'tracker.urls'
@@ -104,6 +106,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_PROFILE_MODULE = 'tracker.Profile'
+AUTH_ANONYMOUS_MODEL = 'tracker.models.AnonymousUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
