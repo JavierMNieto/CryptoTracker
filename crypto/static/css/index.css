@@ -24,6 +24,12 @@ body {
 	display: none;
 }
 
+.alert {
+	position: absolute;
+	top: 0;
+	z-index: 10000;
+}
+
 .fixFrame {
 	margin-top: 56px !important;
 	overflow: auto;

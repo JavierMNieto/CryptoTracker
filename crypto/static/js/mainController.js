@@ -54,6 +54,11 @@ function mainController($scope) {
 				val: '',
 				valid: false,
 				reason: 'Must contain 5 or more characters!'
+			},
+			confirmPass: {
+				val: '',
+				valid: false,
+				reason: 'Passwords do not match!'
 			}
 		};
 
@@ -140,6 +145,20 @@ function mainController($scope) {
 		main.acctInput.pass.valid = valid;
 	}
 
+	main.checkConfirmPass = function() {
+		$('.tooltip').remove();
+
+		main.acctInput.confirmPass.valid = main.acctInput.confirmPass.val == main.acctInput.pass.val;
+	}
+
+	main.forgotPassword = function() {
+		$("#userInfo").slideUp("fast", () => {
+			//$("#forgotPassword").slideDown("fast", () => {
+				//$("#signInBtn").attr("ng-click", "main.passwordEmail('main.acctInput.user.val')").text("Send Email");
+			//});
+		});
+	}
+
 	// REVIEW
 	main.submit = function(type) {
 		return new Promise(async resolve => {
@@ -157,8 +176,13 @@ function mainController($scope) {
 			console.log(resp);
 	
 			if (resp.toLowerCase() == "success" && type.includes("sign")) {
-				location.reload();
-			} else if (resp.toLowerCase() == "error") {
+				if (type == "signUp") {
+					$('#overlay').modal('hide');
+					$("body").prepend('<div class="alert alert-warning alert-dismissible fade show" role="alert">Please confirm your email address to complete the registration.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
+				} else {
+					location.reload();	
+				}
+			} else if (resp.toLowerCase().includes("error")) {
 				$("#overlay").prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error!</strong> You should check in on some of those fields below.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
 			}
 			

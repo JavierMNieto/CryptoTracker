@@ -8,8 +8,10 @@ import pprint
 import json
 import math
 import time
+import datetime
 import sys
 import ccxt
+import re
 import requests
 from .models import Coin
 from urllib.parse import unquote
@@ -189,7 +191,7 @@ def editSession(request, coin=None):
     return JsonResponse("ERROR", safe=False)
 
 """
-    TODO: Better Filter Efficiency by only adding custom filters instead of removing defaults
+    TODO: Better Filter Efficiency by only adding custom filters instead of replacing defaults
 """
 def getFilters(reqData):
     filters = DFilters()
@@ -205,6 +207,29 @@ def getFilters(reqData):
 
             filters[f] = temp
     return filters
+
+conversionToHours = {
+    "second": 1/3600,
+    "minute": 1/60,
+    "hour": 1,
+    "day": 24,
+    "week": 7*24,
+    "month": 30*24,
+    "year": 365*24
+}
+
+def convertToHours(amt, time):
+    for t, val in conversionToHours.items():
+        if t in time:
+            return amt*val
+    
+    return 0
+
+def parseTimeRange(range):
+    amt = int(re.search(r'\d+', range).group())
+    hours = convertToHours(amt, range.lower())
+
+    return time.time() - datetime.timedelta(hours=hours).total_seconds()
 
 def getParams(reqData):
     params = DParams()

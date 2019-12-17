@@ -39,6 +39,22 @@
 {% endif %}
 </head>
 
+{% if confirmation is not None %}
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		{{confirmation}}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% elif rejection is not None %}
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		{{rejection}}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
 <body ng-controller="mainController as main" session-controller basic-controller prem-controller>
 	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top shadow-lg" style="z-index: 100;">
 		<div class="navbar-header">
@@ -65,7 +81,7 @@
 			{% if user.is_authenticated %}
 				<div class="row text-center">
 					<span class="h5 mx-2">{{ user.username }}</span>
-					<form id="signOut" action="/signout">
+					<form id="signOut" action="{% url 'signOut' %}">
 						{% csrf_token %}
 						<button ng-click="main.submit('signOut');" class="btn btn-sm btn-danger shadow mx-2" type="submit">Log Out</button>
 					</form>
@@ -77,7 +93,7 @@
 				</div>
 			{% endif %}
 		</div>
-	</nav>
+	</nav>	
 
 	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" aria-hidden="true">
 		<div ng-switch on="main.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': main.overlay.type == 'delete' || main.overlay.type.indexOf('Session') > 0}" role="document">
@@ -438,7 +454,7 @@
 			</datalist>
 		{% endif %}
 		{% if not user.is_authenticated %}
-			<form id="signUp" method="post" action="/signup" ng-switch-when="signUp" class="modal-content bg-dark">
+			<form id="signUp" method="post" action="{% url 'signUp' %}" ng-switch-when="signUp" class="modal-content bg-dark">
 				{% csrf_token %}
 				{{ form.as_p }}
 				<div class="modal-header text-light">
@@ -492,18 +508,31 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
+					<input autocomplete="off" type="password" name="confirmPass" placeholder="Confirm Password" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="main.acctInput.confirmPass.valid === null" ng-change="main.checkConfirmPass()"
+						ng-model="main.acctInput.confirmPass.val">
+					<div style="position: absolute; top: 9.0rem; right: 8.5rem;" ng-switch
+						on="main.acctInput.confirmPass.valid">
+						<div ng-switch-when="true">
+							<i class="far fa-check-circle fa-sm text-success"></i>
+						</div>
+						<div ng-switch-default ng-title="main.acctInput.confirmPass.reason">
+							<i class="far fa-times-circle fa-sm text-danger"></i>
+						</div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<button type="button" class="btn btn-success"
-						ng-disabled="(!main.acctInput.user.valid || !main.acctInput.email.valid || !main.acctInput.pass.valid)"
+						ng-disabled="(!main.acctInput.user.valid || !main.acctInput.email.valid || !main.acctInput.pass.valid || !main.acctInput.confirmPass.valid)"
 						ng-click="main.submit('signUp')">
 						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Sign Up
 					</button>
 				</div>
 			</form>
-			<form id="signIn" method="post" action="/signin" ng-switch-when="signIn" class="modal-content bg-dark">
+			<form id="signIn" method="post" action="{% url 'signIn' %}" ng-switch-when="signIn" class="modal-content bg-dark">
 				{% csrf_token %}
 				<div class="modal-header text-light">
 					<h5 class="modal-title">Sign In</h5>
@@ -518,13 +547,34 @@
 					<input autocomplete="off" type="password" name="pass" placeholder="Password" ngTrim="true"
 						class="shadow form-control w-50 mx-auto my-1 text-center"
 						ng-model="main.acctInput.pass.val">
-					<a class="btn btn-dark shadow-lg mt-2 text-center text-white" style="cursor: pointer">Forgot Password?</a>
+					<button class="btn btn-dark shadow-lg mt-2 text-center text-white" style="cursor: pointer" ng-click="main.showAcct('forgotPass')">Forgot Password?</button>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<button type="button" class="btn btn-success" ng-click="main.submit('signIn')">
 						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
 						Sign In
+					</button>
+				</div>
+			</form>
+			<form id="forgotPass" method="post" action="{% url 'forgotPass' %}" ng-switch-when="forgotPass" class="modal-content bg-dark">
+				{% csrf_token %}
+				<div class="modal-header text-light">
+					<h5 class="modal-title">Reset Password</h5>
+					<button type="button" class="close btn shadow-none" data-dismiss="modal" aria-label="Close">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body shadow-lg text-center">
+					<input autocomplete="off" type="text" name="email" placeholder="Email" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-model="main.acctInput.email.val">
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-success" ng-click="main.submit('forgotPass')">
+						<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+						Send Email
 					</button>
 				</div>
 			</form>
@@ -640,7 +690,48 @@
 		</div>
 	</div>
 
-{% if coin and coin != 'home' %}
+{% if 'passchange' in request.path %}
+	<div id="iframe1" class="jumbotron d-flex align-items-center h-100">
+		<form id="changePass" method="post" action="{{request.path}}" class="container mx-auto w-25">
+			{% csrf_token %}
+			<div class="modal-header text-dark">
+				<h5 class="modal-title mx-auto">Change Password</h5>
+			</div>
+			<div class="form-group text-center">
+				<input autocomplete="off" type="password" name="pass" placeholder="Password" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="main.acctInput.pass.valid === null" ng-change="main.checkPass()"
+						ng-model="main.acctInput.pass.val">
+				<div style="position: absolute; top: 6.45rem; right: 8.5rem;" ng-switch
+					on="main.acctInput.pass.valid">
+					<div ng-switch-when="true">
+						<i class="far fa-check-circle fa-sm text-success"></i>
+					</div>
+					<div ng-switch-default ng-title="main.acctInput.pass.reason">
+						<i class="far fa-times-circle fa-sm text-danger"></i>
+					</div>
+				</div>
+				<input autocomplete="off" type="password" name="confirmPass" placeholder="Confirm Password" ngTrim="true"
+						class="shadow form-control w-50 mx-auto my-1 text-center"
+						ng-readonly="main.acctInput.confirmPass.valid === null" ng-change="main.checkConfirmPass()"
+						ng-model="main.acctInput.confirmPass.val">
+				<div style="position: absolute; top: 9.0rem; right: 8.5rem;" ng-switch
+					on="main.acctInput.confirmPass.valid">
+					<div ng-switch-when="true">
+						<i class="far fa-check-circle fa-sm text-success"></i>
+					</div>
+					<div ng-switch-default ng-title="main.acctInput.confirmPass.reason">
+						<i class="far fa-times-circle fa-sm text-danger"></i>
+					</div>
+				</div>
+			</div>
+			<button type="submit" class="btn btn-success float-right">
+				<div ng-if="main.formState == 'load'" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+				Confirm
+			</button>
+		</form>
+	</div>
+{% elif coin and coin != 'home' %}
 	<div id="body-row ng-cloak" style="display: flex">
 		<div id="sidebar-container" class="pre-scrollable" style="z-index: 10; position: relative; width: 250px">
 			<div class="text-center text-white h5 m-1 text-truncate">
