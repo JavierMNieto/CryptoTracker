@@ -187,7 +187,7 @@ class Group(models.Model):
 
         for node in self.nodes.all():
             addrs.append(node.getAsDict())
-        
+
         return {
             "name": self.name,
             "url": self.getUrl(),

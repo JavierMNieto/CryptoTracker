@@ -13,6 +13,7 @@ import sys
 import ccxt
 import re
 import requests
+import traceback
 from .models import Coin
 from urllib.parse import unquote
 from pyvis.network import Network
@@ -56,7 +57,7 @@ def add(reqData, session):
     except Http404 as e:
         group = session.addGroup(group)
     
-    return group.addNode(reqData.get("name", ""), reqData.get("addr", ""), getFilters(reqData))
+    return group.addNode(reqData.get("name", ""), reqData.get("addr", ""), getFilters(reqData, format=False))
 
 def delete(reqData, session):
     group = session.getGroup(reqData.get("prevCat", ""))
@@ -74,7 +75,7 @@ def editCat(reqData, session):
     if group.name != reqData.get("newCat", ""):
         group.setName(reqData.get("newCat", ""))
 
-    group.setFilters(getFilters(reqData),)
+    group.setFilters(getFilters(reqData, format=False),)
 
     return "Success"
 
@@ -97,7 +98,7 @@ def change(request, coin=None, session_id=None):
         if method in methods:
             resp = methods[method](request.POST, request.user.getCoin(coin).getSession(session_id))
     except Exception as e:
-        print(e)
+        traceback.print_exc(e)
 
     return JsonResponse(resp, safe=False)
 
@@ -193,7 +194,7 @@ def editSession(request, coin=None):
 """
     TODO: Better Filter Efficiency by only adding custom filters instead of replacing defaults
 """
-def getFilters(reqData):
+def getFilters(reqData, format=True):
     filters = DFilters()
     for f, val in filters.items():
         temp = reqData.get(f)
@@ -206,8 +207,13 @@ def getFilters(reqData):
                     continue
 
             filters[f] = temp
+    
+    if format:
+        return Filters(filters).getRawFilters()
+
     return filters
 
+"""
 conversionToHours = {
     "second": 1/3600,
     "minute": 1/60,
@@ -229,7 +235,8 @@ def parseTimeRange(range):
     amt = int(re.search(r'\d+', range).group())
     hours = convertToHours(amt, range.lower())
 
-    return time.time() - datetime.timedelta(hours=hours).total_seconds()
+    return -datetime.timedelta(hours=hours).total_seconds()
+"""
 
 def getParams(reqData):
     params = DParams()

@@ -44,8 +44,6 @@ function txs(PagerService, $scope) {
 	vm.graphFilters.minTime = "";
 	vm.graphFilters.maxTime = "";
 
-	vm.dURLParams = formatFilters(vm.graphFilters, "").replace("&", "?");
-
 	$(function () {
 		$('[data-toggle="tooltip"]').tooltip({
 			trigger: 'hover'
@@ -78,16 +76,16 @@ function txs(PagerService, $scope) {
 			}
 		});
 
-		if (dFilters['minTime'] != "oldest") {
+		if (dFilters.minTime != "oldest") {
 			vm.graphFilters.minTime = moment.unix(dFilters['minTime']).format(dateFormat);
 		} else {
-			vm.graphFilters['minTime'] = "oldest";
+			vm.graphFilters.minTime = "oldest";
 		}
 
-		if (dFilters['maxTime'] != "latest") {
+		if (dFilters.maxTime != "latest") {
 			vm.graphFilters.maxTime = moment.unix(dFilters['maxTime']).format(dateFormat);
 		} else {
-			vm.graphFilters['maxTime'] = "latest";
+			vm.graphFilters.maxTime = "latest";
 		}
 
 		$('input[name="minTime"]').on('apply.daterangepicker', function (ev, picker) {
@@ -107,10 +105,14 @@ function txs(PagerService, $scope) {
 		});
 
 		for (let filter in vm.graphFilters) {
-			if (!isNaN(vm.graphFilters[filter])) {
+			if (!filter.includes("Time") && !isNaN(vm.graphFilters[filter])) {
 				vm.graphFilters[filter] = numberWithCommas(vm.graphFilters[filter]);
 			}
 		}
+
+		vm.dURLParams = formatFilters(vm.graphFilters, "").replace("&", "?");
+
+		vm.setPage(1);
 	});
 
 	function setTime(f, time) {
@@ -240,7 +242,8 @@ function txs(PagerService, $scope) {
 			}
 
 			var val = filters[filter].toString().replace(/,/g, "");
-			if (filter.toLowerCase().includes('time') && isNaN(val)) {
+			if (filter.includes('Time') && isNaN(val)) {
+				
 				val = moment(val, dateFormat).valueOf() / 1000;
 				if (isNaN(val)) {
 					if (filter.includes("min")) {
@@ -523,9 +526,6 @@ function txs(PagerService, $scope) {
 	if (totalTxs < 500) {
 		vm.loadGraph();
 	}
-
-
-	vm.setPage(1);
 
 	setInterval(function () {
 		vm.savedTxs = {};

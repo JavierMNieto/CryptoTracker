@@ -18,6 +18,7 @@ class CoinController:
     
     def runFilters(self, query, filters=Filters.dFilters):
         query = self.cleanQuery(query, filters)
+        print(query)
         return self.driver.session().run(query, minBal=filters['minBal'], maxBal=filters['maxBal'], minTx=filters['minTx'], maxTx=filters['maxTx'],
                                         minTime=filters['minTime'], maxTime=filters['maxTime'], minTotal=filters['minTotal'], maxTotal=filters['maxTotal'],
                                         minTxsNum=filters['minTxsNum'], maxTxsNum=filters['maxTxsNum'], minAvg=filters['minAvg'], maxAvg=filters['maxAvg'])
@@ -366,7 +367,7 @@ class CoinController:
 
             addrsText += string
 
-        return "{}".format(addrsText)
+        return "({})".format(addrsText)
 
     def isValidAddr(self, coin, addr):
         if len(addr) == 34 and ' ' not in addr and re.match(r'^[A-Za-z0-9]*$', addr):

@@ -74,6 +74,7 @@ function premController($scope) {
 				timePicker: true,
 				showDropdowns: true,
 				autoUpdateInput: false,
+				drops: "up",
 				opens: "center",
 				parentEl: "#overlay",
 				minDate: moment.unix(dFilters.minTime).format(dateFormat),
@@ -117,8 +118,23 @@ function premController($scope) {
 			if (obj.filters) {
 				for (f in dFilters) {
 					if (obj.filters[f] && typeof obj.filters[f] == "number") {
-						if (f.toLowerCase().includes("time")) {
-							prem.filterInput[f] = moment.unix(obj.filters[f]).format(dateFormat);
+						if (f.includes("Time")) {
+							if (obj.filters[f] < -1) {	
+								var scale = getTimeScale(obj.filters[f]);
+
+								if (scale) {
+									var amt = -obj.filters[f] / conversionToSec[scale];
+									scale = scale.charAt(0).toUpperCase() + scale.slice(1); // capitalize first letter
+
+									if (amt == 1) {
+										prem.filterInput[f] = "Last " + scale;
+									} else {
+										prem.filterInput[f] = `Last ${amt} ${scale}s`;
+									}
+								}
+							} else {
+								prem.filterInput[f] = moment.unix(obj.filters[f]).format(dateFormat);
+							}
 						} else {
 							prem.filterInput[f] = numberWithCommas(obj.filters[f]);
 						}
@@ -127,13 +143,6 @@ function premController($scope) {
 					}
 				}
 			}
-		});
-	}
-
-	// REVIEW TIME
-	function setTime(f, time) {
-		$scope.$apply(function () {
-			prem.filterInput[f] = time;
 		});
 	}
 
@@ -339,10 +348,64 @@ function premController($scope) {
 		}
 	}
 
+	var conversionToSec = {
+		"second": 1,
+		"minute": 60,
+		"hour": 3600,
+		"day": 86400,
+		"week": 604800,
+		"month": 2592000,
+		"year": 31556952,
+		"decade": 315569520
+	};
+
+	function convertToSec(amt, timeString) {
+		for (let time in conversionToSec) {
+			if (timeString.toLowerCase().includes(time)) {
+				return amt*conversionToSec[time];
+			}
+		}
+
+		return 0;
+	}
+
+	function getTimeScale(sec) {
+		var times = Object.keys(conversionToSec);
+
+		for (var i = times.length - 1; i >= 0; i--) {
+			if (sec % conversionToSec[times[i]] == 0) {
+				return times[i];
+			}
+		}
+
+		return null;
+	}
+
+	// REVIEW TIME
+	function setTime(f, time) {
+		$scope.$apply(function () {
+			prem.filterInput[f] = time;
+		});
+	}
+
 	prem.submit = async function (type) {
 		for (let filter in prem.filterInput) {
-			if (moment(prem.filterInput[filter], dateFormat).isValid()) {
+			if (moment(prem.filterInput[filter], dateFormat, true).isValid()) {
 				$(`input[name='${filter}']`).val(moment(prem.filterInput[filter], dateFormat).valueOf()/1000);
+			} else if (filter.includes("Time")) {
+				var amt = prem.filterInput[filter].replace(/[^0-9]/g,'');
+
+				if (amt === "") {
+					amt = 1;
+				}
+
+				var ms = -convertToSec(amt, prem.filterInput[filter]);
+				
+				if (ms === 0) {
+					ms = $(`#${filter}Ranges option:first`).val();
+				}
+
+				$(`input[name='${filter}']`).val(ms);
 			} else {
 				$(`input[name='${filter}']`).val(prem.filterInput[filter].toString().replace(/,/g, ""));
 			}
