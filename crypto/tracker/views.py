@@ -45,7 +45,7 @@ def signup(request):
 			message = render_to_string("tracker/activate_email.html", {
 				'user': user,
                 'domain': get_current_site(request).domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': acct_activation_token.make_token(user),
 			})
 

@@ -21,25 +21,43 @@ class Filters:
         
         return url.replace("?&", "?")
 
+    def getRawFilters(self, formatTime=True):
+        filters = self.filters.copy()
+
+        if not formatTime:
+            return filters
+
+        if filters["minTime"] < -1:
+            filters["minTime"] = int(time.time() + filters["minTime"])
+
+        if filters["maxTime"] < -1:
+            filters["maxTime"] = int(time.time() + filters["maxTime"])    
+
+        return filters 
+
     ## CHANGE
-    def getFormattedFilters(self):
+    def getFormattedFilters(self, formatTime=True):
         filters = {}
 
         for f, val in self.filters.items():
             if "min" in f:
-                if val <= self.dFilters[f]:
-                    if "time" in f.lower():
+                if val <= self.dFilters[f] and ("Time" not in f or val >= -1):
+                    if "Time" in f:
                         filters[f] = 'oldest'
                     else: 
                         filters[f] = 'min'
+                elif formatTime and "Time" in f and val < -1:
+                    filters[f] = int(time.time() + val)
                 else:
                     filters[f] = val
             elif f in self.dFilters and "max" in f:
                 if val >= self.dFilters[f]:
-                    if "time" in f.lower():
+                    if "Time" in f:
                         filters[f] = 'latest'
                     else: 
                         filters[f] = 'max'
+                elif formatTime and "Time" in f and val < -1:
+                    filters[f] = int(time.time() + val)
                 else:
                     filters[f] = val
         
@@ -48,7 +66,7 @@ class Filters:
     def getChangedFilters(self):
         cFilters = {}
 
-        for f, val in self.getFormattedFilters().items():
+        for f, val in self.getFormattedFilters(formatTime=False).items():
             if type(val) is int or type(val) is float:
                 cFilters[f] = val
         

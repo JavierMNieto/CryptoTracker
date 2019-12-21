@@ -170,11 +170,11 @@
 							<span class="mx-auto">Transaction Time</span>
 							<div class="w-75 mx-auto mb-1">
 								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
-									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
+									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time" list="minTimeRanges">
 							</div>
 							<div class="w-75 mx-auto">
 								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
-									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
+									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time" list="maxTimeRanges">
 							</div>
 						</div>
 					</div>
@@ -374,11 +374,11 @@
 							<span class="mx-auto">Transaction Time</span>
 							<div class="w-75 mx-auto mb-1">
 								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
-									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
+									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time" list="minTimeRanges">
 							</div>
 							<div class="w-75 mx-auto">
 								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
-									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
+									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time" list="maxTimeRanges">
 							</div>
 						</div>
 					</div>
@@ -451,6 +451,17 @@
 			</div>
 			<datalist id="categories">
 				<option ng-repeat="cat in basic.categories">{% verbatim %}{{cat}}{% endverbatim %}</option>
+			</datalist>
+			<datalist id="minTimeRanges">
+				<option>oldest</option>
+				<option>Last Day</option>
+				<option>Last Week</option>
+				<option>Last Month</option>
+				<option>Last Year</option>
+				<option value="Last ">Custom # (Hour, Day, Week, Month, Year)</option>
+			</datalist>
+			<datalist id="maxTimeRanges">
+				<option>latest</option>
 			</datalist>
 		{% endif %}
 		{% if not user.is_authenticated %}
