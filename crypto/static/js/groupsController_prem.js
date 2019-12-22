@@ -269,12 +269,19 @@ function premController($scope) {
 
 	prem.customGraph = function () {
 		$scope.basic.isCustom = true;
+		$(".collapse").one("hidden.bs.collapse", event => {
+			if (!event.target.id.includes("Home")) {
+				$("#Home").collapse("show");
+			}
+		});
 		resetSideBar();
 		$scope.basic.tempAddr = {
 			addr: '',
 			url: ''
 		};
-		$("#Home").collapse("show");
+		$("#Home").collapse("show").ready(() => {
+			$(".collapse").unbind("hidden.bs.collapse");
+		});
 	}
 
 	prem.customOff = function () {
@@ -413,7 +420,7 @@ function premController($scope) {
 
 		let resp = await $scope.main.submit(type);
 
-		if (resp.toLowerCase() == "success") {
+		if (resp.toLowerCase().includes("success")) {
 			$scope.basic.updateKnown();
 			$(`.modal`).modal('hide');
 		}

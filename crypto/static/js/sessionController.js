@@ -74,9 +74,9 @@ function sessionController($scope) {
 	session.submit = async function (type) {
 		let resp = await $scope.main.submit(type);
 
-		if (type == "addSession" && resp != "ERROR") {
+		if (type == "addSession" && !resp.toLowerCase().includes("ERROR")) {
 			window.location = resp;
-		} else if (resp != "ERROR") {
+		} else if (!resp.toLowerCase().inclues("ERROR")) {
 			location.reload();
 		}
 	}

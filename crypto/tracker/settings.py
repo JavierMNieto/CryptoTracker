@@ -74,6 +74,8 @@ TEMPLATES = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.AllowAllUsersModelBackend']
+
 WSGI_APPLICATION = 'tracker.wsgi.application'
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

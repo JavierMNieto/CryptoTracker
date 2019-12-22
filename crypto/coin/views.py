@@ -65,10 +65,10 @@ def delete(reqData, session):
     return group.delNode(reqData.get("addr", ""))
 
 def edit(reqData, session):
-    if delete(reqData, session) == "Success" and add(reqData, session) == "Success":
-        return "Success"
-    
-    return "ERROR"
+    delete(reqData, session)
+    add(reqData, session)
+
+    return "Successfully edited node."
 
 def editCat(reqData, session):
     group = session.getGroup(reqData.get("cat", ""))
@@ -77,7 +77,7 @@ def editCat(reqData, session):
 
     group.setFilters(getFilters(reqData, format=False),)
 
-    return "Success"
+    return "Successfully edited group."
 
 methods = {
     "add": add,
@@ -97,8 +97,10 @@ def change(request, coin=None, session_id=None):
     try:
         if method in methods:
             resp = methods[method](request.POST, request.user.getCoin(coin).getSession(session_id))
+    except ValidationError as e:
+        resp = "ERROR! " + e.message
     except Exception as e:
-        traceback.print_exc(e)
+        print(e)
 
     return JsonResponse(resp, safe=False)
 

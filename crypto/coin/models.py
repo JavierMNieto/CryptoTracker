@@ -140,17 +140,21 @@ class Group(models.Model):
 
             if node:
                 node.delete()
-                return "Success"
-        
-        return "ERROR"
+                return "Successfully deleted node."
+        else:
+            raise ValidationError("Unable to delete node in default session!", code="invalid")
+            
+        raise ValidationError("Node does not exist in session", code="invalid")
 
     def setName(self, name):
         if self.session.name != Coin.objects.filter(name__iexact=self.session.coin.name).first().sessions.first().uuid:
             if self.name == "Home":
-                raise ValidationError('cannot edit Home')
+                raise ValidationError('Cannot change Home name', code="invalid")
             self.session.isUniqGroupName(name) # change
             self.name = name
             self.save()
+        
+        raise ValidationError("Unable to edit node in default session!", code="invalid")
     
     def setFilters(self, filters):
         self.minBal=filters['minBal']
@@ -172,21 +176,21 @@ class Group(models.Model):
 
     def addNode(self, name, addr, filters):
         if self.session.uuid != Coin.objects.filter(name__iexact=self.session.coin.name).first().sessions.first().uuid:
-            try:
-                self.session.isUniqNode(name, addr)
-                node = self.nodes.create(name=name, addr=addr, group=self)
-                node.setFilters(filters)
-                return "Success"
-            except ValidationError as e:
-                print(e)
+            self.session.isUniqNode(name, addr)
+            node = self.nodes.create(name=name, addr=addr, group=self)
+            node.setFilters(filters)
+            return "Successfully added node."
 
-        return "ERROR"
+        raise ValidationError("Unable to add node to default session!", code="invalid")
 
     def getAsDict(self):
         addrs = []
 
-        for node in self.nodes.all():
-            addrs.append(node.getAsDict())
+        if self.name == "Home":
+            addrs = self.session.getNodes()
+        else:
+            for node in self.nodes.all():
+                addrs.append(node.getAsDict())
 
         return {
             "name": self.name,
@@ -222,7 +226,7 @@ class Session(models.Model):
     def isUniqGroupName(self, name):
         for group in self.groups.all():
             if group.name == name:
-                raise ValidationError('{} is not unique group name in session {}'.format(name, self.name))
+                raise ValidationError('{} is not unique group name in session {}'.format(name, self.name), code="invalid")
     
     def getNode(self, addr):
         for group in self.groups.all():
@@ -254,9 +258,9 @@ class Session(models.Model):
         for group in self.groups.all():
             for node in group.nodes.all():
                 if node.name == name:
-                    raise ValidationError('{} is not unique node name in session {}'.format(name, self.name))
+                    raise ValidationError('%(node)s is not unique node name in session %(name)s', code="invalid", params={'node': name, 'name': self.name})
                 if node.addr == addr:
-                    raise ValidationError('{} is not unique node addr in session {}'.format(addr, self.name))
+                    raise ValidationError('%(addr)s is not unique node addr in session %(name)s', code="invalid", params={'addr': addr, 'name': self.name})
     
     def getAsDict(self):
         return {
@@ -269,32 +273,10 @@ class Session(models.Model):
     def getAsList(self):        
         catList    = []
 
-        home = {
-            'name': 'Home',
-            'url': "/{}/search/Home?".format(self.coin.name),
-            'addrs': [],
-            'filters': {}
-        }
-
         for group in self.groups.all():
-            if group.name == "Home":
-                temp = group.getAsDict()
-                home['url'] = temp['url'] + home['url']
-                home['addrs'] += temp['addrs']
-                home['uuid'] = temp['uuid']
-                home['filters'] = temp['filters']
-                continue
-
-            for node in group.nodes.all():
-                home['addrs'].append(node.getAsDict())
-                home['url'] += "&addr[]=" + node.addr
-
-            if len(group.nodes.all()) < 1:
-                continue
-
-            catList.append(group.getAsDict())
-
-        catList.insert(0, home)
+            group = group.getAsDict()
+            if len(group['addrs']) > 0:
+                catList.append(group)                
 
         return catList       
 
@@ -312,7 +294,8 @@ class Coin(models.Model):
     user = models.ForeignKey(User, related_name='coins', on_delete=models.CASCADE)
 
     def isUniqSession(self, name):
-        return not self.sessions.all().filter(name__iexact=name).exists()
+        if self.sessions.all().filter(name__iexact=name).exists():
+            raise ValidationError("%(name)s is not unique session name!", code="invalid", params={'name': name})
 
     def getImg(self):
         if self.name == "USDT":
@@ -323,45 +306,41 @@ class Coin(models.Model):
         return "/" + self.name.lower()
 
     def addSession(self, name, copySession=None):
-        try:
-            if self.isUniqSession(name):
-                session = self.sessions.create(name=name, coin=self)
-                print(copySession)
-                if copySession:
-                    for group in self.getSession(copySession).groups.all():
-                        newGroup = session.groups.create(name=group.name, session=session)
-                        newGroup.setFilters(group.getFilters())
-                        for node in group.nodes.all():
-                            newNode = newGroup.nodes.create(name=node.name, addr=node.addr, group=newGroup)
-                            newNode.setFilters(node.getFilters())
-                return session
-        except ValidationError as e:
-            pass
-        
-        return None
+        self.isUniqSession(name)
+
+        session = self.sessions.create(name=name, coin=self)
+
+        if copySession:
+            for group in self.getSession(copySession).groups.all():
+                newGroup = session.groups.create(name=group.name, session=session)
+                newGroup.setFilters(group.getFilters())
+                for node in group.nodes.all():
+                    newNode = newGroup.nodes.create(name=node.name, addr=node.addr, group=newGroup)
+                    newNode.setFilters(node.getFilters())
+
+        return session
 
     def editSession(self, id=None, newName=""):
         session = self.getSession(id)
+        
+        if session.uuid != Coin.objects.filter(name__iexact=self.name).first().sessions.first().uuid:
+            self.isUniqSession(newName)
 
-        try:
-            if session.uuid != Coin.objects.filter(name__iexact=self.name).first().sessions.first().uuid and self.isUniqSession(newName):
-                session.name = newName
-                session.save()
-                return "Success"
-        except ValidationError as e:
-            pass
+            session.name = newName
+            session.save()
+            return "Successfully edited session."
 
-        return "ERROR"
+        raise ValidationError("Unable to edit default session!", code="invalid")
 
     def delSession(self, id=None):
         if id != Coin.objects.filter(name__iexact=self.name).first().sessions.first().uuid:
             try:
                 session = self.sessions.all().get(uuid=id)
                 session.delete()
-                return "Success"
+                return "Successfully deleted session."
             except Exception as e:
                 pass
-        return "ERROR"
+        return ValidationError("Unable to delete default session!", code="invalid")
 
     def getSession(self, id=None):
         try:

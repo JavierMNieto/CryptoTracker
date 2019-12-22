@@ -56,29 +56,42 @@
 {% endif %}
 
 <body ng-controller="mainController as main" session-controller basic-controller prem-controller>
-	<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top shadow-lg" style="z-index: 100;">
-		<div class="navbar-header">
+	<nav class="navbar navbar-dark bg-primary shadow-lg" style="z-index: 100;">
+		<div style="position: absolute; left: 0; top: 0.5rem;">
 			<a class="navbar-brand nav-link" style="cursor: pointer;" href="./">
 				<img src="{% static 'images/tracking.png' %}" width="30" height="30"
 					class="d-inline-block align-top">
 				<span class="text-light">Site Name</span>
 			</a>
 		</div>
-		<div class="text-center mx-auto ng-cloak">
-			<span class='text-dark'>Hong Kong Time: </span><span
+		<div class="ng-cloak w-100 text-center py-2">
+			<span class='text-dark h6'>Hong Kong Time: </span><span
 				class="font-weight-bold text-light">{% verbatim %}{{ main.hk }}{% endverbatim %}</span>
-			<span style="color:#F8A33D" class='pl-5'>BTC: </span><span
+			<span class="h6 text-warning pl-5">BTC: </span><span
 				class='font-weight-bold'>${{ btc.last | floatformat:2 | numCommas}}</span>
 			{% if btc.percentage < 0 %}
-			<span class="font-weight-italic pr-5" style="color:#c74242"> ({{btc.percentage}}%)</span>
+			<span class="font-italic text-danger pr-5"> ({{btc.percentage}}%)</span>
 			{% else %}
-			<span class="font-weight-italic pr-5" style="color:#009e73"> (+{{btc.percentage}}%)</span>
+			<span class="font-italic text-success pr-5"> (+{{btc.percentage}}%)</span>
 			{% endif %}
-			<span class='text-dark'>UTC Time: </span><span
+			<span class='text-dark h6'>UTC Time: </span><span
 				class="font-weight-bold text-light">{% verbatim %}{{ main.ut }}{% endverbatim %}</span>
 		</div>
-		<div class="float-right" style="white-space: nowrap;">
+		<div style="white-space: nowrap; position: absolute; right: 1rem; top: 0.5rem;">
 			{% if user.is_authenticated %}
+				<div class="btn-group dropleft shadow">
+					<button class="btn btn-success dropdown-toggle text-capitalize shadow-none" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						{{ user.username }}
+					</button>
+					<div class="dropdown-menu">
+						<a class="dropdown-item" href="{% url 'acctSettings' %}"><i class="fas fa-cog mr-2"></i>Account Settings</a>
+						<form class="dropdown-item" id="signOut" action="{% url 'signOut' %}">
+							{% csrf_token %}
+							<a ng-click="main.submit('signOut');" class="btn btn-sm btn-danger w-100" type="submit">Log Out</a>
+						</form>
+					</div>
+				</div>
+				<!--
 				<div class="row text-center">
 					<span class="h5 mx-2">{{ user.username }}</span>
 					<form id="signOut" action="{% url 'signOut' %}">
@@ -86,6 +99,7 @@
 						<button ng-click="main.submit('signOut');" class="btn btn-sm btn-danger shadow mx-2" type="submit">Log Out</button>
 					</form>
 				</div>
+				-->
 			{% else %}
 				<div class="btn-group"></div>
 					<button class="btn btn-dark shadow" ng-click="main.showAcct('signUp')">Create Account</button>
@@ -95,7 +109,7 @@
 		</div>
 	</nav>	
 
-	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" aria-hidden="true">
+	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" style="overflow: hidden;" aria-hidden="true">
 		<div ng-switch on="main.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': main.overlay.type == 'delete' || main.overlay.type.indexOf('Session') > 0}" role="document">
 		{% if user.is_authenticated and user.settings.premium and session and session != "Basic Session" %}	
 			<form id="edit" method="post" action="{{ request.path }}/change" ng-switch-when="edit"
@@ -742,10 +756,54 @@
 			</button>
 		</form>
 	</div>
+{% elif 'settings' in request.path %}
+	<div id="iframe1" class="jumbotron d-flex h-100">
+		<div class="container m-5 p-5 mx-auto">
+			<div class="text-center text-capitalize h1 mb-5 w-100">{{user.username}} Account Settings</div>
+			<ul class="row nav nav-tabs" id="acctTabs" role="tablist">
+				<li class="nav-item">
+					<a class="nav-link active" id="acct-tab" data-toggle="tab" href="#acct" role="tab" aria-controls="acct" aria-selected="true">Account Details</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" id="payment-tab" data-toggle="tab" href="#payment" role="tab" aria-controls="payment" aria-selected="false">Payment</a>
+				</li>
+			</ul>
+			<div class="tab-content m-5" id="AcctContent">
+				<div class="tab-pane fade show active" id="acct" role="tabpanel" aria-labelledby="acct-tab">
+					<table class="mx-auto table table-hover w-75">
+						<tbody>
+							<tr>
+								<th scope="row">Account Name: </th>
+								<td>{{user.username}}</td>
+							</tr>
+							<tr>
+								<th scope="row">Account Email: </th>
+								<td>{{user.email}}</td>
+							</tr>
+							<tr>
+								<td colspan="2" class="text-center mx-auto">
+									<form id="forgotPass" method="post" action="{% url 'forgotPass' %}">
+										{% csrf_token %}
+										<input type="hidden" name="email" value="{{user.email}}">
+										<button type="button" class="btn btn-success" ng-click="main.submit('forgotPass')">
+											Change Password
+										</button>
+									</form>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="tab-pane fade" id="payment" role="tabpanel" aria-labelledby="payment-tab">
+					
+				</div>
+			</div>
+		</div>
+	</div>
 {% elif coin and coin != 'home' %}
-	<div id="body-row ng-cloak" style="display: flex">
+	<div id="body-row" class="ng-cloak d-flex h-100 w-100">
 		<div id="sidebar-container" class="pre-scrollable" style="z-index: 10; position: relative; width: 250px">
-			<div class="text-center text-white h5 m-1 text-truncate">
+			<div class="text-center text-white h5 m-2 text-truncate">
 				{{session}}
 				{% if user.is_authenticated and user.settings.premium %}
 					<button class="btn btn-xs btn-outline-light ml-2 px-1 py-0 shadow-none text-center" data-toggle="tooltip" title="Copy into new session"
@@ -930,55 +988,55 @@
 		</div>
 	</div>
 {% elif not coin %}
-	<div id="iframe1" class="fixFrame text-center">
+	<div id="iframe1" class="text-center">
 
 	</div>
 {% else %}
-		<div id="iframe1" class="fixFrame text-center">
-			<h2>USDT Statistics</h2>
-			<h2>Sessions</h2>
-			<div class="card-group justify-content-center">
-				<a href="basic" style="text-decoration:none">
-					<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
-						<h5 class="card-header">
-							{{basic_session.name}}
-						</h5>
-						<div class="card-body">
-							<h5 class="card-title">Special title treatment</h5>
-							<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-						</div>
+	<div id="iframe1" class="text-center">
+		<h2 class="mt-5 pt-5">USDT Statistics</h2>
+		<h2>Sessions</h2>
+		<div class="card-group justify-content-center">
+			<a href="basic" style="text-decoration:none">
+				<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
+					<h5 class="card-header">
+						{{basic_session.name}}
+					</h5>
+					<div class="card-body">
+						<h5 class="card-title">Special title treatment</h5>
+						<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
 					</div>
-				</a>
-		{% if request.user.is_authenticated and request.user.settings.premium %}
-			{% for session in sessions %}
-				<a href="{{session.url}}" style="text-decoration:none">
-					<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
-						<h5 class="card-header">
-							<button class="btn btn-xs btn-outline-info px-1 py-0 shadow-none text-center"
-							style="font-size: 0.8em;" ng-click="session.showSession({type:'editSession', uuid:'{{session.uuid}}', name:'{{session.name}}'});">
-								<i class="fas fa-edit"></i>
-							</button>
-							<span>{{ session.name }}</span>
-							<button class="btn btn-xs btn-outline-danger px-1 py-0 shadow-none text-center"
-							style="font-size: 0.8em;" ng-click="session.showSession({type:'delSession', uuid:'{{session.uuid}}', name:'{{session.name}}'})">
-								<i class="fas fa-trash"></i>
-							</button>
-						</h5>
-						<div class="card-body">
-							<h5 class="card-title">Special title treatment</h5>
-							<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-						</div>
+				</div>
+			</a>
+	{% if request.user.is_authenticated and request.user.settings.premium %}
+		{% for session in sessions %}
+			<a href="{{session.url}}" style="text-decoration:none">
+				<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
+					<h5 class="card-header">
+						<button class="btn btn-xs btn-outline-info px-1 py-0 shadow-none text-center"
+						style="font-size: 0.8em;" ng-click="session.showSession({type:'editSession', uuid:'{{session.uuid}}', name:'{{session.name}}'});">
+							<i class="fas fa-edit"></i>
+						</button>
+						<span>{{ session.name }}</span>
+						<button class="btn btn-xs btn-outline-danger px-1 py-0 shadow-none text-center"
+						style="font-size: 0.8em;" ng-click="session.showSession({type:'delSession', uuid:'{{session.uuid}}', name:'{{session.name}}'})">
+							<i class="fas fa-trash"></i>
+						</button>
+					</h5>
+					<div class="card-body">
+						<h5 class="card-title">Special title treatment</h5>
+						<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
 					</div>
-				</a>
-			{% endfor %}
-				<a ng-click="session.showSession({type:'addSession'});" style="text-decoration:none;cursor:pointer;">
-					<div class="card m-4 text-white border-dark justify-content-center" style="width: 18rem; height: 12rem;background-color: rgba(0,0,0,0.0);">
-						<i class="far fa-plus-square fa-3x mx-auto" style="z-index: 100; color: black"></i>
-					</div>
-				</a>
-		{% endif %}
-			</div>
+				</div>
+			</a>
+		{% endfor %}
+			<a ng-click="session.showSession({type:'addSession'});" style="text-decoration:none;cursor:pointer;">
+				<div class="card m-4 text-white border-dark justify-content-center" style="width: 18rem; height: 12rem;background-color: rgba(0,0,0,0.0);">
+					<i class="far fa-plus-square fa-3x mx-auto" style="z-index: 100; color: black"></i>
+				</div>
+			</a>
+	{% endif %}
 		</div>
+	</div>
 {% endif %}
 	<script src="{% static 'js/index.js' %}"></script>
 </body>
