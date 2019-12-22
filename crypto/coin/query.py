@@ -18,7 +18,6 @@ class CoinController:
     
     def runFilters(self, query, filters=Filters.dFilters):
         query = self.cleanQuery(query, filters)
-        print(query)
         return self.driver.session().run(query, minBal=filters['minBal'], maxBal=filters['maxBal'], minTx=filters['minTx'], maxTx=filters['maxTx'],
                                         minTime=filters['minTime'], maxTime=filters['maxTime'], minTotal=filters['minTotal'], maxTotal=filters['maxTotal'],
                                         minTxsNum=filters['minTxsNum'], maxTxsNum=filters['maxTxsNum'], minAvg=filters['minAvg'], maxAvg=filters['maxAvg'])
@@ -110,7 +109,7 @@ class CoinController:
                 "target": self.getNodeFromSession(session, bNode['addr'])['name'],
                 "targetAddr": bNode['addr'],
                 "type": rel['type'],
-                "amount": float(rel['amount']),
+                #"amount": float(rel['amount']),
                 "time": rel['blocktime'],
                 "txid": rel['txid'],
                 "img": session.coin.getImg(),
@@ -261,14 +260,14 @@ class CoinController:
                     "id": aNode.id,
                     "label": aKnown['name'],
                     "addr": aNode['addr'],
-                    "balance": float(aNode['balance'] or 0),
-                    "balVal": float(aNode['balance'] or 0),
+                    #"balance": float(aNode['balance'] or 0),
+                    #"balVal": float(aNode['balance'] or 0),
                     "group": 'usdt' if lastId == 0 else 'tempusdt', #aNode['wallet'] or 
                     "url": aKnown['url'],
-                    "value": float(aNode['balance'] or 0)/Satoshi(),
+                    "value": float(aNode['balance'] or 0),#/Satoshi(),
                     "img": session.coin.getImg(),
                     "title": ("Address: {}<br> "
-                            "Balance: ${} ").format(aNode['addr'], numWithCommas(float(aNode['balance'] or "0")))
+                            "Balance: ${} ").format(aNode['addr'], numWithCommas(aNode['balance'] or "0", dec=3))
                 }
                 if aNode['label'] != aNode['addr']:
                     aNode['title'] = "Name: {}<br>".format(aNode['label']) + aNode['title']
@@ -282,14 +281,14 @@ class CoinController:
                     "id": bNode.id,
                     "label": bKnown['name'],
                     "addr": bNode['addr'],
-                    "balance": float(bNode['balance'] or 0),
-                    "balVal": float(bNode['balance'] or 0),
+                    #"balance": float(bNode['balance'] or 0),
+                    #"balVal": float(bNode['balance'] or 0),
                     "group": 'usdt' if lastId == 0 else 'tempusdt', #bNode['wallet'] or 
                     "url": bKnown['url'],
-                    "value": float(bNode['balance'] or 0)/Satoshi(),
+                    "value": float(bNode['balance'] or 0),#/Satoshi(),
                     "img": session.coin.getImg(),
                     "title": ("Address: {}<br> "
-                            "Balance: ${} ").format(bNode['addr'], numWithCommas(float(bNode['balance'] or "0")))
+                            "Balance: ${} ").format(bNode['addr'], numWithCommas(bNode['balance'] or "0", dec=3))
                 }
                 if bNode['label'] != bNode['addr']:
                     bNode['title'] = "Name: {}<br>".format(bNode['label']) + bNode['title']
@@ -308,7 +307,7 @@ class CoinController:
                     "target": bNode['label'],
                     "sourceAddr": aNode['addr'],
                     "targetAddr": bNode['addr'],
-                    "amount": float(rel['amount'] or 0),
+                    #"amount": float(rel['amount'] or 0),
                     "txsNum": int(rel['txsNum'] or 1.0),
                     "avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
                     "img": session.coin.getImg(),
@@ -320,7 +319,7 @@ class CoinController:
                 }
                 rel['title'] = ("# of Txs: {}<br> "
                                 "Total: ${}<br> "
-                                "Average Tx Amount: ${}<br>".format(numWithCommas(rel['txsNum']), numWithCommas(rel['amount']), numWithCommas(rel['avgTx'])))
+                                "Average Tx Amount: ${}<br>").format(numWithCommas(rel['txsNum'], dec=3), numWithCommas(rel['value'], dec=3), numWithCommas(rel['avgTx'], dec=3))
                 data['totalTxs'] += rel['txsNum']
                 
                 aExists = False

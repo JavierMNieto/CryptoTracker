@@ -2,7 +2,9 @@ import time
 import re
 from .defaults import *
 
-def numWithCommas(num):
+def numWithCommas(num, dec=0):
+    if dec > 0:
+        return ("{:,}".format(round(float(num), dec)))
     return ("{:,}".format(float(num)))
 
 class Filters:

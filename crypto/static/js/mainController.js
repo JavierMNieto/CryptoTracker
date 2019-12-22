@@ -175,18 +175,34 @@ function mainController($scope) {
 	
 			console.log(resp);
 	
-			if (resp.toLowerCase() == "success" && type.includes("sign")) {
+			if (resp.toLowerCase().includes("success") && type.includes("sign")) {
 				if (type == "signUp") {
 					$('#overlay').modal('hide');
-					$("body").prepend('<div class="alert alert-warning alert-dismissible fade show" role="alert">Please confirm your email address to complete the registration.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
 				} else {
-					location.reload();	
+					return location.reload();	
 				}
 			} else if (resp.toLowerCase().includes("error")) {
-				$("#overlay").prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error!</strong> You should check in on some of those fields below.<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>')
+				$("#overlay").prepend(`<div class="alert alert-danger alert-dismissible fixed-top fade show" role="alert">${resp}<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>`);
 			}
 			
+			if (resp.toLowerCase().includes("success")) {
+				$("body").prepend(`<div class="alert alert-success alert-dismissible fixed-top fade show" role="alert">${resp}<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>`);
+			}
+
+			setTimeout(() => {
+				$(".alert").alert('close');
+			}, 5500);
+
 			resolve(resp);
 		});
 	}
+
+	$(function() {
+		$('[data-toggle="tooltip"]').tooltip({
+			trigger: 'hover',
+			boundary: "window"
+		});
+
+		$(window.location.hash).tab("show");
+	});
 }

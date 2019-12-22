@@ -41,15 +41,33 @@
 	animation: popout 1s ease;
 	-webkit-animation: popout 1s ease;
 }
+
 @keyframes popout {
-	from{transform:scale(1)}
-	80%{transform:scale(1.5)}
-	to{transform:scale(1)}
+	from {
+		transform: scale(1)
+	}
+
+	80% {
+		transform: scale(1.5)
+	}
+
+	to {
+		transform: scale(1)
+	}
 }
+
 @-webkit-keyframes popout {
-	from{-webkit-transform:scale(1)}
-	80%{-webkit-transform:scale(1.5)}
-	to{-webkit-transform:scale(1)}
+	from {
+		-webkit-transform: scale(1)
+	}
+
+	80% {
+		-webkit-transform: scale(1.5)
+	}
+
+	to {
+		-webkit-transform: scale(1)
+	}
 }
 
 div.outerBorder {
@@ -133,6 +151,7 @@ body {
 	background-color: rgba(86, 166, 252, 1);
 	max-width: 100%;
 	overflow-x: hidden;
+	font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif !important;
 }
 
 body::-webkit-scrollbar-track {
@@ -163,11 +182,26 @@ a {
 	width: 16px;
 	height: 16px;
 	-webkit-animation: spin 2s linear infinite;
-	/* Safari */
 	animation: spin 2s linear infinite;
 }
 
 .filterChange {
 	border-color: rgb(56, 143, 194, 0.40);
 	border-width: 2px;
+}
+
+div.vis-network-tooltip {
+	position: absolute;
+	z-index: 2000;
+	background-color: rgba(75, 73, 73, 0.75);
+	color: aliceblue;
+	white-space: nowrap;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 1px;
+	border-color: #000000;
+	-moz-box-shadow: 0px 0px 4px #222;
+	-webkit-box-shadow: 0px 0px 4px #222;
+	box-shadow: 0px 0px 4px #222;
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
 }

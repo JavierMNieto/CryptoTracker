@@ -1,8 +1,8 @@
 body {
-	padding-top: 56px;
 	width: 100%;
 	height: 100%;
 	margin: 0;
+	font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif !important;
 	overflow: hidden;
 }
 
@@ -12,7 +12,7 @@ body {
 	width: 100%;
 	top: 0px;
 	height: 100%;
-	padding-bottom: 56px;
+	padding-bottom: 54px;
 	background-color: rgba(86, 166, 252, 0.75);
 }
 
@@ -22,17 +22,6 @@ body {
 
 ::-webkit-scrollbar {
 	display: none;
-}
-
-.alert {
-	position: absolute;
-	top: 0;
-	z-index: 10000;
-}
-
-.fixFrame {
-	margin-top: 56px !important;
-	overflow: auto;
 }
 
 #dragbar {
