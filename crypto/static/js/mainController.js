@@ -160,13 +160,22 @@ function mainController($scope) {
 	}
 
 	// REVIEW
-	main.submit = function(type) {
+	main.submit = function(type, uid) {
 		return new Promise(async resolve => {
 			$(".alert").remove();
 			main.formState = "load"; // Change
-	
+			
+
+			var url = $(`#${type}`).attr('action');
+
+			if (uid) {
+				url += uid;
+			}
+
+			console.log(url);
+
 			let resp = await $.ajax({
-				url: $(`#${type}`).attr('action'),
+				url: url,
 				type: 'POST',
 				data: $(`#${type}`).serialize()
 			});
@@ -176,9 +185,7 @@ function mainController($scope) {
 			console.log(resp);
 	
 			if (resp.toLowerCase().includes("success") && type.includes("sign")) {
-				if (type == "signUp") {
-					$('#overlay').modal('hide');
-				} else {
+				if (type != "signUp") {
 					return location.reload();	
 				}
 			} else if (resp.toLowerCase().includes("error")) {
@@ -186,12 +193,13 @@ function mainController($scope) {
 			}
 			
 			if (resp.toLowerCase().includes("success")) {
+				$('#overlay').modal('hide');
 				$("body").prepend(`<div class="alert alert-success alert-dismissible fixed-top fade show" role="alert">${resp}<button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button></div>`);
 			}
 
 			setTimeout(() => {
 				$(".alert").alert('close');
-			}, 5500);
+			}, 10000);
 
 			resolve(resp);
 		});

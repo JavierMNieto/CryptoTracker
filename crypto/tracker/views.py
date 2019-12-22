@@ -48,17 +48,7 @@ def signup(request):
 		user.is_active = False
 		user.save()
 
-		message = render_to_string("tracker/activate_email.html", {
-			'user': user,
-			'domain': get_current_site(request).domain,
-			'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-			'token': acct_activation_token.make_token(user),
-		})
-
-		email = EmailMessage("Activate Cryptotracker Account.", body=message, to=[email])
-		email.send()
-
-		return HttpResponse("Success. Please confirm your email address to complete the registration.")
+		return verifyEmail(request, force_text(urlsafe_base64_encode(force_bytes(user.pk))))
 	except IntegrityError as e:
 		if "username" in str(e):
 			return HttpResponse("ERROR! Username is not unique!")
@@ -83,7 +73,7 @@ def forgotPass(request):
 		message = render_to_string("tracker/resetpass_email.html", {
 			'user': user,
 			'domain': get_current_site(request).domain,
-			'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+			'uid': force_text(urlsafe_base64_encode(force_bytes(user.pk))),
 			'token': acct_activation_token.make_token(user),
 		})
 
@@ -101,7 +91,7 @@ def passChange(request, uidb64, token):
 	signout(request)
 
 	try:
-		uid  = urlsafe_base64_decode(uidb64).decode()
+		uid  = urlsafe_base64_decode(uidb64)
 		user = User.objects.get(pk=uid)
 	except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
 		return home(request, rejection="Invalid user id!")
@@ -131,7 +121,7 @@ def passChange(request, uidb64, token):
 
 def activate(request, uidb64, token):
 	try:
-		uid  = urlsafe_base64_decode(uidb64).decode()
+		uid  = urlsafe_base64_decode(uidb64)
 		user = User.objects.get(pk=uid)
 	except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
 		return home(request, rejection="Invalid user id!")
@@ -146,12 +136,33 @@ def activate(request, uidb64, token):
 	
 	return home(request, rejection="Activation link is invalid!")	 
 
+def verifyEmail(request, uidb64):
+	try:
+		uid  = urlsafe_base64_decode(uidb64)
+		user = User.objects.get(pk=uid)
+	except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
+		print(e)
+		return HttpResponse("ERROR! Invalid User!")
+
+	message = render_to_string("tracker/activate_email.html", {
+		'user': user,
+		'domain': get_current_site(request).domain,
+		'uid': uidb64,
+		'token': acct_activation_token.make_token(user),
+	})
+
+	email = EmailMessage("Activate Cryptotracker Account.", body=message, to=[user.email])
+	email.send()
+
+	return HttpResponse("Success. Please check your email address for a link to change your password.")
+
 def login(request, user):
 	if user is not None and user.is_active:
 		auth.login(request, user)
 		return HttpResponse("Success")
 	elif not user.is_active:
-		return HttpResponse("ERROR! Please activate your account!")
+		response = """ERROR! Please activate your account! <button class="btn btn-primary" onclick="main.submit('verifyEmail', `{}`)">Click to Resend Email</button>""".format(force_text(urlsafe_base64_encode(force_bytes(user.pk))))
+		return HttpResponse(response)
 
 	return HttpResponse("ERROR! Incorrect credentials!")
 
