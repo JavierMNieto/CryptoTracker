@@ -78,6 +78,12 @@ $(document).ready(function () {
     });
 });
 
+function submit(type) {
+    console.log(type);
+    var vm = angular.element($('body')).scope();
+    vm.$apply(`main.submit('${type}')`);
+}
+
 function resetSideBar() {
     $("#searchBar").val("");
     $("#accordion .addr").toggle(true)

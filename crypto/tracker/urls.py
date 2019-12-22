@@ -28,6 +28,7 @@ urlpatterns = [
     path('signout', views.signout, name="signOut"),
     path('settings', views.acctSettings, name="acctSettings"),
     path('forgotpassword', views.forgotPass, name="forgotPass"),
+    path('verify/<str:uidb64>', views.verifyEmail, name="verifyEmail"),
     path('passchange/<str:uidb64>/<str:token>/', views.passChange, name="passChange"),
     path('activate/<str:uidb64>/<str:token>/', views.activate, name="activate"),
     path('isUniqEmail', views.isUniqEmail, name="isUniqEmail"),

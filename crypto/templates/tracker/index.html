@@ -40,14 +40,14 @@
 </head>
 
 {% if confirmation is not None %}
-	<div class="alert alert-success alert-dismissible fade show" role="alert">
+	<div class="alert alert-success alert-dismissible fixed-top fade show" role="alert">
 		{{confirmation}}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
 	</div>
 {% elif rejection is not None %}
-	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+	<div class="alert alert-danger alert-dismissible fixed-top fade show" role="alert">
 		{{rejection}}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
@@ -602,6 +602,9 @@
 						Send Email
 					</button>
 				</div>
+			</form>
+			<form id="verifyEmail" method="post" action="../verify/" style="display: none;">
+				{% csrf_token %}
 			</form>
 		{% endif %}
 		{% if user.is_authenticated and user.settings.premium %}
