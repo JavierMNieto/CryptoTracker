@@ -12,7 +12,9 @@
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
 		integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
+	<link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}"/>
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="{% static 'js/jquery-ui.min.js' %}"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
 		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
 	</script>
@@ -37,6 +39,10 @@
 	</script>
 	{% endif %}
 {% endif %}
+{% if not coin %}
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css"/>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+{% endif %}
 </head>
 
 {% if confirmation is not None %}
@@ -55,18 +61,19 @@
 	</div>
 {% endif %}
 
-<body ng-controller="mainController as main" session-controller basic-controller prem-controller>
-	<nav class="navbar navbar-dark bg-primary shadow-lg" style="z-index: 100;">
+<body ng-controller="mainController as main" session-controller basic-controller prem-controller style="background-color: rgba(86, 166, 252, 0.75);">
+	<nav class="navbar bg-primary shadow-lg block" id="navbar" style="z-index: 100;">
 		<div style="position: absolute; left: 0; top: 0.5rem;">
-			<a class="navbar-brand nav-link" style="cursor: pointer;" href="./">
+			<a class="navbar-brand nav-link" style="cursor: pointer;" href="{% url 'home' %}">
 				<img src="{% static 'images/tracking.png' %}" width="30" height="30"
 					class="d-inline-block align-top">
 				<span class="text-light">Site Name</span>
 			</a>
 		</div>
 		<div class="ng-cloak w-100 text-center py-2">
-			<span class='text-dark h6'>Hong Kong Time: </span><span
-				class="font-weight-bold text-light">{% verbatim %}{{ main.hk }}{% endverbatim %}</span>
+		{% if coin is not None %}
+			<!--<span class='text-dark h6'>Hong Kong Time: </span><span
+				class="font-weight-bold text-light">{% verbatim %}{{ main.hk }}{% endverbatim %}</span>-->
 			<span class="h6 text-warning pl-5">BTC: </span><span
 				class='font-weight-bold'>${{ btc.last | floatformat:2 | numCommas}}</span>
 			{% if btc.percentage < 0 %}
@@ -76,6 +83,10 @@
 			{% endif %}
 			<span class='text-dark h6'>UTC Time: </span><span
 				class="font-weight-bold text-light">{% verbatim %}{{ main.ut }}{% endverbatim %}</span>
+		{% else %}
+			<a href="#" class="btn">Learn More</a>
+			<a href="#" class="btn">Buy</a>
+		{% endif %}
 		</div>
 		<div style="white-space: nowrap; position: absolute; right: 1rem; top: 0.5rem;">
 			{% if user.is_authenticated %}
@@ -107,7 +118,14 @@
 				</div>
 			{% endif %}
 		</div>
-	</nav>	
+	</nav>
+	<!--
+	<div style="position: relative;z-index: 2001;">
+		<button href class="btn shadow-none" style="position: absolute; top: 0; right: 0.5rem; opacity: 0.5;">
+			<i class="fas fa-arrow-alt-circle-up"></i>
+		</button>
+	</div>
+	-->
 
 	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" style="overflow: hidden;" aria-hidden="true">
 		<div ng-switch on="main.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': main.overlay.type == 'delete' || main.overlay.type.indexOf('Session') > 0}" role="document">
@@ -154,43 +172,7 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<div class="mt-3 p-2 text-center shadow-lg rounded">
-						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
-						<div class="row">
-							<div class="col-6">
-								<span>Balance</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
-										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
-										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
-								</div>
-							</div>
-							<div class="col-6">
-								<span>Transaction Amount</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
-										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
-										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
-								</div>
-							</div>
-						</div>
-						<div class="row m-2">
-							<span class="mx-auto">Transaction Time</span>
-							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
-									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time" list="minTimeRanges">
-							</div>
-							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
-									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time" list="maxTimeRanges">
-							</div>
-						</div>
+					<div ng-filters class="mt-3 p-2 text-center shadow-lg rounded">	
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -261,43 +243,7 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<div class="mt-3 p-2 text-center shadow-lg rounded">
-						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
-						<div class="row">
-							<div class="col-6">
-								<span>Balance</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
-										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
-										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
-								</div>
-							</div>
-							<div class="col-6">
-								<span>Transaction Amount</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
-										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
-										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
-								</div>
-							</div>
-						</div>
-						<div class="row m-2">
-							<span class="mx-auto">Transaction Time</span>
-							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
-									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
-							</div>
-							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
-									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
-							</div>
-						</div>
+					<div ng-filters class="mt-3 p-2 text-center shadow-lg rounded">	
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -358,43 +304,7 @@
 							<i class="far fa-times-circle fa-sm text-danger"></i>
 						</div>
 					</div>
-					<div class="mt-3 p-2 text-center shadow-lg rounded">
-						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
-						<div class="row">
-							<div class="col-6">
-								<span>Balance</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
-										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
-										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
-								</div>
-							</div>
-							<div class="col-6">
-								<span>Transaction Amount</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
-										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
-										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
-								</div>
-							</div>
-						</div>
-						<div class="row m-2">
-							<span class="mx-auto">Transaction Time</span>
-							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
-									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time" list="minTimeRanges">
-							</div>
-							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
-									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time" list="maxTimeRanges">
-							</div>
-						</div>
+					<div ng-filters class="mt-3 p-2 text-center shadow-lg rounded">	
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -417,43 +327,7 @@
 					</button>
 				</div>
 				<div class="modal-body shadow-lg bg-secondary text-center">
-					<div class="p-2 text-center">
-						<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
-						<div class="row">
-							<div class="col-6">
-								<span>Balance</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" ng-change="prem.addCommas('minBal')"
-										ng-focus="prem.filterFocusCheck('minBal')" ng-blur="prem.filterBlurCheck('minBal')" placeholder="Min Balance">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" ng-change="prem.addCommas('maxBal')" 
-										ng-focus="prem.filterFocusCheck('maxBal')" ng-blur="prem.filterBlurCheck('maxBal')" placeholder="Max Balance">
-								</div>
-							</div>
-							<div class="col-6">
-								<span>Transaction Amount</span>
-								<div class="w-100 mb-1">
-									<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" ng-change="prem.addCommas('minTx')"
-										ng-focus="prem.filterFocusCheck('minTx')" ng-blur="prem.filterBlurCheck('minTx')" placeholder="Min Tx Amount">
-								</div>
-								<div class="w-100">
-									<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" ng-change="prem.addCommas('maxTx')"
-										ng-focus="prem.filterFocusCheck('maxTx')" ng-blur="prem.filterBlurCheck('maxTx')" placeholder="Max Tx Amount">
-								</div>
-							</div>
-						</div>
-						<div class="row m-2">
-							<span class="mx-auto">Transaction Time</span>
-							<div class="w-75 mx-auto mb-1">
-								<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" 
-									ng-focus="prem.filterFocusCheck('minTime')" ng-blur="prem.filterBlurCheck('minTime')" placeholder="Min Time">
-							</div>
-							<div class="w-75 mx-auto">
-								<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" 
-									ng-focus="prem.filterFocusCheck('maxTime')" ng-blur="prem.filterBlurCheck('maxTime')" placeholder="Max Time">
-							</div>
-						</div>
+					<div ng-filters class="p-2 text-center">	
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -461,6 +335,38 @@
 					<button type="button" class="btn btn-success" ng-click="prem.makeGraph();">
 						Create Graph
 					</button>
+				</div>
+			</div>
+			<div id="filters" style="display: none;">
+				<span class="mb-2">Preset Filters <i class="far fa-question-circle" data-toggle="tooltip" title="Presetting filters may result in much faster load times"></i></span>
+				<div class="row">
+					<div class="col-6">
+						<span>Balance</span>
+						<div class="w-100 mb-1">
+							<input autocomplete="off" type="text" name="minBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minBal" placeholder="Min Balance" defplaceholder="Min Balance">
+						</div>
+						<div class="w-100">
+							<input autocomplete="off" type="text" name="maxBal" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxBal" placeholder="Max Balance" defplaceholder="Max Balance">
+						</div>
+					</div>
+					<div class="col-6">
+						<span>Transaction Amount</span>
+						<div class="w-100 mb-1">
+							<input autocomplete="off" type="text" name="minTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTx" placeholder="Min Tx Amount" defplaceholder="Min Tx Amount">
+						</div>
+						<div class="w-100">
+							<input autocomplete="off" type="text" name="maxTx" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTx" placeholder="Max Tx Amount" defplaceholder="Max Tx Amount">
+						</div>
+					</div>
+				</div>
+				<div class="row m-2">
+					<span class="mx-auto">Transaction Time</span>
+					<div class="w-75 mx-auto mb-1">
+						<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.minTime" placeholder="Min Time" defplaceholder="Min Time" list="minTimeRanges">
+					</div>
+					<div class="w-75 mx-auto">
+						<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate shadow" ng-model="prem.filterInput.maxTime" placeholder="Max Time" defplaceholder="Max Time" list="maxTimeRanges">
+					</div>
 				</div>
 			</div>
 			<datalist id="categories">
@@ -804,8 +710,8 @@
 		</div>
 	</div>
 {% elif coin and coin != 'home' %}
-	<div id="body-row" class="ng-cloak d-flex h-100 w-100">
-		<div id="sidebar-container" class="pre-scrollable" style="z-index: 10; position: relative; width: 250px">
+	<div id="body-row" class="ng-cloak d-flex h-100 w-100 position-relative">
+		<div id="sidebar-container" ng-mouseenter="basic.slide = true" ng-mouseleave="basic.slide = false" class="pre-scrollable pb-5" style="z-index: 10; position: relative; width: 250px">
 			<div class="text-center text-white h5 m-2 text-truncate">
 				{{session}}
 				{% if user.is_authenticated and user.settings.premium %}
@@ -824,23 +730,23 @@
 				</div>
 				<div ng-switch-default class="btn-group">
 				{% if user.is_authenticated and user.settings.premium %}	
-					<button class="btn btn-info shadow-none" ng-click="prem.customGraph();"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
+					<button class="btn btn-info shadow-none always-open" ng-click="prem.customGraph();"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
 							style="width: 24px; height: auto;"><span class="openup"> Custom
 							Graph</span></button>
 					{% if session == "Basic Session" %}
-						<button class="btn btn-success shadow-none disabled" disabled="disabled">
+						<button class="btn btn-success shadow-none always-open disabled" disabled="disabled">
 							<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 								style="width: 24px; height: auto;"><span class="openup" data-toggle="tooltip" title="Cannot add custom addresses to Basic Session"> Add Address</span></button>
 					{% else %}
-						<button class="btn btn-success shadow-none" ng-click="prem.showOverlay({type:'add'});">
+						<button class="btn btn-success shadow-none always-open" ng-click="prem.showOverlay({type:'add'});">
 							<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 								style="width: 24px; height: auto;"><span class="openup"> Add Address</span></button>
 					{% endif %}
 				{% else %}
-					<button class="btn btn-info shadow-none disabled" disabled="disabled"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
+					<button class="btn btn-info shadow-none always-open disabled" disabled="disabled"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAxCAYAAABK+/BHAAADJElEQVRoQ92ZT6jNQRTHP092SiyVxEpZsbXBTtmwtENZqLdgQymhKGWBlI3yZ2GnKBvZeDt2KBsrsrMiG0v61IzG7d13z8zvN/d1nbq913szcz5z5jtnzsxdYoFtqRP7WWAL8AV4Dvzo4acX/GdgZwLeB7xfVPhdaQVG5+8V+d8FaS8f9BhYuSgbTc0b+S7WA/4g8DrRqnU138V6wJ8AHibaR8DJLuTwj2wOAy9HcGSavJXGuQ2cG2HMVYfIkb8MXAHeAqeBjwMcOo7jaVfTuAOGm941w5fZ4VeawJNGj0pG6WhKRul0sQx/Brg34eEmcL7B6zPgaOp3LJ2wDcPM7lJu2P3AfWBP0e1VWoWvs4f626I8XbsdUHqbzDab0gSOF7Df0gReTJnA3hTpA6mecfIbgQ2Ak3+TpGPOH9WmpcoLwI0JT5eAa8XfzOduTH9GbCVlntHqnLXyvKlTGW0vyJ6mVRDaTWnlWGujpc9Zh9S2NIEjBaGn56Fa4on2Rt8xBpXKs+Czz+vAReATsHsgeO4+uHSIwuvwLrA8EngexouK6bTJovBlsdXkaI1OysfNXG1ReHUezSq1EM3yicCbx9/VElW2bzrMIvBllVjJFG7eVMBF4MtaJUxT2bBp40bgy1qlkinc3Hy/Ndw6NYzAf288SWtZlE6+B0T6rvz38POQjRXn4x6R75njB5UKEdmUd9KIFlvaNFWaEXjLXjdtT2sqESLwQnvCetL2MOuaphI7Ct+zRGiKulGMwtu2fNIYawWatJ6d18Cr/Q/AjpHIB9+movDKxsj702eQoRMQ3EvIoBeFCLx1vMVZedl+AJxqXAFf0Hy/HHR/jWjeB9PylUCHOhbAVXBS+eubWXMxq9wZ8wVtWuSNsjLJz3aCudSCT17ZXBk/PjqVty0nah8/Hv2jvdestWFXi6jAajSy1J7I2crfZ61M9f8nI69ElEqpb9OZ5WoEXIC5fB9Val5Ya2mvfNlKfddEZe7w5ZdgWd+tqWzu8AK7Oc0eNfpebUXWBT5PwMvwEFs3+CHQue9Cw/8sIrB5jGhMGyNSHvT0P2jshYb/A2Ytj2/PKdckAAAAAElFTkSuQmCC"
 						style="width: 24px; height: auto;"><span class="openup" data-toggle="tooltip" title="Premium required to create custom graphs"> Custom
 						Graph</span></button>
-					<button class="btn btn-success shadow-none disabled" disabled="disabled">
+					<button class="btn btn-success shadow-none always-open disabled" disabled="disabled">
 						<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 							style="width: 24px; height: auto;"><span class="openup" data-toggle="tooltip" title="Premium required to add custom addresses"> Add Address</span></button>
 				{% endif %}
@@ -879,12 +785,12 @@
 				</div>
 				<div ng-repeat="category in basic.known | orderBy:basic.sortGroups">
 					<div class="category shadow" name="{% verbatim %}{{category.name}}{% endverbatim %}">
-						<button class='btn btn-dark btn-group float-right m-1 mr-2 ml-2 shadow-none'
+						<button class='btn btn-dark btn-group float-right m-1 mr-2 ml-2 shadow'
 							style='z-index: 100; height: 42px' data-toggle="collapse"
 							data-target="#{% verbatim %}{{category.name}}{% endverbatim %}" aria-expanded="false"
 							aria-controls="{% verbatim %}{{category.name}}{% endverbatim %}"
 							ng-disabled="category.addrs.length < 1">
-							<i class="fas fa-caret-down"></i>
+							<i class="fas fa-caret-down flipped"></i>
 						</button>
 						<div ng-switch on="basic.isCustom" class="ng-cloak text-truncate"
 							style="overflow: visible !important;"
@@ -897,13 +803,13 @@
 							<div ng-switch-default>
 							{% if user.is_authenticated and user.settings.premium and session != "Basic Session" %}	
 								<button
-									class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
+									class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow'
 									data-toggle="modal" data-target="#overlay" ng-click="prem.showOverlay({type:'editCat',cat:category.name, id:category.uuid,url:category.url,filters:category.filters});">
 									<i class="fas fa-edit"></i>
 								</button>
 							{% else %}
 								<!--
-								<button class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'>
+								<button class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow'>
 									<span class="fa-layers fa-fw">
 										<i class="fas fa-edit"></i>
 										<i class="fas fa-lock fa-lg" style="opacity: 0.25; color: black"></i>
@@ -946,12 +852,12 @@
 								<div ng-switch-default style="white-space: nowrap;">
 								{% if user.is_authenticated and user.settings.premium and session != "Basic Session" %}	
 									<button
-										class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow-none'
+										class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow'
 										ng-click="prem.showOverlay({type:'delete',name:x.name,addr:x.addr,cat:category.uuid});">
 										<i class="fas fa-trash"></i>
 									</button>
 									<button
-										class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow-none'
+										class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow'
 										ng-click="prem.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.name,catId:category.uuid,url:x.url,filters:x.filters});">
 										<i class="fas fa-edit"></i>
 									</button>
@@ -971,14 +877,29 @@
 		</div>
 		<!-- sidebar-container END -->
 
-		<div style="position: relative; align-items:center; display: flex;">
-			<div id="dragbar"></div>
-			<a id="dragcircle" href="" class="justify-content-center d-inline-flex text-white drag"><i
-					class="fas fa-caret-left"></i></a>
+		<div style="position: relative; align-items:center;" class="d-inline-flex">
+			<div id="dragbar" ng-class="{'resize-cursor': basic.toggleBar}"><div class="arrow-right" ng-class="{'slide-right': !basic.toggleBar}"></div></div>
+			<a id="dragcircle" ng-click="basic.toggleSide();" ng-when href="" class="justify-content-center d-inline-flex text-white drag" ng-class="{'slide-right': basic.slide || !basic.toggleBar}">
+				<i class="fas fa-caret-left flipped"></i>
+			</a>
+			
+			<nav aria-label="breadcrumb" id="breadcrumb" ng-class="{'drag': basic.breadcrumbs.length > 0, 'slide-right': basic.breadcrumbs.length > 0 && basic.slide}" style="position: absolute; top: 0; right: 0; z-index: 8; width: max-content; opacity: 0.85;">
+				<ol class="breadcrumb bg-dark shadow h6">
+					<li class="breadcrumb-item text-primary text-truncate" ng-repeat="crumb in basic.breadcrumbs.slice(0, basic.activeCrumb)">
+						<a target="iframe_a" href="{% verbatim %}{{crumb.link}}{% endverbatim %}" ng-click="basic.addBreadcrumb({'link': crumb.link, 'name': crumb.name});">{% verbatim %}{{crumb.name}}{% endverbatim %}</a>
+					</li>
+					<li class="breadcrumb-item text-white text-truncate active" aria-current="page" data-placement="bottom">
+						{% verbatim %}{{basic.breadcrumbs[basic.activeCrumb].name}}{% endverbatim %}
+					</li>
+					<li class="breadcrumb-item text-primary text-truncate" ng-repeat="crumb in basic.breadcrumbs.slice(basic.activeCrumb + 1, basic.breadcrumbs.length)">
+						<a target="iframe_a" href="{% verbatim %}{{crumb.link}}{% endverbatim %}" ng-click="basic.addBreadcrumb({'link': crumb.link, 'name': crumb.name});">{% verbatim %}{{crumb.name}}{% endverbatim %}</a>
+					</li>
+				</ol>
+			</nav>
 		</div>
 
 		<!-- MAIN -->
-		<div class="col" id="frame" style="flex-grow: 1; z-index: 1;">
+		<div style="flex-grow: 1; flex-basis: 0;" id="frame">
 			<iframe id="iframe1" frameborder="0" name="iframe_a" src=""></iframe>
 			<div ng-if="!basic.loaded" style="position: absolute; display: block; left:40%; top:35%; z-index: 10000">
 				<div class="spinner-grow mx-auto" style="width: 15rem; height: 15rem;" role="status">
@@ -991,32 +912,174 @@
 		</div>
 	</div>
 {% elif not coin %}
-	<div id="iframe1" class="text-center">
+	<div id="iframe1">
+		<h2 class="position-absolute text-light" style="top: 20%; left: 50%; transform: translate(-50%); z-index: 100;">Blockchain Explorer Through Graphs!</h2>
+		<div id="graph" class="bg-dark" style="height: 100%; width: 100%"></div>
+		<!--<a class="btn btn-lg btn-success shadow position-absolute" href="/usdt/" style="left: 40%; top: 49%;">USDT</a>-->
+		<script>
+			var container = document.getElementById('graph');
+			//container.style = "cursor: wait";
 
+			// adding nodes and edges to the graph
+			data = {
+				nodes: new vis.DataSet([
+					{id: 1, label: 'Site', y: -300, size: 150},
+					{id: 2, label: 'Name', y: -300, size: 150},
+					{id: 3, x: -100, y: 0, label: "USDT", url: location.href + "usdt/", group: "link", color: {background: "#26A17B"}},
+					{id: 4, x: 100, y: 0, label: "BTC", "title": "Coming Soon!", group: "link", color: {background: "#FF9900"}}
+				]),
+				edges: new vis.DataSet([
+					{from: 3, to: 1},
+					{from: 1, to: 2},
+					{from: 2, to: 4}
+				])
+			};
+
+			var solver = "forceAtlas2Based";
+
+			var options = {
+				"nodes": {
+					"shape": "dot",
+					"borderWidthSelected": 1,
+					"font": {
+						"color": "#ffffff",
+						"size": 75,
+					},
+					"color": {
+						"highlight": {
+							"border": "#1f8766",
+							"background": "#e5ff00"
+						}
+					}
+				},
+				"edges": {
+					"arrows": {
+						"to": {
+							"enabled": true
+						}
+					},
+					"arrowStrikethrough": false,
+					"color": {
+						"highlight": "#e5ff00",
+						"hover": "#0062ff"
+					},
+					"smooth": {
+						"type": "dynamic",
+						"forceDirection": "none"
+					},
+					"font": {
+						"color": "#000000"
+					}
+				},
+				"interaction": {
+					"dragNodes": true,
+					"hideEdgesOnDrag": false,
+					"hideNodesOnDrag": false,
+					"hover": true,
+					"tooltipDelay": 100,
+					"hoverConnectedEdges": true,
+					"dragView": false,
+					"zoomView": false
+				},
+				"groups": {
+					"link": {
+						"shape": "box",
+						"size": 50,
+						"font": {
+							"size": 60,
+							"face": "Candara"
+						},
+						"fixed": {
+							"x": true, 
+							"y": true
+						},
+						"shadow": {
+							"enabled": true, 
+							"size": 10
+						},
+						"color": {
+							"border": "black"
+						}
+					}
+				},
+				"layout": {
+					"improvedLayout": false
+				},
+				"physics": {
+					'stabilization': {
+						'enabled': true,
+						'iterations': 2000,
+						'updateInterval': 25
+					},
+					"repulsion": {
+						"nodeDistance": 400,
+						"springLength": 300
+					},
+					"forceAtlas2Based": {
+						"avoidOverlap": 0.85
+					},
+					"enabled": true,
+					"solver": "forceAtlas2Based"
+				}
+			};
+			
+			network = new vis.Network(container, data, options);
+
+			network.on("hoverNode", function (params) {
+				if (data.nodes.get(params.node).url) {
+					network.canvas.body.container.style.cursor = 'pointer';
+				}				
+			});
+
+			network.on("blurNode", function (params) {
+				network.canvas.body.container.style.cursor = 'auto';
+			});
+
+			network.on("click", function (properties) {
+				if (properties.nodes.length === 1) {
+					var node = data.nodes.get(properties.nodes[0]);
+					if (node.url) {
+						location = node.url
+					}
+				}
+			});
+
+			$(window).resize(function() {
+				network.fit({
+					animation: false
+				});
+			});
+		</script>
 	</div>
 {% else %}
-	<div id="iframe1" class="text-center">
-		<h2 class="mt-5 pt-5">USDT Statistics</h2>
+	<div id="iframe1" class="position-absolute text-center pb-5" style="overflow-y: auto;">
+		<h2 class="mt-5">USDT Statistics</h2>
 		<h2>Sessions</h2>
 		<div class="card-group justify-content-center">
-			<a href="basic" style="text-decoration:none">
-				<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
+			<a href="basic" style="text-decoration:none" id="basic">
+				<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;" ng-init="session.mouseExit('basic')" ng-mouseenter="session.mouseEnter('basic')" ng-mouseleave="session.mouseExit('basic')">
 					<h5 class="card-header">
 						{{basic_session.name}}
 					</h5>
 					<div class="card-body">
-						<h5 class="card-title">Special title treatment</h5>
-						<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+						<h5 class="card-title">Addresses</h5>
+						<p class="card-text ">
+						{% for addr in basic_session.addrs %}
+							<span class="mx-2">
+								{{ addr.name }}
+							</span>
+						{% endfor %}
+						</p>
 					</div>
 				</div>
 			</a>
 	{% if request.user.is_authenticated and request.user.settings.premium %}
 		{% for session in sessions %}
-			<a href="{{session.url}}" style="text-decoration:none">
-				<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem;">
+			<a href="{{session.url}}" id="{{session.uuid}}" style="text-decoration:none">
+				<div class="card m-4 text-white bg-dark shadow shadow-lg" style="max-width: 18rem; max-height: 12rem; min-height: 12rem;" ng-init="session.mouseExit('{{session.uuid}}')" ng-mouseenter="session.mouseEnter('{{session.uuid}}')" ng-mouseleave="session.mouseExit('{{session.uuid}}')">
 					<h5 class="card-header">
 						<button class="btn btn-xs btn-outline-info px-1 py-0 shadow-none text-center"
-						style="font-size: 0.8em;" ng-click="session.showSession({type:'editSession', uuid:'{{session.uuid}}', name:'{{session.name}}'});">
+						style="font-size: 0.8em; z-index: 100;" ng-click="session.showSession({type:'editSession', uuid:'{{session.uuid}}', name:'{{session.name}}'});">
 							<i class="fas fa-edit"></i>
 						</button>
 						<span>{{ session.name }}</span>
@@ -1026,8 +1089,14 @@
 						</button>
 					</h5>
 					<div class="card-body">
-						<h5 class="card-title">Special title treatment</h5>
-						<p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+						<h5 class="card-title">Addresses</h5>
+						<p class="card-text">
+						{% for addr in session.addrs %}
+							<span class="mx-2">
+								{{ addr.name }}
+							</span>
+						{% endfor %}
+						</p>
 					</div>
 				</div>
 			</a>
@@ -1041,6 +1110,7 @@
 		</div>
 	</div>
 {% endif %}
-	<script src="{% static 'js/index.js' %}"></script>
+	<script src="{% static 'js/index.js' %}">
+	</script>
 </body>
 </html>

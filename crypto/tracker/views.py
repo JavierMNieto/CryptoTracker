@@ -169,7 +169,16 @@ def login(request, user):
 def signin(request):
 	username = request.POST.get('name', '')
 	password = request.POST.get('pass', '')
-	user = auth.authenticate(username=username, password=password)
+
+	user = None
+
+	try:
+		isValidEmail(username)
+	except ValidationError as e:
+		if e.code == "used":
+			user = auth.authenticate(username=User.objects.filter(email=username).first().username, password=password)
+		else:
+			user = auth.authenticate(username=username, password=password)
 
 	return login(request, user)
 
@@ -192,7 +201,7 @@ def isValidEmail(email):
 	validate_email(email)
 
 	if isUsedEmail(email):
-		raise ValidationError(email + " is already being used!", code="invalid")
+		raise ValidationError(email + " is already being used!", code="used")
 
 def isValidName(name):
 	if len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_ -]*$', name) != None:

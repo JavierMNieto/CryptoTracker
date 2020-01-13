@@ -96,6 +96,12 @@ function drawGraph(stop, graph) {
 						"background": "#AEB6BF",
 						"border": "#1f8766",
 					}
+				},
+				"main": {
+					"color": {
+						"background": "#17a2b8",
+						"border": "#1f8766",
+					}
 				}
 			},
 			"interaction": {
@@ -150,7 +156,12 @@ function drawGraph(stop, graph) {
 				if (stop) {
 					stopPhysics(graph);
 				}
-
+				$("#graph").resizable({
+					//maxHeight: 250,
+					maxWidth: $("#graph").width(),
+					//minHeight: 150,
+					minWidth: $("#graphContainer").innerWidth()*0.40
+				});
 			}, 500);
 		});
 
@@ -202,6 +213,7 @@ function onDeselectNodes() {
 
 function stopPhysics(graph) {
 	setTimeout(function () {
+		network.stabilize();
 		network.setOptions({
 			"physics": {
 				"enabled": false

@@ -8,7 +8,7 @@ var main = angular
 				scope.$watch(attr.ngTitle, function (v) {
 					element.tooltip({
 						title: v
-					})
+					});
 				});
 			}
 		};
@@ -22,12 +22,12 @@ function mainController($scope) {
 	main.overlay     = {};
 	main.acctInput   = {};
 	main.ut = moment().utc().format('HH:mm:ss');
-	main.hk = moment().tz('Asia/Hong_Kong').format('HH:mm:ss');
+	//main.hk = moment().tz('Asia/Hong_Kong').format('HH:mm:ss');
 
 	setInterval(function () {
 		$scope.$apply(function () {
 			main.ut = moment().utc().format('HH:mm:ss');
-			main.hk = moment().tz('Asia/Hong_Kong').format('HH:mm:ss');
+			//main.hk = moment().tz('Asia/Hong_Kong').format('HH:mm:ss');
 		});
 	}, 1000);
 
@@ -163,16 +163,13 @@ function mainController($scope) {
 	main.submit = function(type, uid) {
 		return new Promise(async resolve => {
 			$(".alert").remove();
-			main.formState = "load"; // Change
-			
+			main.formState = "load"; // Change			
 
 			var url = $(`#${type}`).attr('action');
 
 			if (uid) {
 				url += uid;
 			}
-
-			console.log(url);
 
 			let resp = await $.ajax({
 				url: url,

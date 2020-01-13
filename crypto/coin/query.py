@@ -256,13 +256,21 @@ class CoinController:
             if nodes:
                 aNode = nodes['from']
                 aKnown = self.getNodeFromSession(session, aNode['addr'])
+
+                group = "usdt"
+
+                if inArr(params['addr[]'], aNode['addr']):
+                    group = "main"
+                elif lastId != 0:
+                    group = "tempusdt"
+
                 aNode = {
                     "id": aNode.id,
                     "label": aKnown['name'],
                     "addr": aNode['addr'],
                     #"balance": float(aNode['balance'] or 0),
                     #"balVal": float(aNode['balance'] or 0),
-                    "group": 'usdt' if lastId == 0 else 'tempusdt', #aNode['wallet'] or 
+                    "group": group, #aNode['wallet'] or 
                     "url": aKnown['url'],
                     "value": float(aNode['balance'] or 0),#/Satoshi(),
                     "img": session.coin.getImg(),
@@ -277,13 +285,21 @@ class CoinController:
                 
                 bNode  = nodes['to']
                 bKnown = self.getNodeFromSession(session, bNode['addr'])
+
+                group = "usdt"
+
+                if inArr(params['addr[]'], bNode['addr']):
+                    group = "main"
+                elif lastId != 0:
+                    group = "tempusdt"
+
                 bNode = {
                     "id": bNode.id,
                     "label": bKnown['name'],
                     "addr": bNode['addr'],
                     #"balance": float(bNode['balance'] or 0),
                     #"balVal": float(bNode['balance'] or 0),
-                    "group": 'usdt' if lastId == 0 else 'tempusdt', #bNode['wallet'] or 
+                    "group": group, #bNode['wallet'] or 
                     "url": bKnown['url'],
                     "value": float(bNode['balance'] or 0),#/Satoshi(),
                     "img": session.coin.getImg(),

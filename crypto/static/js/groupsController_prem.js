@@ -6,6 +6,17 @@ main.directive('premController', function() {
 		controller: 'premController',
 		controllerAs: 'prem'
 	}
+}).directive('ngFilters', function($compile) {
+	return {
+		restrict: "A",
+		link: function (scope, element, attrs) {
+			var filters = $("#filters").clone().children();
+
+			$compile(filters)(scope);
+
+			element.html(filters);
+		}
+	};
 });
 
 function premController($scope) {
@@ -59,10 +70,9 @@ function premController($scope) {
 		} else if (obj.type == "add" && obj.addr) {
 			prem.addrInput.addr.val = obj.addr;
 			prem.checkAddr();
-		}
-
-		$('#overlay').modal('show');
+		}		
 		
+		$('#overlay').modal('show');
 		$(function () {
 			
 			$('[data-toggle="tooltip"]').tooltip({
@@ -143,20 +153,29 @@ function premController($scope) {
 					}
 				}
 			}
+			
+			$('input').on('input', function(event) {
+				var prev = $(this).val().match(/,*/g).length;
+				var select = event.target.selectionStart;
+
+				$(this).val(numberWithCommas($(this).val().replace(/,/g, "")));
+
+				if (prev != $(this).val().match(/,*/g).length) {
+					select++;
+				}
+
+				$(this)[0].setSelectionRange(select, select);
+			}).focus(function() {
+				if ($(this).val() != '' && $(this).val().match(/[0-9]/g) === null) {
+					$(this).attr('placeholder', $(this).val());
+					$(this).val('');
+				}
+			}).blur(function() {
+				if ($(this).val() == '' && $(this).attr('placeholder') != $(this).attr('defplaceholder')) {
+					$(this).val($(this).attr('placeholder'));
+				}
+			});
 		});
-	}
-
-	prem.filterFocusCheck = function (filter) {
-		let val = prem.filterInput[filter].toString();
-		if ( /*dFilters[filter] == val.replace(/,/g, "") ||*/ val == "max" || val == "min" || val == "oldest" || val == "latest") {
-			prem.filterInput[filter] = "";
-		}
-	}
-
-	prem.filterBlurCheck = function (filter) {
-		if (prem.filterInput[filter] == "") {
-			prem.filterInput[filter] = numberWithCommas(dFilters[filter]);
-		}
 	}
 
 	prem.checkAddr = function () {
@@ -256,16 +275,6 @@ function premController($scope) {
 
 		prem.addrInput.cat.valid = valid;
 	}
-	
-	prem.addCommas = function (name) {
-		var prevVal = prem.filterInput[name].replace(/,/g, "");
-
-		if (prevVal == "" || Number.isNaN(parseFloat(prevVal)) || (!isNaN(prevVal) && prevVal[prevVal.length - 1] == ".")) {
-			return;
-		}
-
-		prem.filterInput[name] = numberWithCommas(prevVal);
-	}
 
 	prem.customGraph = function () {
 		$scope.basic.isCustom = true;
@@ -296,7 +305,7 @@ function premController($scope) {
 			url += "&addr[]=" + prem.addrs[i];
 		}
 		$("#overlay").modal("hide");
-		prem.startLoader();
+		$scope.basic.startLoader();
 		$('#iframe1').attr('src', formatFilters(prem.filterInput, url));
 		prem.customOff();
 	}

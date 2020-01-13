@@ -10,9 +10,11 @@
 	<title>USDT/BTC Market Tracker</title>
 	<link rel="shortcut icon" href="{% static 'images/tracking.png' %}">
 	<link rel="icon" href="{% static 'images/tracking.png' %}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css"/>
+	<link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}"/>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="{% static 'js/jquery-ui.min.js' %}"></script>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
@@ -45,13 +47,14 @@
 		var network;
 		var container;
 		var options, data;
+		var dateFormat = "M/DD/YY h:mm A"; // REVIEW
 		const satoshi = 100000000.0;
 	</script>
 	<script src="{% static 'js/coinController.js' %}"></script>
 </head>
 
-<body ng-controller="txsController as vm" class="container-fluid">
-	<div id="body" class="ng-cloak">
+<body ng-controller="txsController as vm" class="container-fluid scroll">
+	<div id="body" class="ng-cloak mt-3">
 		<div id="name" class="font-weight-bold text-center h1">
 			{% if addr|length == 1 and label == addr.0 and session != "Basic Session" and user.is_authenticated and user.settings.premium %}
 			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{addr.0}}'}, window.location.origin)" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Add Address">
@@ -67,7 +70,7 @@
 		{% if names %}
 		<div class="justify-content-center text-center h6">
 			{% for name in names %}
-				<a class="mx-1" href="../addr/{{addr|index:forloop.counter0}}{%verbatim%}{{vm.dURLParams}}{% endverbatim %}">{{name}}</a>
+				<a class="mx-1 addr" href="../addr/{{addr|index:forloop.counter0}}{%verbatim%}{{vm.dURLParams}}{% endverbatim %}">{{name}}</a>
 			{% endfor %}
 		</div>
 		{% endif %}
@@ -96,8 +99,8 @@
 						Balance
 					</button>
 					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
-						<input autocomplete="off" ng-change="vm.addCommas('minBal');" type="text" name="minBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Balance" ng-model="vm.graphFilters.minBal">
-						<input autocomplete="off" ng-change="vm.addCommas('maxBal');" type="text" name="maxBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Balance" ng-model="vm.graphFilters.maxBal">
+						<input autocomplete="off" ng-change="vm.addCommas('minBal');" type="text" name="minBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Balance" defplaceholder="Min Balance" ng-model="vm.graphFilters.minBal">
+						<input autocomplete="off" ng-change="vm.addCommas('maxBal');" type="text" name="maxBal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Balance" defplaceholder="Max Balance" ng-model="vm.graphFilters.maxBal">
 					</div>
 				</div>
 
@@ -106,8 +109,8 @@
 						Time
 					</button>
 					<div class="dropdown-menu mt-n1" name="dateTimes" style="min-width: 15vw">
-						<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx Time" ng-model="vm.graphFilters.minTime">
-						<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx Time" ng-model="vm.graphFilters.maxTime">
+						<input autocomplete="off" type="text" name="minTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx Time" defplaceholder="Min Tx Time" ng-model="vm.graphFilters.minTime">
+						<input autocomplete="off" type="text" name="maxTime" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx Time" defplaceholder="Max Tx Time" ng-model="vm.graphFilters.maxTime">
 					</div>
 				</div> 
 				<div class="dropdown dropdown-hover mx-2">
@@ -115,8 +118,8 @@
 						Transaction Amount
 					</button>
 					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
-						<input autocomplete="off" ng-change="vm.addCommas('minTx');" type="text" name="minTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx" ng-model="vm.graphFilters.minTx">
-						<input autocomplete="off" ng-change="vm.addCommas('maxTx');" type="text" name="maxTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx" ng-model="vm.graphFilters.maxTx">
+						<input autocomplete="off" ng-change="vm.addCommas('minTx');" type="text" name="minTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx" defplaceholder="Min Tx" ng-model="vm.graphFilters.minTx">
+						<input autocomplete="off" ng-change="vm.addCommas('maxTx');" type="text" name="maxTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx" defplaceholder="Max Tx" ng-model="vm.graphFilters.maxTx">
 					</div>
 				</div>
 			</div>
@@ -184,20 +187,31 @@
 					</div>
 				</div>
 			</div>
-			<div style="position: absolute; left: 97.5%">
-				<div>
-					<button ng-disabled="!vm.isGraph" ngsf-toggle-fullscreen width="16px" height="16px" class="btn position-relative btn-sm shadow-none" onclick="fullGraph()" data-toggle="tooltip" data-placement="top" title="Fullscreen Graph">
-						<svg width="16px" height="16px" viewBox="0 0 438.543 438.543">
-							<path d="M407.42,159.029c3.62,3.616,7.898,5.428,12.847,5.428c2.282,0,4.668-0.476,7.139-1.429   c7.426-3.235,11.136-8.853,11.136-16.846V18.276c0-4.949-1.807-9.231-5.428-12.847c-3.61-3.617-7.898-5.424-12.847-5.424H292.36   c-7.991,0-13.607,3.805-16.848,11.419c-3.23,7.423-1.902,13.99,4,19.698l41.111,41.112L219.271,173.589L117.917,72.231   l41.112-41.112c5.901-5.708,7.232-12.275,3.999-19.698C159.789,3.807,154.175,0,146.182,0H18.276C13.324,0,9.041,1.809,5.425,5.426   c-3.617,3.616-5.424,7.898-5.424,12.847v127.907c0,7.996,3.809,13.61,11.419,16.846c2.285,0.948,4.57,1.429,6.855,1.429   c4.948,0,9.229-1.812,12.847-5.427l41.112-41.109l101.354,101.354L72.234,320.622l-41.112-41.113   c-5.711-5.903-12.275-7.231-19.702-4.001c-7.614,3.241-11.419,8.856-11.419,16.854v127.906c0,4.948,1.807,9.229,5.424,12.847   c3.619,3.614,7.902,5.421,12.851,5.421h127.906c7.996,0,13.61-3.806,16.846-11.416c3.234-7.427,1.903-13.99-3.999-19.705   l-41.112-41.106L219.271,264.95l101.353,101.361l-41.114,41.11c-5.899,5.708-7.228,12.279-3.997,19.698   c3.237,7.617,8.856,11.423,16.851,11.423h127.907c4.948,0,9.232-1.813,12.847-5.428c3.613-3.613,5.42-7.898,5.42-12.847V292.362   c0-7.994-3.709-13.613-11.136-16.851c-7.802-3.23-14.462-1.903-19.985,4.004l-41.106,41.106L264.952,219.271L366.31,117.917   L407.42,159.029z"/>
-						</svg>
-					</button>
-				</div>
-				<div class="row mx-auto">
-					<button ng-disabled="!vm.isGraph" width="16px" height="16px" class="btn position-absolute btn-sm shadow-none" onclick="toggleDarkMode()" data-toggle="tooltip" data-placement="top" title="Toggle Graph Dark Mode">
-						<svg width="16px" height="16px" viewBox="-12 0 448 448.04455">
-							<path d="m224.023438 448.03125c85.714843.902344 164.011718-48.488281 200.117187-126.230469-22.722656 9.914063-47.332031 14.769531-72.117187 14.230469-97.15625-.109375-175.890626-78.84375-176-176 .972656-65.71875 37.234374-125.832031 94.910156-157.351562-15.554688-1.980469-31.230469-2.867188-46.910156-2.648438-123.714844 0-224.0000005 100.289062-224.0000005 224 0 123.714844 100.2851565 224 224.0000005 224zm0 0"/>
-						</svg>
-					</button>
+			<div style="position: relative;">
+				<div style="position: absolute; left: 97.5%; z-index: 100;">
+					<div>
+						<button ng-disabled="!vm.isGraph" ngsf-toggle-fullscreen class="btn position-relative btn-sm shadow-none" onclick="fullGraph()" data-toggle="tooltip" data-placement="top" title="Fullscreen Graph">
+							<i class="fas fa-arrows-alt"></i>
+						</button>
+					</div>
+					<div class="row mx-auto">
+						<button ng-disabled="!vm.isGraph" class="btn position-relative btn-sm shadow-none" onclick="toggleDarkMode()" data-toggle="tooltip" data-placement="top" title="Toggle Graph Dark Mode">
+							<i class="fas fa-adjust"></i>
+						</button>
+					</div>
+					<div class="row mx-auto">
+						<button ng-disabled="!vm.isGraph" class="btn position-relative btn-sm shadow-none" onclick="network.fit({animation: true});" data-toggle="tooltip" data-placement="top" title="Center Graph">
+							<i class="fas fa-crosshairs"></i>
+						</button>
+					</div>
+					<div class="row mx-auto" ng-switch="vm.txGraph">
+						<button ng-switch-when="false" ng-disabled="!vm.isGraph" class="btn position-relative btn-sm shadow-none" onclick="$('#graph').animate({width: '45%'}, 'slow', 'linear', function() {$('#graph').trigger('resize');});" data-toggle="tooltip" data-placement="top" title="Right Justify Transactions">
+							<i class="fas fa-align-right"></i>
+						</button>
+						<button ng-switch-default ng-disabled="!vm.isGraph" class="btn position-relative btn-sm shadow-none" onclick="$('#graph').animate({width: '95%'}, 'slow', 'linear', function() {$('#graph').trigger('resize');});" data-toggle="tooltip" data-placement="top" title="Normal View">
+							<i class="fas fa-align-justify"></i>
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -213,7 +227,7 @@
 						</button>
 					</div>
 					<div ng-switch-default class="text-center text-truncate">
-						<a href="{% verbatim %}{{ vm.selection.url }}{{ vm.dURLParams }}{% endverbatim %}" class="h2 font-weight-bold">
+						<a href="{% verbatim %}{{ vm.selection.url }}{{ vm.dURLParams }}{% endverbatim %}" class="h2 font-weight-bold addr">
 							{% verbatim %}{{ vm.selection.label }}{% endverbatim %}
 						</a>
 						<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.label }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Name">
@@ -240,7 +254,7 @@
 					</div>
 				</div>
 				<div class="row align-items-end justify-content-center">
-					<a href="{% verbatim %}{{ vm.selection.url }}{{ vm.dURLParams }}{% endverbatim %}" class="font-italic" style="font-size: 65%">
+					<a href="{% verbatim %}{{ vm.selection.url }}{{ vm.dURLParams }}{% endverbatim %}" class="font-italic addr" style="font-size: 65%">
 						{% verbatim %}{{ vm.selection.addr }}{% endverbatim %}
 					</a>
 					<button width="20" height="20" class="btn btn-icon rounded" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ vm.selection.addr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Address">
@@ -251,141 +265,143 @@
 				</div>		
 			</div>
 		</div>
-		<div class="row justify-content-center mx-auto" style="padding-top: 2vh; width: 90%">
-			<div class="h5 text-center block">
-				<div ng-switch="vm.pager.totalItems">
-					<div ng-switch-when="1">
-						{% verbatim %}{{ vm.pager.totalItems | number : fractionSize }}{% endverbatim %} Transaction
-					</div>
-					<div ng-switch-default> 
-						{% verbatim %}{{ vm.pager.totalItems | number : fractionSize }}{% endverbatim %} Transactions
-					</div>
-				</div>
-				<div ng-switch="vm.pager.totalPages">
-					<div ng-switch-when="1">
-						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages | number : fractionSize }}{% endverbatim %} Page)</span>
-					</div>
-					<div ng-switch-default>
-						<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages | number : fractionSize }}{% endverbatim %} Pages)</span>
-					</div>
-				</div>
-			</div>
-			<div class="px-5">
-				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect shadow">
-					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(1)" class="page-link">First</a>
-					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item"> 
-						<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
-					</li>
-					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled: vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page | number : fractionSize}}{% endverbatim %}</a>
-					</li>                
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
-					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(vm.pager.totalPages)" class="page-link">Last</a>
-					</li>
-				</ul>
-			</div>
-			<div class="dropdown block">
-				<button type="button" class="btn btn-primary dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-					{% verbatim %}{{ vm.dropText }}{% endverbatim %} <span class="caret"></span>
-				</button>
-				<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-					<a class="dropdown-item" ng-click="vm.sortBy('time', true)">Most Recent</a>
-					<a class="dropdown-item" ng-click="vm.sortBy('value', true)">Transaction Amount <span class="font-italic h6">| Largest to Smallest</span></a>
-					<a class="dropdown-item" ng-click="vm.sortBy('value', false)">Transaction Amount <span class="font-italic h6">| Smallest to Largest</span></a>
-				</div>
-			</div>
-		</div>
-		<div class="container" ng-switch="vm.txLoading">
-			<div ng-switch-when="true" class="text-center mb-5">
-				<div class="spinner-grow plus" style="width: 5rem; height: 5rem;" role="status">
-					<span class="sr-only">Loading...</span>
-				</div>
-			</div>
-			<div ng-switch-default class="list-group" id="txList" style="position: relative">
-				<div ng-repeat="tx in vm.txs" class="list-group-item mx-auto shadow-lg" style="width: 90%;">
-					<div class="row align-items-start" style="padding-bottom: 1vh;">
-						<div class="col-sm-1">
-							<img ng-src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
+		<div id="txContainer">
+			<div class="row justify-content-center mx-auto" style="padding-top: 2vh; width: 90%" id="txTop">
+				<div class="text-center block" id="txCounter">
+					<div ng-switch="vm.pager.totalItems">
+						<div ng-switch-when="1">
+							{% verbatim %}{{ vm.pager.totalItems | number : fractionSize }}{% endverbatim %} Transaction
 						</div>
-						<div class="col-sm-7 h1">
-							{% verbatim %}{{ tx.value | number : fractionSize }}{% endverbatim %}
-							<span ng-if="tx.type !== 'USDTTX'" class="h6">(${% verbatim %}{{ tx.value | number : 2 }}{% endverbatim %})</span>
-							<button width="20" height="20" class="btn btn-icon" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.value }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Transaction Amount">
-								<i class="far fa-copy fa-lg"></i>
-							</button>
+						<div ng-switch-default> 
+							{% verbatim %}{{ vm.pager.totalItems | number : fractionSize }}{% endverbatim %} Transactions
 						</div>
-						<div class="col-sm-4 h5 font-italic text-right">{% verbatim %}{{ vm.formatTime(tx.time) }}{% endverbatim %}</div>
 					</div>
-					<div class="justify-content-center" ng-class="{row: vm.rowTxs, 'text-center': !vm.rowTxs}" style="padding-bottom: 1rem;">
-						<div class="block" ng-class="{'col-6': vm.rowTxs, 'ml-n4': vm.rowTxs, 'text-right': vm.rowTxs}" style="position: relative; whitespace: nowrap;">
-							<button width="16" height="16" ng-click="vm.highlight(tx.from, true)" class="btn btn-icon" 
-								style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" 
-								title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
+					<div ng-switch="vm.pager.totalPages">
+						<div ng-switch-when="1">
+							<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages | number : fractionSize }}{% endverbatim %} Page)</span>
+						</div>
+						<div ng-switch-default>
+							<span class="font-italic">({% verbatim %}{{ vm.pager.totalPages | number : fractionSize }}{% endverbatim %} Pages)</span>
+						</div>
+					</div>
+				</div>
+				<div ng-class="{'px-4': !vm.txGraph, 'px-2': vm.txGraph}">
+					<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect shadow">
+						<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(1)" class="page-link">First</a>
+						</li>
+						<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item"> 
+							<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
+						</li>
+						<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled: vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page | number : fractionSize}}{% endverbatim %}</a>
+						</li>                
+						<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
+						</li>
+						<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(vm.pager.totalPages)" class="page-link">Last</a>
+						</li>
+					</ul>
+				</div>
+				<div class="dropdown block" id="txSort">
+					<button type="button" class="btn btn-primary dropdown-toggle shadow" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<i class="fas fa-filter"></i></span>
+					</button>
+					<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+						<a class="dropdown-item active" id="blocktimeDESC" ng-click="vm.sortBy('time', true)">Most Recent</a>
+						<a class="dropdown-item" id="amountDESC" ng-click="vm.sortBy('value', true)">Amount <i class="fas fa-sort-amount-up"></i></a>
+						<a class="dropdown-item" id="amountASC" ng-click="vm.sortBy('value', false)">Amount <i class="fas fa-sort-amount-down-alt"></i></a>
+					</div>
+				</div>
+			</div>
+			<div class="container scroll" id="txListContainer" ng-switch="vm.txLoading" style="overflow-x: hidden;" ng-style="{'overflow-y': vm.txGraph ? 'auto' : 'hidden'}">
+				<div ng-switch-when="true" class="text-center mb-5">
+					<div class="spinner-grow plus" style="width: 5rem; height: 5rem;" role="status">
+						<span class="sr-only">Loading...</span>
+					</div>
+				</div>
+				<div ng-switch-default class="list-group" id="txList" style="position: relative;">
+					<div ng-repeat="tx in vm.txs" class="list-group-item mx-auto" ng-class="{'shadow-lg': !vm.txGraph}" style="width: 90%;">
+						<div class="row align-items-start" style="padding-bottom: 1vh;">
+							<div class="col-sm-1">
+								<img ng-src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
+							</div>
+							<div class="col-sm-7 h1">
+								{% verbatim %}{{ tx.value | number : fractionSize }}{% endverbatim %}
+								<span ng-if="tx.type != 'USDTTX'" class="h6">(${% verbatim %}{{ tx.value | number : 2 }}{% endverbatim %})</span>
+								<button width="20" height="20" class="btn btn-icon" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.value }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Transaction Amount">
+									<i class="far fa-copy fa-lg"></i>
+								</button>
+							</div>
+							<div class="col-sm-4 h4 font-italic text-right">{% verbatim %}{{ vm.formatTime(tx.time) }}{% endverbatim %}</div>
+						</div>
+						<div class="justify-content-center" ng-class="{row: vm.rowTxs, 'text-center': !vm.rowTxs}" style="padding-bottom: 1rem;">
+							<div class="block" ng-class="{'col-6': vm.rowTxs, 'ml-n4': vm.rowTxs, 'text-right': vm.rowTxs}" style="position: relative; white-space: nowrap;">
+								<button width="16" height="16" ng-click="vm.highlight(tx.from, true)" class="btn btn-icon" 
+									style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top" 
+									title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
+									<i class="fas fa-highlighter"></i>
+								</button>
+								<a href="{% verbatim %}{{ tx.sourceUrl }}{{ vm.dURLParams }}{% endverbatim %}" class="h6 text-truncate text-primary font-weight-bold addr">
+									{% verbatim %}{{ tx.source }}{% endverbatim %}
+								</a>
+								<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.sourceAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Sender Address">
+									<i class="far fa-copy"></i>
+								</button>
+							</div>
+							<i class="fas fa-arrow-right" ng-if="vm.rowTxs"></i>
+							<i class="fas fa-arrow-down" ng-if="!vm.rowTxs"></i>
+							<div class="block" ng-class="{'col-6': vm.rowTxs, 'mr-n4': vm.rowTxs, 'text-left': vm.rowTxs}" style="position: relative; white-space: nowrap;">
+								<button width="16" height="16" ng-click="vm.highlight(tx.to, true)" class="btn btn-icon" 
+									style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top"
+									title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
+									<i class="fas fa-highlighter"></i>
+								</button>
+								<a href="{% verbatim %}{{ tx.targetUrl }}{{ vm.dURLParams }}{% endverbatim %}" class="h6 text-truncate text-primary font-weight-bold addr">
+									{% verbatim %}{{ tx.target }}{% endverbatim %}
+								</a>
+								<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.targetAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Reference Address">
+									<i class="far fa-copy"></i>
+								</button>	
+							</div>
+						</div>
+						<div class="row align-items-end justify-content-center">
+							<button width="16" height="16" ng-click="vm.highlight({source: tx.source, target: tx.target}, false)" 
+								class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" 
+								data-placement="top" title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
 								<i class="fas fa-highlighter"></i>
 							</button>
-							<a href="{% verbatim %}{{ tx.sourceUrl }}{{ vm.dURLParams }}{% endverbatim %}" ng-click="vm.startLoader();" class="h6">
-								{% verbatim %}{{ tx.source }}{% endverbatim %}
+							<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" class="font-italic text-truncate" style="font-size: 70%">
+								{% verbatim %}{{ tx.txid }}{% endverbatim %}
 							</a>
-							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.sourceAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Sender Address">
+							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.txid }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy TxID">
 								<i class="far fa-copy"></i>
-							</button>
+							</button>		
 						</div>
-						<i class="fas fa-arrow-right" ng-if="vm.rowTxs"></i>
-						<i class="fas fa-arrow-down" ng-if="!vm.rowTxs"></i>
-						<div class="block" ng-class="{'col-6': vm.rowTxs, 'mr-n4': vm.rowTxs, 'text-left': vm.rowTxs}" style="position: relative; whitespace: nowrap;">
-							<button width="16" height="16" ng-click="vm.highlight(tx.to, true)" class="btn btn-icon" 
-								style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top"
-								title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
-								<i class="fas fa-highlighter"></i>
-							</button>
-							<a href="{% verbatim %}{{ tx.targetUrl }}{{ vm.dURLParams }}{% endverbatim %}" ng-click="vm.startLoader();" class="h6">
-								{% verbatim %}{{ tx.target }}{% endverbatim %}
-							</a>
-							<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.targetAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Reference Address">
-								<i class="far fa-copy"></i>
-							</button>	
-						</div>
-					</div>
-					<div class="row align-items-end justify-content-center">
-						<button width="16" height="16" ng-click="vm.highlight({source: tx.source, target: tx.target}, false)" 
-							class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" 
-							data-placement="top" title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
-							<i class="fas fa-highlighter"></i>
-						</button>
-						<a href="{% verbatim %}{{ tx.txidUrl }}{% endverbatim %}" ng-click="vm.startLoader();" class="font-italic text-truncate" style="font-size: 65%">
-							{% verbatim %}{{ tx.txid }}{% endverbatim %}
-						</a>
-						<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.txid }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy TxID">
-							<i class="far fa-copy"></i>
-						</button>		
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="row mx-auto justify-content-center mt-3">
-			<div>
-				<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect shadow">
-					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(1)" class="page-link">First</a>
-					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item"> 
-						<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
-					</li>
-					<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled:vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page | number : fractionSize}}{% endverbatim %}</a>
-					</li>                
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
-					</li>
-					<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
-						<a ng-click="vm.setPage(vm.pager.totalPages)" class="page-link">Last</a>
-					</li>
-				</ul>
+			<div class="row mx-auto justify-content-center mt-3">
+				<div>
+					<ul ng-if="vm.pager.pages.length" class="pagination justify-content-center noselect shadow">
+						<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(1)" class="page-link">First</a>
+						</li>
+						<li ng-class="{disabled:vm.pager.currentPage === 1 || vm.txLoading}" class="page-item"> 
+							<a ng-click="vm.setPage(vm.pager.currentPage - 1)" class="page-link">Previous</a>
+						</li>
+						<li ng-repeat="page in vm.pager.pages" ng-class="{active:vm.pager.currentPage === page, disabled:vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(page)" class="page-link">{% verbatim %}{{page | number : fractionSize}}{% endverbatim %}</a>
+						</li>                
+						<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(vm.pager.currentPage + 1)" class="page-link">Next</a>
+						</li>
+						<li ng-class="{disabled:vm.pager.currentPage === vm.pager.totalPages || vm.txLoading}" class="page-item">
+							<a ng-click="vm.setPage(vm.pager.totalPages)" class="page-link">Last</a>
+						</li>
+					</ul>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -460,9 +476,38 @@
 			e.stopPropagation();
 		});
 
+		$('.dropdown-hover input').on('input', function(event) {
+			var prev = $(this).val().match(/,*/g).length;
+			var select = event.target.selectionStart;
+
+			$(this).val(numberWithCommas($(this).val().replace(/,/g, "")));
+
+			if (prev != $(this).val().match(/,*/g).length) {
+				select++;
+			}
+
+			$(this)[0].setSelectionRange(select, select);
+		}).focus(function() {
+			if ($(this).val() != '' && $(this).val().match(/[0-9]/g) === null) {
+				$(this).attr('placeholder', $(this).val());
+				$(this).val('');
+			}
+		}).blur(function() {
+			if ($(this).val() == '' && $(this).attr('placeholder') != $(this).attr('defplaceholder')) {
+				$(this).val($(this).attr('placeholder'));
+				$(this).removeClass("filterChange");
+			} else if ((!$(this).attr("name").includes("Time") && dFilters[$(this).attr("name")] != $(this).val().replace(/,/g, "")) ||
+						$(this).attr("name").includes("Time") && Math.abs(moment($(this).val(), dateFormat).valueOf()/1000 - dFilters[$(this).attr("name")]) > 600) {
+				$(this).addClass("filterChange");			
+			} else {
+				$(this).removeClass("filterChange");
+			}
+		});
+
+		/*
 		$(".dropdown-hover input").focus(e => {
 			var el   = e.target;
-			if ($(el).val() == "max" || $(el).val() == "min" || $(el).val() == "oldest" || $(el).val() == "latest" /*|| dFilters[el.name] == $(el).val().replace(/,/g, "")*/) {
+			if ($(el).val() == "max" || $(el).val() == "min" || $(el).val() == "oldest" || $(el).val() == "latest" /*|| dFilters[el.name] == $(el).val().replace(/,/g, "")/) {
 				$(el).val("");
 				$(el).removeClass("filterChange");
 				tempFilters[$(el).attr("name")] = $(el).val();
@@ -478,6 +523,7 @@
 
 			tempFilters[$(el).attr("name")] = $(el).val();
 		});
+		*/
 	</script>
 </body>
 {% endif %}

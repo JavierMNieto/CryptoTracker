@@ -103,8 +103,7 @@ function isValidAddr(addr) {
     });
 }
 
-var dragging = false,
-    toggle = false;
+var dragging = false;
 
 $('#dragbar').mousedown(function (e) {
     e.preventDefault();
@@ -112,15 +111,12 @@ $('#dragbar').mousedown(function (e) {
     var side = $('#sidebar-container');
     $('iframe').css('pointer-events', 'none');
     $(document).mousemove(function (ex) {
-        if (ex.pageX + 2 < 425 && ex.pageX + 2 > 50 && dragging && !toggle) {
+        if (ex.pageX + 2 < 425 && ex.pageX + 2 > 50 && dragging) {
             side.width(ex.pageX + 2);
-        } else if (ex.pageX + 2 <= 50 && !toggle && dragging) {
-            toggle = true;
+        } else if (ex.pageX + 2 <= 50 && dragging) {
             stopDrag();
-            $("#dragcircle i").attr("class", "fas fa-caret-left open");
-            side.animate({
-                width: '0px'
-            }, 250);
+            var vm = angular.element($('body')).scope();
+            vm.$apply(`basic.toggleSide()`);
         }
 
         if (side.width() < 85) {
@@ -129,37 +125,6 @@ $('#dragbar').mousedown(function (e) {
             $(".btn-overlap").show();
         }
     });
-});
-
-$("#sidebar-container").hover(() => {
-    if (!toggle) {
-        $(".drag").addClass("slide-right");
-    }
-}, () => {
-    if (!toggle) {
-        $(".drag").removeClass("slide-right");
-    }
-});
-
-$("#dragcircle").click(() => {
-    var symbol = $("#dragcircle i");
-    if (toggle) {
-        $(symbol).attr("class", "fas fa-caret-left");
-        $('#sidebar-container').animate({
-            width: '250px'
-        }, 'slow');
-        toggle = false;
-        $(".btn-overlap").show();
-        $(".drag").removeClass("slide-right");
-    } else {
-        $(".btn-overlap").hide();
-        $(".drag").addClass("slide-right");
-        $(symbol).attr("class", "fas fa-caret-left open");
-        $('#sidebar-container').animate({
-            width: '0px'
-        }, 'slow');
-        toggle = true;
-    }
 });
 
 function stopDrag() {
@@ -174,24 +139,14 @@ $(document).mouseup(function (e) {
     }
 });
 
-function rotate(el) {
-    el = $(el).find("i");
-    if ($(el).hasClass("open")) {
-        $(el).attr("class", "fas fa-caret-down");
-    } else {
-        $(".open").attr("class", "fas fa-caret-down");
-        $(el).attr("class", "fas fa-caret-down open");
-    }
-}
-
 $('#accordion').on('hide.bs.collapse', e => {
-    var el = $(`[name='${e.target.id}']`).find('.fa-caret-down');
+    var el = $(`[name='${e.target.id}']`).find('i');
 
-    $(el).attr("class", "fas fa-caret-down");
+    $(el).toggleClass("flip flipped");
 });
 
 $('#accordion').on('show.bs.collapse', e => {
-    var el = $(`[name='${e.target.id}']`).find('.fa-caret-down');
-
-    $(el).attr("class", "fas fa-caret-down open");
+    var el = $(`[name='${e.target.id}']`).find('i');
+    
+    $(el).toggleClass("flipped flip");
 });

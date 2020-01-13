@@ -1,6 +1,6 @@
 main.controller('sessionController', ['$scope', sessionController]);
 
-main.directive('sessionController', function() {
+main.directive('sessionController', function () {
 	return {
 		controller: 'sessionController',
 		controllerAs: 'session'
@@ -14,9 +14,9 @@ function sessionController($scope) {
 	session.val = '';
 	session.valid = false;
 	session.reason = 'Must contain 3 or more characters!';
-	
+
 	session.showSession = function (obj) {
-		$('a').click(function(event){
+		$('a').click(function (event) {
 			event.preventDefault();
 		});
 		$('#overlay').modal('show');
@@ -32,15 +32,15 @@ function sessionController($scope) {
 			trigger: "hover"
 		});
 
-		setTimeout(function() {
+		setTimeout(function () {
 			$('a').off();
 		}, 250);
 	}
 
-	session.checkSession = function() {
+	session.checkSession = function () {
 		$('.tooltip').remove();
 
-		var val   = session.val;
+		var val = session.val;
 		var valid = false;
 
 		if (val.length >= 3 && val.length <= 16 && namePattern.test(val)) {
@@ -51,7 +51,7 @@ function sessionController($scope) {
 				$scope.$apply(() => {
 					session.valid = null;
 				});
-				
+
 				let isValid = await $.get("./isUniqSession?name=" + val);
 				session.valid = isValid;
 				if (!isValid) {
@@ -76,8 +76,40 @@ function sessionController($scope) {
 
 		if (type == "addSession" && !resp.toLowerCase().includes("ERROR")) {
 			window.location = resp;
-		} else if (!resp.toLowerCase().inclues("ERROR")) {
+		} else if (!resp.toLowerCase().includes("ERROR")) {
 			location.reload();
 		}
 	}
+
+	session.mouseEnter = function(sess) {
+		sess = "#" + sess + " .card";
+		$(sess + " .card-body").removeClass("overflow");
+
+		height = totalHeight(sess);
+
+		if ($(sess).height() < height) {
+			$(sess).animate({
+				"max-height": height
+			}, 'fast');
+		}
+
+	}
+
+	session.mouseExit = function(sess) {
+		sess = "#" + sess + " .card";
+
+		$(sess).animate({
+			"max-height": "12rem"
+		}, 'fast');
+
+		if ($(sess).height() < totalHeight(sess)) {
+			$(sess + " .card-body").addClass("overflow");
+		}
+	}
+
+	
+	function totalHeight(sess) {
+		return $(sess + " .card-body").outerHeight() + $(sess + " .card-header").outerHeight();
+	}
+
 }

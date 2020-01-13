@@ -221,7 +221,10 @@ class Session(models.Model):
             raise Http404("Invalid Group")
 
     def addGroup(self, name):
-        return self.groups.create(name=name, session=self)
+        try: 
+            return self.getGroup(name)
+        except Http404:
+            return self.groups.create(name=name, session=self)
 
     def isUniqGroupName(self, name):
         for group in self.groups.all():
@@ -312,12 +315,11 @@ class Coin(models.Model):
 
         if copySession:
             for group in self.getSession(copySession).groups.all():
-                newGroup = session.groups.create(name=group.name, session=session)
-                newGroup.setFilters(group.getFilters())
+                new_group = session.addGroup(group.name)
+                new_group.setFilters(group.getFilters())
                 for node in group.nodes.all():
-                    newNode = newGroup.nodes.create(name=node.name, addr=node.addr, group=newGroup)
-                    newNode.setFilters(node.getFilters())
-
+                    new_group.addNode(node.name, node.addr, node.getFilters())
+                
         return session
 
     def editSession(self, id=None, newName=""):

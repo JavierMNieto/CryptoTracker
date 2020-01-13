@@ -52,10 +52,7 @@ def getKnown(request, coin=None, session_id=None):
 def add(reqData, session):
     group   = reqData.get("cat", "")
 
-    try:
-        group = session.getGroup(group)
-    except Http404 as e:
-        group = session.addGroup(group)
+    group = session.addGroup(group)
     
     return group.addNode(reqData.get("name", ""), reqData.get("addr", ""), getFilters(reqData, format=False))
 
@@ -144,7 +141,14 @@ def getTx(request, tx, coin=None):
     return render(request, 'coin/tx.html', getBlockchain("omni_gettransaction", [tx]))
 
 def isUniqSession(request, coin=None):
-	return JsonResponse(request.user.getCoin(coin).isUniqSession(request.GET.get("name")), safe=False)
+    uniq = True
+
+    try:
+        request.user.getCoin(coin).isUniqSession(request.GET.get("name"))
+    except ValidationError as e:
+        uniq = True
+    
+    return JsonResponse(uniq, safe=False)
 
 def isValidAddr(request, coin=None):
     if request.method != "GET":

@@ -11,7 +11,66 @@ var main = angular
 				$(element).text(`${attr.name}: ${scope.formatTime({time: attr.unix})}`);
 			}
 		};
-	});;
+	}).directive('ngOverflow', ['$parse', '$rootScope', '$exceptionHandler', function ($parse, $rootScope, $exceptionHandler) {
+		return {
+			restrict: 'A',
+			scope: {
+				if: "@ngOverflow",
+				else: "@ngNotOverflow"
+			},
+			compile: function ($element, attrs) {
+				return function ngEventHandler(scope, el) {
+					function checkOverflow() {
+						var totalWidth = 0;
+						$(el).find("*").each(function() {
+							if ($(this).children().length == 0) {
+								totalWidth += $(this).outerWidth();
+							}
+						});
+						//$(el).outerWidth() > $(el).parent().innerWidth() || $(el).outerHeight() > $(el).parent().innerHeight()
+						//console.log($(el).width() - totalWidth);
+						if ($(el).width() - totalWidth < 20) {
+							scope.$parent.$evalAsync(scope.if);
+						} else if ($(el).width() - totalWidth*2 > 0) {
+							scope.$parent.$evalAsync(scope.else);
+						}
+					}
+					checkOverflow();
+					
+					$(window).resize(checkOverflow);
+				};
+			}
+		};
+	}]);
+
+$.event.special.widthChanged = {
+	remove: function () {
+		$(this).children('iframe.width-changed').remove();
+	},
+	add: function () {
+		var elm = $(this);
+		var iframe = elm.children('iframe.width-changed');
+		if (!iframe.length) {
+			iframe = $('<iframe/>').addClass('width-changed').prependTo(this);
+		}
+		var oldWidth = elm.width();
+
+		function elmResized() {
+			var width = elm.width();
+			if (oldWidth != width) {
+				elm.trigger('widthChanged', [width, oldWidth]);
+				oldWidth = width;
+			}
+		}
+
+		var timer = 0;
+		var ielm = iframe[0];
+		(ielm.contentWindow || ielm).onresize = function () {
+			clearTimeout(timer);
+			timer = setTimeout(elmResized, 20);
+		};
+	}
+}
 
 function txs(PagerService, $scope) {
 	var vm = this;
@@ -20,15 +79,14 @@ function txs(PagerService, $scope) {
 	var sort = 'blocktime';
 	vm.txs = [];
 	vm.pager = {};
-	vm.dropText = "Most Recent";
+	//vm.dropText = "Most Recent";
 	vm.pager = PagerService.GetPager(totalTxs, 1);
 
+	var pageCnt = 10;
 	var tempTotalTxs = totalTxs;
-	var dateFormat = "M/DD/YY h:mm A"; // REVIEW
 	vm.tempAddrs = [];
+
 	$('#loadingBar').hide();
-	$('#iframe').hide();
-	$('#body').show();
 	vm.selCollapsed = [];
 	vm.graph;
 	vm.isGraph = false;
@@ -37,8 +95,9 @@ function txs(PagerService, $scope) {
 	vm.currentId = 0;
 
 	vm.savedTxs = {};
-	vm.txLoading = false;
+	vm.txLoading = true;
 	vm.rowTxs = true;
+	vm.txGraph = false;
 
 	vm.graphFilters = JSON.parse(JSON.stringify(dFilters));
 	vm.graphFilters.minTime = "";
@@ -46,7 +105,8 @@ function txs(PagerService, $scope) {
 
 	$(function () {
 		$('[data-toggle="tooltip"]').tooltip({
-			trigger: 'hover'
+			trigger: 'hover',
+			boundary: "window"
 		});
 	});
 	$(function () {
@@ -155,14 +215,14 @@ function txs(PagerService, $scope) {
 
 	vm.setPage = async function (page) {
 		if (vm.pager.totalPages < 1) {
-			vm.pager = PagerService.GetPager(tempTotalTxs, page);
+			vm.pager = PagerService.GetPager(tempTotalTxs, page, pageCnt);
 		}
 		if (page < 1 || page > vm.pager.totalPages) {
-			return;
+			return; // change
 		}
 
 		// get pager object from service
-		vm.pager = PagerService.GetPager(tempTotalTxs, page);
+		vm.pager = PagerService.GetPager(tempTotalTxs, page, pageCnt);
 		$('[data-toggle="tooltip"]').tooltip('hide');
 
 		// get current page of items
@@ -208,13 +268,25 @@ function txs(PagerService, $scope) {
 				vm.txLoading = false;
 			});
 			vm.savedTxs[reqSig] = data;
-
-			$(function () {
-				$('[data-toggle="tooltip"]').tooltip({
-					trigger: 'hover'
-				});
-			});
 		}
+
+		$(function () {
+			$('[data-toggle="tooltip"]').tooltip({
+				trigger: 'hover',
+				boundary: "window"
+			});
+
+			$("a.addr").click(function () {
+				vm.startLoader();
+				parent.postMessage({
+					type: 'crumb',
+					crumb: {
+						link: $(this).attr("href"),
+						name: $(this).text().trim()
+					}
+				}, window.location.origin);
+			});
+		});
 	}
 
 	function formatFilters(filters, url) {
@@ -243,7 +315,7 @@ function txs(PagerService, $scope) {
 
 			var val = filters[filter].toString().replace(/,/g, "");
 			if (filter.includes('Time') && isNaN(val)) {
-				
+
 				val = moment(val, dateFormat).valueOf() / 1000;
 				if (isNaN(val)) {
 					if (filter.includes("min")) {
@@ -262,18 +334,20 @@ function txs(PagerService, $scope) {
 
 	vm.sortBy = function (propertyName, reverse) {
 		if (propertyName == "time") {
-			vm.dropText = "Most Recent";
+			//vm.dropText = "Most Recent";
 			sort = 'blocktime';
 			order = 'DESC';
 		} else if (propertyName == "value" && reverse) {
-			vm.dropText = "Transaction Amount ↓";
+			//vm.dropText = "Transaction Amount ↓";
 			sort = 'amount';
 			order = 'DESC';
 		} else if (propertyName == "value" && !reverse) {
-			vm.dropText = "Transaction Amount ↑";
+			//vm.dropText = "Transaction Amount ↑";
 			sort = 'amount';
 			order = 'ASC';
 		}
+		$("#txSort .dropdown-item").removeClass("active");
+		$("#" + sort + order).addClass("active");
 		vm.setPage(vm.pager.currentPage);
 	}
 
@@ -287,6 +361,7 @@ function txs(PagerService, $scope) {
 	}
 
 	vm.setFilters = function () {
+		var name = $("#name").text().trim();
 		vm.startLoader();
 		var url = window.location + "";
 
@@ -295,6 +370,14 @@ function txs(PagerService, $scope) {
 		}
 
 		url = formatFilters(vm.graphFilters, url);
+
+		parent.postMessage({
+			type: 'crumb',
+			crumb: {
+				link: url,
+				name: name
+			}
+		}, window.location.origin);
 
 		window.location = url;
 	}
@@ -407,11 +490,6 @@ function txs(PagerService, $scope) {
 
 		if (properties.edges.length > 0 || properties.nodes.length > 0) {
 			vm.setPage(1);
-			$(function () {
-				$('[data-toggle="tooltip"]').tooltip({
-					trigger: 'hover'
-				});
-			});
 		}
 	}
 
@@ -497,7 +575,8 @@ function txs(PagerService, $scope) {
 					stopPhysics(vm.graph);
 					$(function () {
 						$('[data-toggle="tooltip"]').tooltip({
-							trigger: 'hover'
+							trigger: 'hover',
+							boundary: "window"
 						});
 					});
 				}, 1000);
@@ -531,16 +610,75 @@ function txs(PagerService, $scope) {
 		vm.savedTxs = {};
 	}, 300000);
 
-	$(window).resize(function () {
-		if ($(window).width() < 1000 && vm.rowTxs) {
-			$scope.$apply(() => {
+	function onTxWidthChange() {
+		if ($("#txListContainer").width() < 900 && vm.rowTxs) {
+			$scope.$apply(function() {
 				vm.rowTxs = false;
+				pageCnt = 5;
+				vm.pager = PagerService.GetPager(vm.pager.totalItems, vm.pager.currentPage, pageCnt);
 			});
-		} else if ($(window).width() > 1000 && !vm.rowTxs) {
-			$scope.$apply(() => {
+		} else if ($("#txListContainer").width() > 900 && !vm.rowTxs) {
+			$scope.$apply(function() {
 				vm.rowTxs = true;
+				pageCnt = 10;
+				vm.pager = PagerService.GetPager(vm.pager.totalItems, vm.pager.currentPage, pageCnt);
 			});
 		}
+
+		if (vm.txGraph) {
+			$("#txListContainer").css("height", $("#graph").height() - $("#txTop").height()*2);
+		} else {
+			$("#txListContainer").css("height", "auto");
+		}
+	}
+
+	$(function () {
+		$(window).resize(function () {
+			if (vm.isGraph) {
+				$("#graph").resizable({
+					maxWidth: $("#graphContainer").innerWidth() * 0.95,
+					minWidth: $("#graphContainer").innerWidth() * 0.40
+				});
+			}
+		});
+
+		onTxWidthChange();
+		$("#txListContainer").on("widthChanged", onTxWidthChange);
+
+		$("#graph").resize(function () {
+			var width = 100 * $("#graph").outerWidth() / $("#graphContainer").innerWidth();
+
+			$("#graph").css("width", width + "%");
+			$("#graphContainer").css("height", 100 * $("#graph").outerHeight() / $("#body").innerHeight() + "%");
+
+			if (width - 45 < 1) {
+				$("#txContainer").css("width", 100 - (width + 2.5) + "%");
+				$("#txListContainer").css("height", $("#graph").height() - $("#txTop").height()*2);
+				if (!vm.txGraph) {
+					$("#txContainer").appendTo("#graphContainer").on("widthChanged", onTxWidthChange);
+					$scope.$apply(() => {
+						vm.txGraph = true;
+					});
+					onTxWidthChange();
+				}
+				$('[data-toggle="tooltip"]').tooltip({
+					trigger: 'hover',
+					boundary: "window"
+				});
+			} else if (width - 45 > 1 && vm.txGraph) {
+				$scope.$apply(() => {
+					vm.txGraph = false;
+				});
+				$("#txListContainer").css("height", "auto");
+				$("#txContainer").appendTo("#body").css("width", "auto").on("widthChanged", onTxWidthChange);
+				onTxWidthChange();
+				$('[data-toggle="tooltip"]').tooltip({
+					trigger: 'hover',
+					boundary: "window"
+				});
+				//$("#txCounter").prependTo("#txTop");
+			}
+		});
 	});
 }
 
@@ -553,32 +691,36 @@ function PagerService() {
 	return service;
 
 	// service implementation
-	function GetPager(totalItems, currentPage, pageSize) {
+	function GetPager(totalItems, currentPage, pageCnt, pageSize) {
 		// default to first page
 		currentPage = currentPage || 1;
 
 		// default page size is 10
 		pageSize = pageSize || 10;
 
+		// default page count (# of page #s to be able to click) is 10
+		pageCnt = pageCnt || 10;
+
 		// calculate total pages
 		var totalPages = Math.ceil(totalItems / pageSize);
 
 		var startPage, endPage;
-		if (totalPages <= 10) {
-			// less than 10 total pages so show all
+		if (totalPages <= pageCnt) {
+			// less than pageCnt total pages so show all
 			startPage = 1;
 			endPage = totalPages;
 		} else {
+			offset = Math.floor(pageCnt / 2) + 1;
 			// more than 10 total pages so calculate start and end pages
-			if (currentPage <= 6) {
+			if (currentPage <= offset) {
 				startPage = 1;
-				endPage = 10;
-			} else if (currentPage + 4 >= totalPages) {
-				startPage = totalPages - 9;
+				endPage = pageCnt;
+			} else if (currentPage + (pageCnt - offset) >= totalPages) {
+				startPage = totalPages - (pageCnt - 1);
 				endPage = totalPages;
 			} else {
-				startPage = currentPage - 5;
-				endPage = currentPage + 4;
+				startPage = currentPage - Math.floor(pageCnt / 2);
+				endPage = currentPage + (pageCnt - offset);
 			}
 		}
 
