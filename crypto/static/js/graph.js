@@ -197,6 +197,7 @@ function getGraphTotalTxs() {
 
 	return tempNum;
 }
+
 */
 
 function onDeselectEdges() {
