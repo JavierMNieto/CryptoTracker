@@ -56,12 +56,12 @@
 <body ng-controller="txsController as vm" class="container-fluid scroll">
 	<div id="body" class="ng-cloak mt-3">
 		<div id="name" class="font-weight-bold text-center h1">
-			{% if addr|length == 1 and label == addr.0 and session != "Basic Session" and user.is_authenticated and user.settings.premium %}
+		{% if addr|length == 1 and label == addr.0 and session != "Basic Session" and user.is_authenticated and user.settings.premium %}
 			<button width="30" height="30" onclick="parent.postMessage({type: 'add', addr: '{{addr.0}}'}, window.location.origin)" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Add Address">
 				<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAB6klEQVRYR+2X6zFEQRBGv83AZkAEyIAIEAEiQASIgAzIwGZgRUAGZEAG1KmaqWqzdx737szUqtJV++PufcyZfnzdM9OG2awzz4GkZ7PmiaSFZfgH2gQPESZve5LuzPWtpKW5XvYI2feIPJ3/WaAtSWeSdiXh9m2z6y9Jb5JeJD1K4tpaVQ+x+KmDAarEKOMrSR/u4eMgh66DHGIz3haxkLE4L+KVUpAQ9t6B2f8n6RAAD5Lszko8M/QMuz80YRwNBAxKSqhqGTm146BGAdX0TLgZPLXv/gxT4FcR2By6cXlTyzPhd6jA89zHPRBl/LpGAufW8ffxkq2qlfc8EElMRbU2JIEOHzWAiOl7B+94CBLca9Sghy6DhtfaS4gmGjVoeOipkuaUbiQZNoAIl+1NpR+e+hxlPk95aOOAxnTjqV4J34uOPdz47FhhHiwJhCDW7F05L1LylH60ynqJogfIVhkKDVQvY7Cnb0Y9hFKTR70sq9SA9ApbUS8DCGFEj1ob06M9h62sZ8uPAxx9rZUNzdhJIG62koBwto5uOhSoVjM1g1l05LB0Q4pZEwrPMJAVwQCWOkqvm1PM0Mw+4Uk2maO5sz0t5WLkeEsVAZKcnVPCWFJVyAIHxyMnEX5+Yvf8CAlne3RmEoiH+AGJuF1VndddEAAAAABJRU5ErkJggg=="
 					style="width: 24px; height: auto;">
 			</button>
-			{% endif %}
+		{% endif %}
 			{{label}}
 			<button width="30" height="30" onclick="location.reload()" ng-click="vm.startLoader();" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="bottom" title="Refresh Page">
 				<i class="fas fa-sync-alt fa-lg"></i>
@@ -85,6 +85,9 @@
 			</div>
 			{% endif %}
 			<div class="px-5 h5">
+			{% if is_frozen %}
+				<i class="fas fa-exclamation-triangle fa-sm text-warning" data-toggle="tooltip" data-placement="bottom" title="Frozen!"></i>
+			{% endif %}
 				Balance: {{balance | floatformat:2 | numCommas}}
 				<button width="16" height="16" class="btn btn-icon rounded" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{{ balance }}" data-toggle="tooltip" data-placement="top" title="Copy Balance">
 					<i class="far fa-copy" aria-hidden="true"></i>
@@ -329,7 +332,7 @@
 							</div>
 							<div class="col-sm-7 h1">
 								{% verbatim %}{{ tx.value | number : fractionSize }}{% endverbatim %}
-								<span ng-if="tx.type != 'USDTTX'" class="h6">(${% verbatim %}{{ tx.value | number : 2 }}{% endverbatim %})</span>
+								<!--<span ng-if="tx.type != 'USDTTX'" class="h6">(${% verbatim %}{{ tx.value | number : 2 }}{% endverbatim %})</span>-->
 								<button width="20" height="20" class="btn btn-icon" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.value }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Transaction Amount">
 									<i class="far fa-copy fa-lg"></i>
 								</button>
@@ -352,18 +355,26 @@
 							</div>
 							<i class="fas fa-arrow-right" ng-if="vm.rowTxs"></i>
 							<i class="fas fa-arrow-down" ng-if="!vm.rowTxs"></i>
-							<div class="block" ng-class="{'col-6': vm.rowTxs, 'mr-n4': vm.rowTxs, 'text-left': vm.rowTxs}" style="position: relative; white-space: nowrap;">
-								<button width="16" height="16" ng-click="vm.highlight(tx.to, true)" class="btn btn-icon" 
+							<div class="block" ng-class="{'col-6': vm.rowTxs, 'mr-n4': vm.rowTxs, 'text-left': vm.rowTxs}" 
+								style="position: relative; white-space: nowrap;" ng-switch="tx.type">
+								<div ng-switch-when="56">
+									<span class="h6 text-truncate text-danger font-weight-bold">
+										Revoked Property Tokens
+									</span>
+								</div>
+								<div ng-switch-default>
+									<button width="16" height="16" ng-click="vm.highlight(tx.to, true)" class="btn btn-icon" 
 									style="background-color: rgba(0, 0, 0, 0)" data-toggle="tooltip" data-placement="top"
 									title="Highlight on Graph" ng-class="{disabled: !vm.isGraph}">
 									<i class="fas fa-highlighter"></i>
-								</button>
-								<a href="{% verbatim %}{{ tx.targetUrl }}{{ vm.dURLParams }}{% endverbatim %}" class="h6 text-truncate text-primary font-weight-bold addr">
-									{% verbatim %}{{ tx.target }}{% endverbatim %}
-								</a>
-								<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.targetAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Reference Address">
-									<i class="far fa-copy"></i>
-								</button>	
+									</button>
+									<a href="{% verbatim %}{{ tx.targetUrl }}{{ vm.dURLParams }}{% endverbatim %}" class="h6 text-truncate text-primary font-weight-bold addr">
+										{% verbatim %}{{ tx.target }}{% endverbatim %}
+									</a>
+									<button width="16" height="16" class="btn btn-icon" style="background-color: rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.targetAddr }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Reference Address">
+										<i class="far fa-copy"></i>
+									</button>	
+								</div>
 							</div>
 						</div>
 						<div class="row align-items-end justify-content-center">

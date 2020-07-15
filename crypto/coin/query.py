@@ -104,35 +104,35 @@ class CoinController:
                 "to": bNode['id'],
                 #"id": rel['id'],
                 "value": float(rel['amount']),
-                "source": self.getNodeFromSession(session, aNode['addr'])['name'],
+                "source": self.get_nodeFromSession(session, aNode['addr'])['name'],
                 "sourceAddr": aNode['addr'],
-                "target": self.getNodeFromSession(session, bNode['addr'])['name'],
+                "target": self.get_nodeFromSession(session, bNode['addr'])['name'],
                 "targetAddr": bNode['addr'],
                 "type": rel['type'],
                 #"amount": float(rel['amount']),
                 "time": rel['blocktime'],
                 "txid": rel['txid'],
-                "img": session.coin.getImg(),
-                "txidUrl": session.coin.getUrl() + "/getTx/" + rel['txid'],
-                "sourceUrl": session.getUrl() + "/addr/" + aNode['addr'],
-                "targetUrl": session.getUrl() + "/addr/" + bNode['addr']
+                "img": session.coin.get_img(),
+                "txidUrl": session.coin.get_url() + "/getTx/" + rel['txid'],
+                "sourceUrl": session.get_url() + "/addr/" + aNode['addr'],
+                "target_url": session.get_url() + "/addr/" + bNode['addr']
             }
             edges.append(rel)
 
         return edges
 
-    def getNodeFromSession(self, session, addr):
+    def get_nodeFromSession(self, session, addr):
         try:
-            node = session.getNode(addr)
+            node = session.get_node(addr)
             return {
                 "name": node.name,
                 "addr": node.addr,
-                "url": node.getUrl()
+                "url": node.get_url()
             }
         except Http404 as e:
             pass
 
-        return {"name": addr, "addr": addr, "url": session.getUrl() + "/addr/" + addr}
+        return {"name": addr, "addr": addr, "url": session.get_url() + "/addr/" + addr}
 
     def getAddr(self, addr, session, filters):
         info = {
@@ -145,7 +145,7 @@ class CoinController:
         }
 
         try:
-            info["label"] = session.getNode(addr).name
+            info["label"] = session.get_node(addr).name
         except Exception as e:
             pass
         
@@ -159,14 +159,15 @@ class CoinController:
 
         info['addr']    = node['addr']
         info['balance'] = node['balance']
+        info['is_frozen'] = node['is_frozen']
 
-        info['url']  = session.getUrl() + "/addr/" + info['addr']
+        info['url']  = session.get_url() + "/addr/" + info['addr']
         info['addr'] = [info['addr']]
         info['totalTxs'] = self.getNumTxs(session.coin.name, info['addr'], filters)
         
         info['dFilters'] = Filters.dFilters
 
-        info['filters']  = Filters(filters).getFormattedFilters()
+        info['filters']  = Filters(filters).get_formatted_filters()
 
         return info
 
@@ -180,16 +181,16 @@ class CoinController:
         }
 
         if group_id:
-            group = session.getGroup(group_id)
+            group = session.get_group(group_id)
             info['label'] = group.name
-            info['addr']  = group.getAddrs()
+            info['addr']  = group.get_addrs()
         elif addrs:
             info['addr'] = addrs
             info['names'] = []
 
             for addr in addrs:
                 try:
-                    node = session.getNode(addr)
+                    node = session.get_node(addr)
                     info['names'].append(node.name)
                 except Http404 as e:
                     info['names'].append(addr)
@@ -202,7 +203,7 @@ class CoinController:
         
         info['dFilters'] = Filters.dFilters
 
-        info['filters']  = Filters(filters).getFormattedFilters()
+        info['filters']  = Filters(filters).get_formatted_filters()
 
         return {
             "session": session.name,
@@ -235,7 +236,6 @@ class CoinController:
             'edges': [],
             'totalTxs': 0
         }
-
         if params['addr[]']:
             """
             for addr in params['addr[]']:
@@ -248,14 +248,13 @@ class CoinController:
         query = "MATCH (a:{})-[r:{}TX]-(b:{}) WHERE {} {}".format(session.coin.name, session.coin.name, session.coin.name, addrsText, query)
 
         txs   = self.runFilters(query, filters)
-
         id = lastId
 
         for nodes in txs:
             nodes = nodes.get('result')
             if nodes:
                 aNode = nodes['from']
-                aKnown = self.getNodeFromSession(session, aNode['addr'])
+                aKnown = self.get_nodeFromSession(session, aNode['addr'])
 
                 group = "usdt"
 
@@ -273,7 +272,7 @@ class CoinController:
                     "group": group, #aNode['wallet'] or 
                     "url": aKnown['url'],
                     "value": float(aNode['balance'] or 0),#/Satoshi(),
-                    "img": session.coin.getImg(),
+                    "img": session.coin.get_img(),
                     "title": ("Address: {}<br> "
                             "Balance: ${} ").format(aNode['addr'], numWithCommas(aNode['balance'] or "0", dec=3))
                 }
@@ -284,7 +283,7 @@ class CoinController:
                     aNode['title'] += "<br> <b>Double Click to Load Transactions!</b>"
                 
                 bNode  = nodes['to']
-                bKnown = self.getNodeFromSession(session, bNode['addr'])
+                bKnown = self.get_nodeFromSession(session, bNode['addr'])
 
                 group = "usdt"
 
@@ -302,7 +301,7 @@ class CoinController:
                     "group": group, #bNode['wallet'] or 
                     "url": bKnown['url'],
                     "value": float(bNode['balance'] or 0),#/Satoshi(),
-                    "img": session.coin.getImg(),
+                    "img": session.coin.get_img(),
                     "title": ("Address: {}<br> "
                             "Balance: ${} ").format(bNode['addr'], numWithCommas(bNode['balance'] or "0", dec=3))
                 }
@@ -326,12 +325,12 @@ class CoinController:
                     #"amount": float(rel['amount'] or 0),
                     "txsNum": int(rel['txsNum'] or 1.0),
                     "avgTx": float(rel['avgTxAmt'] or rel['amount'] or 0),
-                    "img": session.coin.getImg(),
+                    "img": session.coin.get_img(),
                     "color": {
                         "color": "#26A17B" if lastId == 0 else "#AEB6BF"
                     },
-                    "sourceUrl": session.getUrl() + "/addr/" + aNode['addr'],
-                    "targetUrl": session.getUrl() + "/addr/" + bNode['addr']
+                    "sourceUrl": session.get_url() + "/addr/" + aNode['addr'],
+                    "target_url": session.get_url() + "/addr/" + bNode['addr']
                 }
                 rel['title'] = ("# of Txs: {}<br> "
                                 "Total: ${}<br> "

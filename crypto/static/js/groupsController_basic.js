@@ -193,6 +193,22 @@ function basicController($scope, $timeout) {
 		}, 250);
 	}	
 
+	basic.setTempAddr = function(addr) {
+		basic.tempAddr = {
+			addr: addr,
+			url: window.location.pathname + "/addr/" + addr
+		}
+
+		$(function() {
+			$("#tempAddr").click(function() {
+				basic.addBreadcrumb({
+					link: $(this).attr("href"),
+					name: $(this).text().trim()
+				});
+			});
+		});
+	}
+
 	basic.updateKnown();
 
 	$(function() {

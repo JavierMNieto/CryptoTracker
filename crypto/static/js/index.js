@@ -68,7 +68,7 @@ $(document).ready(function () {
             let isValid = await isValidAddr(original);
             if (isValid) {
                 $('#spinner').hide();
-                vm.$apply(`basic.tempAddr={addr:'${original}',url:'${window.location.pathname + "/search/" + original}'}`);
+                vm.$apply(`basic.setTempAddr('${original}');`);
             } else {
                 $('#spinner').hide();
             }

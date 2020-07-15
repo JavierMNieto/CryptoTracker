@@ -160,7 +160,7 @@ def login(request, user):
 	if user is not None and user.is_active:
 		auth.login(request, user)
 		return HttpResponse("Success")
-	elif not user.is_active:
+	elif user is not None and not user.is_active:
 		response = """ERROR! Please activate your account! <button class="btn btn-primary" onclick="main.submit('verifyEmail', `{}`)">Click to Resend Email</button>""".format(force_text(urlsafe_base64_encode(force_bytes(user.pk))))
 		return HttpResponse(response)
 
@@ -218,7 +218,7 @@ def isUniqUserName(request):
 	return JsonResponse(not User.objects.filter(username__iexact=request.GET.get("username")).exists(), safe=False)
 
 def home(request, confirmation=None, rejection=None):
-	cmc = ccxt.coinmarketcap()
+	cmc = ccxt.coinbase()
 	btc = cmc.fetch_ticker('BTC/USD')
 	return render(request, 'tracker/index.html', {
 		'search': [], 

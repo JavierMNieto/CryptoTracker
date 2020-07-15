@@ -29,25 +29,25 @@ coinController = CoinController()
 coins = ["USDT"]
 
 def home(request, coin=None):
-    btc = ccxt.coinmarketcap().fetch_ticker('BTC/USD')
+    btc = ccxt.coinbase().fetch_ticker('BTC/USD')
 
-    sessions      = request.user.getCoin(coin).getSessions()
-    basic_session = Coin.objects.filter(name__iexact=coin).first().sessions.first().getAsDict()
+    sessions      = request.user.getCoin(coin).get_sessions()
+    basic_session = Coin.objects.filter(name__iexact=coin).first().sessions.first().get_as_dict()
     return render(request, 'tracker/index.html', {'search': [], 'coin': 'home', 'btc': btc, 'basic_session': basic_session, 'sessions': sessions, 'session': None})
 
 def session(request, coin=None, session_id=None):
-	session = request.user.getCoin(coin).getSession(session_id).name
+	session = request.user.getCoin(coin).get_session(session_id).name
 
-	btc = ccxt.coinmarketcap().fetch_ticker('BTC/USD')
+	btc = ccxt.coinbase().fetch_ticker('BTC/USD')
 
-	search = {'coin': coin, 'btc': btc, 'dFilters': Filters().getFormattedFilters(), 'session': session}
+	search = {'coin': coin, 'btc': btc, 'dFilters': Filters().get_formatted_filters(), 'session': session}
 	return render(request, 'tracker/index.html', search)
 
 def goToDefaultSession(request, coin):
-    return redirect(Coin.objects.filter(name__iexact=coin).first().sessions.first().getUrl())
+    return redirect(Coin.objects.filter(name__iexact=coin).first().sessions.first().get_url())
 
 def getKnown(request, coin=None, session_id=None):
-    return JsonResponse(request.user.getCoin(coin).getSession(session_id).getAsList(), safe=False) 
+    return JsonResponse(request.user.getCoin(coin).get_session(session_id).get_as_list(), safe=False) 
 
 def add(reqData, session):
     group   = reqData.get("cat", "")
@@ -93,7 +93,7 @@ def change(request, coin=None, session_id=None):
 
     try:
         if method in methods:
-            resp = methods[method](request.POST, request.user.getCoin(coin).getSession(session_id))
+            resp = methods[method](request.POST, request.user.getCoin(coin).get_session(session_id))
     except ValidationError as e:
         resp = "ERROR! " + e.message
     except Exception as e:
@@ -102,20 +102,20 @@ def change(request, coin=None, session_id=None):
     return JsonResponse(resp, safe=False)
 
 def addr(request, coin=None, session_id=None, addr=None):
-    session = request.user.getCoin(coin).getSession(session_id)
+    session = request.user.getCoin(coin).get_session(session_id)
 
     data = coinController.getAddr(addr, session, getFilters(request.GET))
     return render(request, 'coin/coin.html', data)
 
 def customGroup(request, coin=None, session_id=None):
-    session = request.user.getCoin(coin).getSession(session_id)
+    session = request.user.getCoin(coin).get_session(session_id)
     
     data = coinController.getGroup(session, getFilters(request.GET), addrs=request.GET.getlist("addr[]", None))
     data['session'] = session.name
     return render(request, 'coin/coin.html', data)
 
 def group(request, coin=None, session_id=None, group_id=None):
-    session = request.user.getCoin(coin).getSession(session_id)
+    session = request.user.getCoin(coin).get_session(session_id)
     
     data = coinController.getGroup(session, getFilters(request.GET), group_id)
     data['session'] = session.name
@@ -125,12 +125,12 @@ def getTxs(request, coin=None, session_id=None):
     if request.method != "GET":
         raise Http404("Only GETs are allowed!")
 
-    return JsonResponse(coinController.getTxs(request.user.getCoin(coin).getSession(session_id), getParams(request.GET), getFilters(request.GET)), safe=False)
+    return JsonResponse(coinController.getTxs(request.user.getCoin(coin).get_session(session_id), getParams(request.GET), getFilters(request.GET)), safe=False)
 
 def getGraphData(request, coin=None, session_id=None):   
     if request.method != "GET":
         raise Http404("Only GETs are allowed!") 
-    return JsonResponse(coinController.getGraphData(request.user.getCoin(coin).getSession(session_id), getParams(request.GET), getFilters(request.GET), request.GET.get("lastId", 0)), safe=False)
+    return JsonResponse(coinController.getGraphData(request.user.getCoin(coin).get_session(session_id), getParams(request.GET), getFilters(request.GET), request.GET.get("lastId", 0)), safe=False)
 
 def getTx(request, tx, coin=None):
     if request.method != "GET":
@@ -215,7 +215,7 @@ def getFilters(reqData, format=True):
             filters[f] = temp
     
     if format:
-        return Filters(filters).getRawFilters()
+        return Filters(filters).get_raw_filters()
 
     return filters
 

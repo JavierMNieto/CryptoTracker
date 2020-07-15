@@ -17,13 +17,13 @@ class Filters:
             if f in self.filters and (type(val) is int or type(val) is float):
                 self.filters[f] = val
 
-    def addAsQueryParams(self, url):
+    def add_as_query_params(self, url):
         for f, val in self.filters.items():
             url += "&{}={}".format(f, val)
         
         return url.replace("?&", "?")
 
-    def getRawFilters(self, formatTime=True):
+    def get_raw_filters(self, formatTime=True):
         filters = self.filters.copy()
 
         if not formatTime:
@@ -38,7 +38,7 @@ class Filters:
         return filters 
 
     ## CHANGE
-    def getFormattedFilters(self, formatTime=True):
+    def get_formatted_filters(self, formatTime=True):
         filters = {}
 
         for f, val in self.filters.items():
@@ -65,10 +65,10 @@ class Filters:
         
         return filters
 
-    def getChangedFilters(self):
+    def get_changed_filters(self):
         cFilters = {}
 
-        for f, val in self.getFormattedFilters(formatTime=False).items():
+        for f, val in self.get_formatted_filters(formatTime=False).items():
             if type(val) is int or type(val) is float:
                 cFilters[f] = val
         
