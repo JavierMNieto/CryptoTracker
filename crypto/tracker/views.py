@@ -22,10 +22,7 @@ import sys
 import re
 import traceback
 
-sys.path.append("../")
-from static.py.clean import *
-
-def numWithCommas(num):
+def num_with_commas(num):
 	return ("{:,}".format(float(num)))
 
 def signup(request):
@@ -38,9 +35,9 @@ def signup(request):
 	email	 	= request.POST.get("email", "")
 
 	try:
-		isValidName(username)
-		isValidEmail(email)
-		isValidPassword(password)
+		is_valid_name(username)
+		is_valid_email(email)
+		is_valid_password(password)
 		if password != confirmPass:
 			raise ValidationError("Password and confirmation password are not equal!", code="invalid")
 
@@ -48,7 +45,7 @@ def signup(request):
 		user.is_active = False
 		user.save()
 
-		return verifyEmail(request, force_text(urlsafe_base64_encode(force_bytes(user.pk))))
+		return verify_email(request, force_text(urlsafe_base64_encode(force_bytes(user.pk))))
 	except IntegrityError as e:
 		if "username" in str(e):
 			return HttpResponse("ERROR! Username is not unique!")
@@ -59,13 +56,13 @@ def signup(request):
 
 	return HttpResponse("ERROR")
 
-def forgotPass(request):
+def forgot_pass(request):
 	email = request.POST.get("email", "")
 
 	try:
 		validate_email(email)
 		
-		if not isUsedEmail(email):
+		if not is_used_email(email):
 			raise ValidationError("No account uses " + email + "!", code="invalid")
 
 		user = User.objects.get(email=email)
@@ -87,7 +84,7 @@ def forgotPass(request):
 
 	return HttpResponse("ERROR")
 
-def passChange(request, uidb64, token):
+def pass_change(request, uidb64, token):
 	signout(request)
 
 	try:
@@ -108,7 +105,7 @@ def passChange(request, uidb64, token):
 			confirmPass = request.POST.get("confirmPass", "")
 
 			try:
-				isValidPassword(password)
+				is_valid_password(password)
 				if password != confirmPass:
 					raise ValidationError("Password and confirmation password are not equal!", code="invalid")
 				user.set_password(password)
@@ -136,7 +133,7 @@ def activate(request, uidb64, token):
 	
 	return home(request, rejection="Activation link is invalid!")	 
 
-def verifyEmail(request, uidb64):
+def verify_email(request, uidb64):
 	try:
 		uid  = urlsafe_base64_decode(uidb64)
 		user = User.objects.get(pk=uid)
@@ -161,7 +158,7 @@ def login(request, user):
 		auth.login(request, user)
 		return HttpResponse("Success")
 	elif user is not None and not user.is_active:
-		response = """ERROR! Please activate your account! <button class="btn btn-primary" onclick="main.submit('verifyEmail', `{}`)">Click to Resend Email</button>""".format(force_text(urlsafe_base64_encode(force_bytes(user.pk))))
+		response = """ERROR! Please activate your account! <button class="btn btn-primary" onclick="main.submit('verify_email', `{}`)">Click to Resend Email</button>""".format(force_text(urlsafe_base64_encode(force_bytes(user.pk))))
 		return HttpResponse(response)
 
 	return HttpResponse("ERROR! Incorrect credentials!")
@@ -173,7 +170,7 @@ def signin(request):
 	user = None
 
 	try:
-		isValidEmail(username)
+		is_valid_email(username)
 	except ValidationError as e:
 		if e.code == "used":
 			user = auth.authenticate(username=User.objects.filter(email=username).first().username, password=password)
@@ -186,35 +183,35 @@ def signout(request):
 	auth.logout(request)
 	return JsonResponse("Success", safe=False)
 
-def acctSettings(request):
+def acct_settings(request):
 	if request.user.is_authenticated:
 		return home(request)
 	
 	return redirect("/")
 
-def isValidPassword(password):
+def is_valid_password(password):
 	if len(password) < 32 and len(password) > 5:
 		return True
 	raise ValidationError("Invalid password!", code="invalid")
 
-def isValidEmail(email):
+def is_valid_email(email):
 	validate_email(email)
 
-	if isUsedEmail(email):
+	if is_used_email(email):
 		raise ValidationError(email + " is already being used!", code="used")
 
-def isValidName(name):
+def is_valid_name(name):
 	if len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_ -]*$', name) != None:
 		return True
 	raise ValidationError(name + " is not a valid username!", code="invalid")
 
-def isUniqEmail(request):
-	return JsonResponse(not isUsedEmail(request.GET.get("email", "")), safe=False)
+def is_uniq_email(request):
+	return JsonResponse(not is_used_email(request.GET.get("email", "")), safe=False)
 
-def isUsedEmail(email):
+def is_used_email(email):
 	return User.objects.filter(email=email).exists()
 
-def isUniqUserName(request):
+def is_uniq_user_name(request):
 	return JsonResponse(not User.objects.filter(username__iexact=request.GET.get("username")).exists(), safe=False)
 
 def home(request, confirmation=None, rejection=None):

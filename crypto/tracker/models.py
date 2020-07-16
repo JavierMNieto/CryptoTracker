@@ -90,16 +90,16 @@ class Profile(models.Model):
         
         return json.load(open(path + coin + ".json"))
 
-    def addAddr(self, reqData, coin, filters):
+    def addAddr(self, req_data, coin, filters):
         node = {
-                "name": reqData.get("name", ""),
-                "addr": reqData.get("addr", ""),
-                "url": "/{}/search/{}?".format(coin, reqData.get("addr", ""))
+                "name": req_data.get("name", ""),
+                "addr": req_data.get("addr", ""),
+                "url": "/{}/search/{}?".format(coin, req_data.get("addr", ""))
             }
-        cat = reqData.get("cat", "")
+        cat = req_data.get("cat", "")
 
-        if isValidName(node['name']) and isValidAddr(node['addr']) and self.uniqName(node['name']) and isValidName(cat):
-            session = self.getSession(coin, reqData.get("session", ""))
+        if is_valid_name(node['name']) and is_valid_addr(node['addr']) and self.uniqName(node['name']) and is_valid_name(cat):
+            session = self.getSession(coin, req_data.get("session", ""))
 
             if cat in session:
                 session[cat]['url'] += "&addr[]={}".format(node['addr'])
@@ -115,7 +115,7 @@ class Profile(models.Model):
         return "ERROR"
 
     def uniqName(self, name, addr):
-        addrs = self.getKnownList()[0]['addrs']
+        addrs = self.get_knownList()[0]['addrs']
         
         for node in addrs:
             if node['name'].lower() == name.lower() and node['addr'] != addr:
@@ -123,23 +123,23 @@ class Profile(models.Model):
 
         return True
 
-    def delAddr(self, reqData, coin): 
-        session = self.getSession(coin, reqData.get("session", ""))
+    def delAddr(self, req_data, coin): 
+        session = self.getSession(coin, req_data.get("session", ""))
 
         for cat, info in session.items():
             for i in range(len(info['addrs'])):
-                if session[cat]['addrs'][i]['addr'] == reqData.get("addr", ""):
+                if session[cat]['addrs'][i]['addr'] == req_data.get("addr", ""):
                     del session[cat]['addrs'][i]
                     return "Success"
             
         return "ERROR"
 
-    def editAddr(self, reqData, filters):
-        addr = reqData.get("addr", "")
-        name = reqData.get("name", "")
-        cat  = reqData.get("cat", "")
+    def editAddr(self, req_data, filters):
+        addr = req_data.get("addr", "")
+        name = req_data.get("name", "")
+        cat  = req_data.get("cat", "")
 
-        if isValidAddr(addr) and isValidName(name) and not self.nameExists(name, addr=addr) and self.isValidName(cat):
+        if is_valid_addr(addr) and is_valid_name(name) and not self.nameExists(name, addr=addr) and self.is_valid_name(cat):
             if self.delAddr(addr) == "Success" and self.addAddr(addr, name, cat, filters) == "Success":
                 return "Success"
             
@@ -151,18 +151,18 @@ class Profile(models.Model):
 
         return None
 
-    def delCat(self, reqData, coin):
-        if self.popCat(reqData.get("cat", ""), coin, reqData.get("session", "")):
+    def delCat(self, req_data, coin):
+        if self.popCat(req_data.get("cat", ""), coin, req_data.get("session", "")):
             return "Success"
         
         return "ERROR"
 
-    def editCat(self, reqData, coin, filters):
-        prevCat = reqData.get("prevCat", "")
-        newCat  = reqData.get("newCat", "")
+    def edit_cat(self, req_data, coin, filters):
+        prevCat = req_data.get("prevCat", "")
+        newCat  = req_data.get("newCat", "")
 
-        if isValidName(prevCat) and isValidName(newCat):  
-            session = self.getSession(coin, reqData.get("session", ""))
+        if is_valid_name(prevCat) and is_valid_name(newCat):  
+            session = self.getSession(coin, req_data.get("session", ""))
 
             if session and prevCat in session:
                 session[newCat] = session.pop(prevCat)
@@ -179,14 +179,14 @@ class Profile(models.Model):
 
         return "ERROR"
 
-    def getKnown(self, addr, coin, session):
-        for known in self.getKnownList(coin, session)[0]['addrs']:
+    def get_known(self, addr, coin, session):
+        for known in self.get_knownList(coin, session)[0]['addrs']:
             if known['addr'] == addr:
                 return known
         
         return {"name": addr, "addr": addr, "url": addr}#self.urls['addr'] + addr}
 
-    def getKnownList(self, coin, session):
+    def get_knownList(self, coin, session):
         catDict = self.getSession(coin, session)
 
         catList    = []

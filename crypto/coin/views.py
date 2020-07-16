@@ -4,6 +4,12 @@ from django.template import loader
 from django.shortcuts import get_object_or_404, render, redirect
 from neo4j.v1 import GraphDatabase
 from django.core.exceptions import ValidationError
+from urllib.parse import unquote
+from pyvis.network import Network
+from .clean import *
+from .defaults import *
+from .models import Coin
+from .query import CoinController
 import pprint
 import json
 import math
@@ -14,19 +20,14 @@ import ccxt
 import re
 import requests
 import traceback
-from .models import Coin
-from urllib.parse import unquote
-from pyvis.network import Network
-
-from .query import CoinController
-
-sys.path.append("../")
-from static.py.defaults import *
-from static.py.clean import *
 
 coinController = CoinController()
 
 coins = ["USDT"]
+
+"""
+    TODO: Maybe use class view instead for more organised url/function mapping
+"""
 
 def home(request, coin=None):
     btc = ccxt.coinbase().fetch_ticker('BTC/USD')
@@ -43,36 +44,36 @@ def session(request, coin=None, session_id=None):
 	search = {'coin': coin, 'btc': btc, 'dFilters': Filters().get_formatted_filters(), 'session': session}
 	return render(request, 'tracker/index.html', search)
 
-def goToDefaultSession(request, coin):
+def go_to_default_session(request, coin):
     return redirect(Coin.objects.filter(name__iexact=coin).first().sessions.first().get_url())
 
-def getKnown(request, coin=None, session_id=None):
+def get_known(request, coin=None, session_id=None):
     return JsonResponse(request.user.getCoin(coin).get_session(session_id).get_as_list(), safe=False) 
 
-def add(reqData, session):
-    group   = reqData.get("cat", "")
+def add(req_data, session):
+    group   = req_data.get("cat", "")
 
     group = session.addGroup(group)
     
-    return group.addNode(reqData.get("name", ""), reqData.get("addr", ""), getFilters(reqData, format=False))
+    return group.addNode(req_data.get("name", ""), req_data.get("addr", ""), get_filters(req_data, format=False))
 
-def delete(reqData, session):
-    group = session.getGroup(reqData.get("prevCat", ""))
+def delete(req_data, session):
+    group = session.get_group(req_data.get("prevCat", ""))
 
-    return group.delNode(reqData.get("addr", ""))
+    return group.delNode(req_data.get("addr", ""))
 
-def edit(reqData, session):
-    delete(reqData, session)
-    add(reqData, session)
+def edit(req_data, session):
+    delete(req_data, session)
+    add(req_data, session)
 
     return "Successfully edited node."
 
-def editCat(reqData, session):
-    group = session.getGroup(reqData.get("cat", ""))
-    if group.name != reqData.get("newCat", ""):
-        group.setName(reqData.get("newCat", ""))
+def edit_cat(req_data, session):
+    group = session.get_group(req_data.get("cat", ""))
+    if group.name != req_data.get("newCat", ""):
+        group.setName(req_data.get("newCat", ""))
 
-    group.setFilters(getFilters(reqData, format=False),)
+    group.setFilters(get_filters(req_data, format=False),)
 
     return "Successfully edited group."
 
@@ -80,7 +81,7 @@ methods = {
     "add": add,
     "delete": delete,
     "edit": edit,
-    "editCat": editCat
+    "edit_cat": edit_cat
 }
 
 def change(request, coin=None, session_id=None):
@@ -104,106 +105,106 @@ def change(request, coin=None, session_id=None):
 def addr(request, coin=None, session_id=None, addr=None):
     session = request.user.getCoin(coin).get_session(session_id)
 
-    data = coinController.getAddr(addr, session, getFilters(request.GET))
+    data = coinController.get_addr(addr, session, get_filters(request.GET))
     return render(request, 'coin/coin.html', data)
 
-def customGroup(request, coin=None, session_id=None):
+def custom_group(request, coin=None, session_id=None):
     session = request.user.getCoin(coin).get_session(session_id)
     
-    data = coinController.getGroup(session, getFilters(request.GET), addrs=request.GET.getlist("addr[]", None))
+    data = coinController.get_group(session, get_filters(request.GET), addrs=request.GET.getlist("addr[]", None))
     data['session'] = session.name
     return render(request, 'coin/coin.html', data)
 
 def group(request, coin=None, session_id=None, group_id=None):
     session = request.user.getCoin(coin).get_session(session_id)
     
-    data = coinController.getGroup(session, getFilters(request.GET), group_id)
+    data = coinController.get_group(session, get_filters(request.GET), group_id)
     data['session'] = session.name
     return render(request, 'coin/coin.html', data)
 
-def getTxs(request, coin=None, session_id=None):
+def get_txs(request, coin=None, session_id=None):
     if request.method != "GET":
         raise Http404("Only GETs are allowed!")
 
-    return JsonResponse(coinController.getTxs(request.user.getCoin(coin).get_session(session_id), getParams(request.GET), getFilters(request.GET)), safe=False)
+    return JsonResponse(coinController.get_txs(request.user.getCoin(coin).get_session(session_id), get_params(request.GET), get_filters(request.GET)), safe=False)
 
-def getGraphData(request, coin=None, session_id=None):   
+def get_graph_data(request, coin=None, session_id=None):   
     if request.method != "GET":
         raise Http404("Only GETs are allowed!") 
-    return JsonResponse(coinController.getGraphData(request.user.getCoin(coin).get_session(session_id), getParams(request.GET), getFilters(request.GET), request.GET.get("lastId", 0)), safe=False)
+    return JsonResponse(coinController.get_graph_data(request.user.getCoin(coin).get_session(session_id), get_params(request.GET), get_filters(request.GET), request.GET.get("lastId", 0)), safe=False)
 
-def getTx(request, tx, coin=None):
+def get_tx(request, tx, coin=None):
     if request.method != "GET":
         raise Http404("Only GETs are allowed!")
 
     if request.GET.get("rawTx"):
-        return JsonResponse(getBlockchain("omni_gettransaction", [tx]), json_dumps_params={'indent': 2})
-    return render(request, 'coin/tx.html', getBlockchain("omni_gettransaction", [tx]))
+        return JsonResponse(get_blockchain("omni_gettransaction", [tx]), json_dumps_params={'indent': 2})
+    return render(request, 'coin/tx.html', get_blockchain("omni_gettransaction", [tx]))
 
-def isUniqSession(request, coin=None):
+def is_uniq_session(request, coin=None):
     uniq = True
 
     try:
-        request.user.getCoin(coin).isUniqSession(request.GET.get("name"))
+        request.user.getCoin(coin).is_uniq_session(request.GET.get("name"))
     except ValidationError as e:
         uniq = True
     
     return JsonResponse(uniq, safe=False)
 
-def isValidAddr(request, coin=None):
+def is_valid_addr(request, coin=None):
     if request.method != "GET":
         raise Http404("Only GETs are allowed!")
-    return JsonResponse(coinController.isValidAddr(coin, request.GET.get('addr')), safe=False)
+    return JsonResponse(coinController.is_valid_addr(coin, request.GET.get('addr')), safe=False)
 
-def copySession(request, coin=None, session_id=None):
+def copy_session(request, coin=None, session_id=None):
     if request.method != "POST":
         raise Http404("Only POSTs are allowed!")
     
     if request.user.is_authenticated and request.user.settings.premium:
-        session = request.user.getCoin(coin).addSession(request.POST.get("name", ""), copySession=session_id)
+        session = request.user.getCoin(coin).add_session(request.POST.get("name", ""), copy_session=session_id)
         
         if session:
             return JsonResponse(session.getUrl(), safe=False)
 
     return JsonResponse("ERROR", safe=False)
 
-def addSession(request, coin=None):
+def add_session(request, coin=None):
     if request.method != "POST":
         raise Http404("Only POSTs are allowed!")
     
     if request.user.is_authenticated and request.user.settings.premium:
-        session = request.user.getCoin(coin).addSession(request.POST.get("name", ""))
+        session = request.user.getCoin(coin).add_session(request.POST.get("name", ""))
 
         if session:
             return JsonResponse(session.getUrl(), safe=False)
 
     return JsonResponse("ERROR", safe=False)
 
-def delSession(request, coin=None):
+def del_session(request, coin=None):
     if request.method != "POST":
         raise Http404("Only POSTs are allowed!")
 
     if request.user.is_authenticated and request.user.settings.premium:
-        return JsonResponse(request.user.getCoin(coin).delSession(request.POST.get("session_id", "")), safe=False)
+        return JsonResponse(request.user.getCoin(coin).del_session(request.POST.get("session_id", "")), safe=False)
     
     return JsonResponse("ERROR", safe=False)
 
-def editSession(request, coin=None):
+def edit_session(request, coin=None):
     if request.method != "POST":
         raise Http404("Only POSTs are allowed!")
 
     if request.user.is_authenticated and request.user.settings.premium:
-        return JsonResponse(request.user.getCoin(coin).editSession(request.POST.get("session_id", ""), request.POST.get("name", "")), safe=False)
+        return JsonResponse(request.user.getCoin(coin).edit_session(request.POST.get("session_id", ""), request.POST.get("name", "")), safe=False)
     
     return JsonResponse("ERROR", safe=False)
 
 """
     TODO: Better Filter Efficiency by only adding custom filters instead of replacing defaults
 """
-def getFilters(reqData, format=True):
+def get_filters(req_data, format=True):
     filters = DFilters()
     for f, val in filters.items():
-        temp = reqData.get(f)
+        temp = req_data.get(f)
         
         if temp and temp != "max" and temp != "latest" and temp != "min" and temp != "oldest":
             try:
@@ -244,15 +245,15 @@ def parseTimeRange(range):
     return -datetime.timedelta(hours=hours).total_seconds()
 """
 
-def getParams(reqData):
+def get_params(req_data):
     params = DParams()
     for p, val in params.items():
         temp = None
 
         if '[]' in p:
-            temp = reqData.getlist(p)
+            temp = req_data.getlist(p)
         else:
-            temp = reqData.get(p)
+            temp = req_data.get(p)
 
         if temp:
             try:
@@ -271,8 +272,8 @@ def getParams(reqData):
     return params
 
 """
-	Return info from blockchain
+	Return info from directly blockchain
 """
-def getBlockchain(method, params=[]):
+def get_blockchain(method, params=[]):
     data = {"method": method, "params": params, "jsonrpc": "1.0"}
     return (requests.post("http://127.0.0.1:8332/", auth=Auth(), data=json.dumps(data), headers={'content-type': 'application/json'}).json())['result']

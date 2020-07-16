@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.core.validators import MaxLengthValidator, MinLengthValidator, RegexValidator, BaseValidator
 from .query import CoinController
+from .clean import Filters
 import urllib.parse
 import time
 import sys
@@ -15,24 +16,32 @@ import uuid
 #import django
 #django.setup()
 
+"""
+    Default sessions for coins from database
+    TODO: Allow it to automatically detect first created session as default session for coin
+"""
 default_sessions = {
     "USDT": "ef628b71-bb8c-4944-9a6e-0d6b2c49e41b",#Coin.objects.filter(name__iexact="USDT").first().sessions.first().uuid,
     "BTC": ""
 }
 
-sys.path.append("../")
-from static.py.clean import Filters
-
+# Validation of addr and name input from user
 addrRegex = r'^[A-Za-z0-9]*$'
 nameRegex = r'^[A-Za-z0-9_ -]*$'
 
+"""
+    Checks if addr is a valid node on neo4j database
+"""
 def validate_addr(value):
-    coin = "USDT" # FIX
+    coin = "USDT" # FIX to be able to check any coin
     node = CoinController().driver.session().run("MATCH (a:" + coin + ") WHERE a.addr = '" + value + "' RETURN a").single()
 
     if not node:
         raise ValidationError('{} is not a valid {} address'.format(value, coin))
 
+"""
+    Checks if uuid is valid
+"""
 def is_valid_uuid(val):
     try:
         uuid.UUID(str(val))
@@ -40,6 +49,9 @@ def is_valid_uuid(val):
     except ValueError:
         return False
 
+"""
+    Subclass of Filters which handles filters from Node and Group models
+"""
 class FiltersModel(Filters):
     def __init__(self, model):
         filters = {}
@@ -49,6 +61,11 @@ class FiltersModel(Filters):
 
         super().__init__(filters)
 
+"""
+    Node model which handles saving user's filters, group, and label in session
+    Distinguished by public key address
+    Child of Group model
+"""
 class Node(models.Model):
     name = models.CharField(max_length=16, validators=[MinLengthValidator(3), RegexValidator(nameRegex)])
     addr = models.CharField(max_length=34, validators=[MinLengthValidator(34), RegexValidator(addrRegex), validate_addr])
@@ -91,6 +108,9 @@ class Node(models.Model):
     def get_filters(self):
         return FiltersModel(self).filters
 
+    """
+        Returns node as dictionary for frontend
+    """
     def get_as_dict(self):
         return {
             "name": self.name,
@@ -102,6 +122,12 @@ class Node(models.Model):
     def __str__(self):
         return self.name
 
+"""
+    Group model holding many nodes in user's session
+    Handles editting of nodes and group filters and group label
+    Distinguished by uuid
+    Child of Session model
+"""
 class Group(models.Model):
     name = models.CharField(max_length=16, validators=[MinLengthValidator(3), RegexValidator(nameRegex)])
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -123,9 +149,10 @@ class Group(models.Model):
     def get_url(self):        
         url = self.session.get_url() + "/group/" + str(self.uuid)
 
-        return url + "?" +  urllib.parse.urlencode(FiltersModel(self).get_changed_filters()) #FIX
+        return url + "?" +  urllib.parse.urlencode(FiltersModel(self).get_changed_filters())
 
     def get_addrs(self):
+        # TODO: Find better way to distinguish default group in sessions
         if self.name == "Home":
             return self.session.get_addrs()
 
@@ -191,6 +218,9 @@ class Group(models.Model):
 
         raise ValidationError("Unable to add node to default session!", code="invalid")
 
+    """
+        Returns group as dictionary for frontend
+    """
     def get_as_dict(self):
         addrs = []
 
@@ -211,6 +241,12 @@ class Group(models.Model):
     def __str__(self):
         return self.name
 
+"""
+    Session model holding user's groups and nodes
+    Each coin should have a 'default' session for anyone to view
+    Distinguished by uuid
+    Child of Coin model
+"""
 class Session(models.Model):
     name = models.CharField(max_length=16, validators=[MinLengthValidator(3), RegexValidator(nameRegex)])
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -265,6 +301,9 @@ class Session(models.Model):
         
         return addrs
 
+    """
+        Checks if node name or address is not already in session
+    """
     def is_uniq_node(self, name, addr):
         for group in self.groups.all():
             for node in group.nodes.all():
@@ -273,6 +312,9 @@ class Session(models.Model):
                 if node.addr == addr:
                     raise ValidationError('%(addr)s is not unique node addr in session %(name)s', code="invalid", params={'addr': addr, 'name': self.name})
     
+    """
+        Returns dictionary for frontend
+    """
     def get_as_dict(self):
         return {
             'name': self.name,
@@ -281,6 +323,9 @@ class Session(models.Model):
             'addrs': self.get_nodes()
         }
 
+    """
+        Returns list for easy organisation on site
+    """
     def get_as_list(self):        
         catList    = []
 
@@ -294,11 +339,18 @@ class Session(models.Model):
     def __str__(self):
         return self.name
 
+"""
+    Always add default group 'Home' to Session
+"""
 @receiver(post_save, sender=Session)
 def created(sender, instance, created, **kwargs):
     if created:
         instance.add_group("Home")
 
+"""
+    Coin model holding all of the user's sessions of specific coin
+    All user's have access to the coin's default session
+"""
 class Coin(models.Model):
     name = models.CharField(max_length=5, validators=[MinLengthValidator(3), RegexValidator(nameRegex)], default="USDT")
 
@@ -334,7 +386,7 @@ class Coin(models.Model):
         session = self.get_session(id)
         
         if session.uuid != default_sessions[self.name]:
-            self.is_uniq_session(newName)
+            self.is_uniq_session(new_name)
 
             session.name = new_name
             session.save()
@@ -352,6 +404,9 @@ class Coin(models.Model):
                 pass
         return ValidationError("Unable to delete default session!", code="invalid")
 
+    """
+        Returns sessions by id but if it is not found in user's profile then return default session
+    """
     def get_session(self, id=None):
         try:
             return self.sessions.all().get(uuid=id)

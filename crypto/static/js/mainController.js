@@ -115,7 +115,7 @@ function mainController($scope) {
 					main.acctInput.email.valid = null;
 				});
 				
-				let isValid = await $.get("../isUniqEmail?email=" + val);
+				let isValid = await $.get("../is_uniq_email?email=" + val);
 				main.acctInput.email.valid = isValid;
 
 				if (!isValid) {

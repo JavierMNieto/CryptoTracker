@@ -2,11 +2,16 @@ import time
 import re
 from .defaults import *
 
-def numWithCommas(num, dec=0):
+def num_with_commas(num, dec=0):
     if dec > 0:
         return ("{:,}".format(round(float(num), dec)))
     return ("{:,}".format(float(num)))
 
+"""
+    Filters class which handles filters from user requests and formats 
+    them for most efficient use for queries
+    TODO: Find more efficient way to build filters from user requests
+"""
 class Filters:
     dFilters = DFilters()
 
@@ -37,7 +42,9 @@ class Filters:
 
         return filters 
 
-    ## CHANGE
+    """
+        Format filters by building dictionary of only valid filter types and filter values
+    """
     def get_formatted_filters(self, formatTime=True):
         filters = {}
 
@@ -65,6 +72,9 @@ class Filters:
         
         return filters
 
+    """
+        Returns filters which do not have default values
+    """
     def get_changed_filters(self):
         cFilters = {}
 
@@ -74,20 +84,19 @@ class Filters:
         
         return cFilters
 
-
-def inArr(arr, val):
+def in_arr(arr, val):
     for item in arr:
         if item == val:
             return True
     
     return False
 
-def isInt(s):
+def is_int(s):
     try: 
         int(s)
         return True
     except ValueError:
         return False
 
-def isValidName(name):            
+def is_valid_name(name):            
         return len(name) < 16 and len(name) > 2 and re.match(r'^[A-Za-z0-9_ -]*$', name) != None
