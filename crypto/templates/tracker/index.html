@@ -129,7 +129,8 @@
 
 	<div class="modal fade" tabindex="-1" role="dialog" id="overlay" style="overflow: hidden;" aria-hidden="true">
 		<div ng-switch on="main.overlay.type" class="modal-dialog modal-dialog-centered modal" ng-class="{'modal-sm': main.overlay.type == 'delete' || main.overlay.type.indexOf('Session') > 0}" role="document">
-		{% if user.is_authenticated and user.settings.premium and session and session != "Basic Session" %}	
+		{% if user.is_authenticated and user.settings.premium and session %}
+			{% if session != "Basic Session" %}	
 			<form id="edit" method="post" action="{{ request.path }}/change" ng-switch-when="edit"
 				class="modal-content bg-dark">
 				{% csrf_token %}
@@ -318,6 +319,7 @@
 					</button>
 				</div>
 			</form>
+			{% endif %}
 			<div id="customGraph" ng-switch-when="customGraph" class="modal-content bg-dark">
 				{% csrf_token %}
 				<div class="modal-header text-light">
