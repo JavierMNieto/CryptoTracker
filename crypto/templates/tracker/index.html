@@ -791,7 +791,7 @@
 							data-target="#{% verbatim %}{{category.name}}{% endverbatim %}" aria-expanded="false"
 							aria-controls="{% verbatim %}{{category.name}}{% endverbatim %}"
 							ng-disabled="category.addrs.length < 1">
-							<i class="fas fa-caret-down flipped"></i>
+							<i class="fas fa-caret-down mt-1 flipped"></i>
 						</button>
 						<div ng-switch on="basic.isCustom" class="ng-cloak text-truncate"
 							style="overflow: visible !important;"
@@ -806,7 +806,7 @@
 								<button
 									class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow'
 									data-toggle="modal" data-target="#overlay" ng-click="prem.showOverlay({type:'editCat',cat:category.name, id:category.uuid,url:category.url,filters:category.filters});">
-									<i class="fas fa-edit"></i>
+									<i class="fas fa-edit" style="font-size: 1.2em; margin-top: 0.1em"></i>
 								</button>
 							{% else %}
 								<!--
@@ -853,14 +853,14 @@
 								<div ng-switch-default style="white-space: nowrap;">
 								{% if user.is_authenticated and user.settings.premium and session != "Basic Session" %}	
 									<button
-										class='btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow'
+										class="btn btn-outline-danger btn-sm btn-group float-right m-2 mr-2 btn-overlap shadow"
 										ng-click="prem.showOverlay({type:'delete',name:x.name,addr:x.addr,cat:category.uuid});">
-										<i class="fas fa-trash"></i>
+										<i class="fas fa-trash" style="font-size: 1.3em; margin-top: 0.1em"></i>
 									</button>
 									<button
 										class='btn btn-outline-info btn-sm btn-group float-right m-2 mr-n1 btn-overlap shadow'
 										ng-click="prem.showOverlay({type:'edit',name:x.name,addr:x.addr,cat:category.name,catId:category.uuid,url:x.url,filters:x.filters});">
-										<i class="fas fa-edit"></i>
+										<i class="fas fa-edit" style="font-size: 1.2em; margin-top: 0.1em"></i>
 									</button>
 								{% endif %}
 									<a href="{% verbatim %}{{x.url}}{% endverbatim %}" id="addr" target="iframe_a"
@@ -932,7 +932,8 @@
 				edges: new vis.DataSet([
 					{from: 3, to: 1},
 					{from: 1, to: 2},
-					{from: 2, to: 4}
+					{from: 2, to: 4},
+					{from: 3, to: 4}
 				])
 			};
 
