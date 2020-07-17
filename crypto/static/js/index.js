@@ -140,13 +140,13 @@ $(document).mouseup(function (e) {
 });
 
 $('#accordion').on('hide.bs.collapse', e => {
-    var el = $(`[name='${e.target.id}']`).find('i');
+    //var el = $(`[name='${e.target.id}']`).find('i');
 
-    $(el).toggleClass("flip flipped");
+    $(`[name='${e.target.id}'] .fa-caret-down`).toggleClass("flip flipped");
 });
 
 $('#accordion').on('show.bs.collapse', e => {
-    var el = $(`[name='${e.target.id}']`).find('i');
+    //var el = $().find('i');
     
-    $(el).toggleClass("flipped flip");
+    $(`[name='${e.target.id}'] .fa-caret-down`).toggleClass("flipped flip");
 });

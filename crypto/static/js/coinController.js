@@ -1,8 +1,13 @@
+/**
+ * Coin controller for displaying txs and graphs
+ */
+
 var main = angular
 	.module('txs', [])
 	.factory('PagerService', PagerService)
 	.controller('txsController', ['PagerService', '$scope', txs])
 	.directive('ngInitTime', function ($parse) {
+		// Format time in user's local time on initialization of page
 		return {
 			scope: {
 				formatTime: "&callbackFn"
@@ -12,6 +17,7 @@ var main = angular
 			}
 		};
 	}).directive('ngOverflow', ['$parse', '$rootScope', '$exceptionHandler', function ($parse, $rootScope, $exceptionHandler) {
+		// Listener for when element overflows from parent
 		return {
 			restrict: 'A',
 			scope: {
@@ -94,7 +100,7 @@ function txs(PagerService, $scope) {
 
 	vm.currentId = 0;
 
-	vm.savedTxs = {};
+	vm.savedTxs = {}; // Saved Tx pages so that duplicate requests are not made
 	vm.txLoading = true;
 	vm.rowTxs = true;
 	vm.txGraph = false;
@@ -103,6 +109,7 @@ function txs(PagerService, $scope) {
 	vm.graphFilters.minTime = "";
 	vm.graphFilters.maxTime = "";
 
+	// initialize tooltips and date input
 	$(function () {
 		$('[data-toggle="tooltip"]').tooltip({
 			trigger: 'hover',
@@ -213,6 +220,11 @@ function txs(PagerService, $scope) {
 		return moment.unix(mill).format(dateFormat) + " " + moment.tz(moment.tz.guess()).format("z");
 	}
 
+	/**
+	 * Sets page depending on type of selection 
+	 * (either of main address(es), of temporary node, or of selected edge on graph)
+	 * @param {int} page 
+	 */
 	vm.setPage = async function (page) {
 		if (vm.pager.totalPages < 1) {
 			vm.pager = PagerService.GetPager(tempTotalTxs, page, pageCnt);
@@ -289,6 +301,11 @@ function txs(PagerService, $scope) {
 		});
 	}
 
+	/**
+	 * Formats map of filters into url params
+	 * @param {JSON Object} filters 
+	 * @param {String} url 
+	 */
 	function formatFilters(filters, url) {
 		/*
 		if (filters['minTime'].trim() === "") {
@@ -360,6 +377,7 @@ function txs(PagerService, $scope) {
 		};
 	}
 
+	// 
 	vm.setFilters = function () {
 		var name = $("#name").text().trim();
 		vm.startLoader();
@@ -514,6 +532,10 @@ function txs(PagerService, $scope) {
 		return distinctAddrs;
 	}
 
+	/**
+	 * Adds txs of address to existing graph
+	 * @param {JSON Object} properties 
+	 */
 	vm.addTempGraph = async function (properties) {
 		if (properties.nodes.length > 0) {
 			let id = properties.nodes[0];

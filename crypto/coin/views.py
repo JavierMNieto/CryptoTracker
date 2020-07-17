@@ -1,3 +1,7 @@
+"""
+	Probably worth checking out new angular https://angular.io/ for easy backend and frontend compatibility
+    TODO: Maybe use class view instead for more organised url/function mapping
+"""
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, Http404
 from django.template import loader
@@ -22,12 +26,7 @@ import requests
 import traceback
 
 coinController = CoinController()
-
 coins = ["USDT"]
-
-"""
-    TODO: Maybe use class view instead for more organised url/function mapping
-"""
 
 def home(request, coin=None):
     btc = ccxt.coinbase().fetch_ticker('BTC/USD')

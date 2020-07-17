@@ -1,3 +1,6 @@
+"""
+	Probably worth checking out new angular https://angular.io/ for easy backend and frontend compatibility
+"""
 from django.http import HttpResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.template import loader
 from neo4j.v1 import GraphDatabase
