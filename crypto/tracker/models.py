@@ -30,26 +30,26 @@ class AnonymousUser(DjangoAnonymousUser):
     def __init__(self, request):
         super(AnonymousUser, self).__init__()
     
-    def getCoin(self, coin):
+    def get_coin(self, coin):
         try:
             return Coin.objects.filter(name__iexact=coin).first()
         except Exception as e:
             raise Http404("Invalid Coin") 
 
-def getCoin(self, coin):
+def get_coin(self, coin):
     try:
         return self.coins.all().get(name__iexact=coin)
     except Coin.DoesNotExist as e:
         raise Http404("Invalid Coin") 
 
-def addCoin(self, coin):
+def add_coin(self, coin):
     try:
-        self.getCoin(coin)
+        self.get_coin(coin)
     except Http404 as e:
         self.coins.create(name=coin, user=self)
         
-User.add_to_class('getCoin', getCoin)
-User.add_to_class('addCoin', addCoin)
+User.add_to_class('get_coin', get_coin)
+User.add_to_class('add_coin', add_coin)
 """
 class JSONField(models.TextField):
     def to_python(self, value):

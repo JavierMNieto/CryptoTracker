@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, Http404
 from django.template import loader
 from django.shortcuts import get_object_or_404, render, redirect
-from neo4j.v1 import GraphDatabase
+from neo4j import GraphDatabase
 from django.core.exceptions import ValidationError
 from urllib.parse import unquote
 from pyvis.network import Network
@@ -31,12 +31,12 @@ coins = ["USDT"]
 def home(request, coin=None):
     btc = ccxt.coinbase().fetch_ticker('BTC/USD')
 
-    sessions      = request.user.getCoin(coin).get_sessions()
+    sessions      = request.user.get_coin(coin).get_sessions()
     basic_session = Coin.objects.filter(name__iexact=coin).first().sessions.first().get_as_dict()
     return render(request, 'tracker/index.html', {'search': [], 'coin': 'home', 'btc': btc, 'basic_session': basic_session, 'sessions': sessions, 'session': None})
 
 def session(request, coin=None, session_id=None):
-	session = request.user.getCoin(coin).get_session(session_id).name
+	session = request.user.get_coin(coin).get_session(session_id).name
 
 	btc = ccxt.coinbase().fetch_ticker('BTC/USD')
 
@@ -47,19 +47,19 @@ def go_to_default_session(request, coin):
     return redirect(Coin.objects.filter(name__iexact=coin).first().sessions.first().get_url())
 
 def get_known(request, coin=None, session_id=None):
-    return JsonResponse(request.user.getCoin(coin).get_session(session_id).get_as_list(), safe=False) 
+    return JsonResponse(request.user.get_coin(coin).get_session(session_id).get_as_list(), safe=False) 
 
 def add(req_data, session):
     group   = req_data.get("cat", "")
 
-    group = session.addGroup(group)
+    group = session.add_group(group)
     
-    return group.addNode(req_data.get("name", ""), req_data.get("addr", ""), get_filters(req_data, format=False))
+    return group.add_node(req_data.get("name", ""), req_data.get("addr", ""), get_filters(req_data, format=False))
 
 def delete(req_data, session):
     group = session.get_group(req_data.get("prevCat", ""))
 
-    return group.delNode(req_data.get("addr", ""))
+    return group.del_node(req_data.get("addr", ""))
 
 def edit(req_data, session):
     delete(req_data, session)
@@ -93,7 +93,7 @@ def change(request, coin=None, session_id=None):
 
     try:
         if method in methods:
-            resp = methods[method](request.POST, request.user.getCoin(coin).get_session(session_id))
+            resp = methods[method](request.POST, request.user.get_coin(coin).get_session(session_id))
     except ValidationError as e:
         resp = "ERROR! " + e.message
     except Exception as e:
@@ -102,20 +102,20 @@ def change(request, coin=None, session_id=None):
     return JsonResponse(resp, safe=False)
 
 def addr(request, coin=None, session_id=None, addr=None):
-    session = request.user.getCoin(coin).get_session(session_id)
+    session = request.user.get_coin(coin).get_session(session_id)
 
     data = coinController.get_addr(addr, session, get_filters(request.GET))
     return render(request, 'coin/coin.html', data)
 
 def custom_group(request, coin=None, session_id=None):
-    session = request.user.getCoin(coin).get_session(session_id)
+    session = request.user.get_coin(coin).get_session(session_id)
     
     data = coinController.get_group(session, get_filters(request.GET), addrs=request.GET.getlist("addr[]", None))
     data['session'] = session.name
     return render(request, 'coin/coin.html', data)
 
 def group(request, coin=None, session_id=None, group_id=None):
-    session = request.user.getCoin(coin).get_session(session_id)
+    session = request.user.get_coin(coin).get_session(session_id)
     
     data = coinController.get_group(session, get_filters(request.GET), group_id)
     data['session'] = session.name
@@ -125,12 +125,12 @@ def get_txs(request, coin=None, session_id=None):
     if request.method != "GET":
         raise Http404("Only GETs are allowed!")
 
-    return JsonResponse(coinController.get_txs(request.user.getCoin(coin).get_session(session_id), get_params(request.GET), get_filters(request.GET)), safe=False)
+    return JsonResponse(coinController.get_txs(request.user.get_coin(coin).get_session(session_id), get_params(request.GET), get_filters(request.GET)), safe=False)
 
 def get_graph_data(request, coin=None, session_id=None):   
     if request.method != "GET":
         raise Http404("Only GETs are allowed!") 
-    return JsonResponse(coinController.get_graph_data(request.user.getCoin(coin).get_session(session_id), get_params(request.GET), get_filters(request.GET), request.GET.get("lastId", 0)), safe=False)
+    return JsonResponse(coinController.get_graph_data(request.user.get_coin(coin).get_session(session_id), get_params(request.GET), get_filters(request.GET), request.GET.get("lastId", 0)), safe=False)
 
 def get_tx(request, tx, coin=None):
     if request.method != "GET":
@@ -144,7 +144,7 @@ def is_uniq_session(request, coin=None):
     uniq = True
 
     try:
-        request.user.getCoin(coin).is_uniq_session(request.GET.get("name"))
+        request.user.get_coin(coin).is_uniq_session(request.GET.get("name"))
     except ValidationError as e:
         uniq = True
     
@@ -160,10 +160,10 @@ def copy_session(request, coin=None, session_id=None):
         raise Http404("Only POSTs are allowed!")
     
     if request.user.is_authenticated and request.user.settings.premium:
-        session = request.user.getCoin(coin).add_session(request.POST.get("name", ""), copy_session=session_id)
+        session = request.user.get_coin(coin).add_session(request.POST.get("name", ""), copy_session=session_id)
         
         if session:
-            return JsonResponse(session.getUrl(), safe=False)
+            return JsonResponse(session.get_url(), safe=False)
 
     return JsonResponse("ERROR", safe=False)
 
@@ -172,10 +172,10 @@ def add_session(request, coin=None):
         raise Http404("Only POSTs are allowed!")
     
     if request.user.is_authenticated and request.user.settings.premium:
-        session = request.user.getCoin(coin).add_session(request.POST.get("name", ""))
+        session = request.user.get_coin(coin).add_session(request.POST.get("name", ""))
 
         if session:
-            return JsonResponse(session.getUrl(), safe=False)
+            return JsonResponse(session.get_url(), safe=False)
 
     return JsonResponse("ERROR", safe=False)
 
@@ -184,7 +184,7 @@ def del_session(request, coin=None):
         raise Http404("Only POSTs are allowed!")
 
     if request.user.is_authenticated and request.user.settings.premium:
-        return JsonResponse(request.user.getCoin(coin).del_session(request.POST.get("session_id", "")), safe=False)
+        return JsonResponse(request.user.get_coin(coin).del_session(request.POST.get("session_id", "")), safe=False)
     
     return JsonResponse("ERROR", safe=False)
 
@@ -193,7 +193,7 @@ def edit_session(request, coin=None):
         raise Http404("Only POSTs are allowed!")
 
     if request.user.is_authenticated and request.user.settings.premium:
-        return JsonResponse(request.user.getCoin(coin).edit_session(request.POST.get("session_id", ""), request.POST.get("name", "")), safe=False)
+        return JsonResponse(request.user.get_coin(coin).edit_session(request.POST.get("session_id", ""), request.POST.get("name", "")), safe=False)
     
     return JsonResponse("ERROR", safe=False)
 

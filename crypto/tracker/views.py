@@ -3,7 +3,7 @@
 """
 from django.http import HttpResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.template import loader
-from neo4j.v1 import GraphDatabase
+from neo4j import GraphDatabase
 from django.contrib.auth.models import User
 from django.core.validators import validate_email, ValidationError
 from django.utils.encoding import force_bytes, force_text

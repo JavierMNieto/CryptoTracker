@@ -85,6 +85,10 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = "cryptotracker8969@gmail.com"
 EMAIL_HOST_PASSWORD = "cryptotracker89"
 
+X_FRAME_OPTIONS = 'ALLOWALL'
+
+XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
+
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
