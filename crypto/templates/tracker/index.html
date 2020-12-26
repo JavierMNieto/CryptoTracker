@@ -76,11 +76,13 @@
 				class="font-weight-bold text-light">{% verbatim %}{{ main.hk }}{% endverbatim %}</span>-->
 			<span class="h6 text-warning pl-5">BTC: </span><span
 				class='font-weight-bold'>${{ btc.last | floatformat:2 | numCommas}}</span>
-			{% if btc.percentage < 0 %}
-			<span class="font-italic text-danger pr-5"> ({{btc.percentage}}%)</span>
-			{% else %}
-			<span class="font-italic text-success pr-5"> (+{{btc.percentage}}%)</span>
-			{% endif %}
+				{% comment '' %}
+					{% if btc.percentage < 0 %}
+					<span class="font-italic text-danger pr-5"> ({{btc.percentage}}%)</span>
+					{% else %}
+					<span class="font-italic text-success pr-5"> (+{{btc.percentage}}%)</span>
+					{% endif %}
+				{% endcomment %}
 			<span class='text-dark h6'>UTC Time: </span><span
 				class="font-weight-bold text-light">{% verbatim %}{{ main.ut }}{% endverbatim %}</span>
 		{% else %}

@@ -207,6 +207,11 @@
 							<i class="fas fa-crosshairs"></i>
 						</button>
 					</div>
+					<div class="row mx-auto">
+						<button ng-disabled="!vm.isGraph" class="btn position-relative btn-sm shadow-none" onclick="togglePhysics()" data-toggle="tooltip" data-placement="top" title="Toggle Graph Physics">
+							<i class="fas fa-atom"></i>
+						</button>
+					</div>
 					<div class="row mx-auto" ng-switch="vm.txGraph">
 						<button ng-switch-when="false" ng-disabled="!vm.isGraph" class="btn position-relative btn-sm shadow-none" onclick="$('#graph').animate({width: '45%'}, 'slow', 'linear', function() {$('#graph').trigger('resize');});" data-toggle="tooltip" data-placement="top" title="Right Justify Transactions">
 							<i class="fas fa-align-right"></i>

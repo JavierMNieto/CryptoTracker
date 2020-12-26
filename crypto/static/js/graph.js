@@ -1,3 +1,6 @@
+
+var physics = false;
+
 function fullGraph() {
 	document.getElementById('graph').requestFullscreen();
 }
@@ -22,6 +25,16 @@ function toggleDarkMode() {
 			}
 		});
 	}
+}
+
+function togglePhysics() {
+	physics = !physics;
+
+	network.setOptions({
+		"physics": {
+			"enabled": physics
+		}
+	});
 }
 
 // This method is responsible for drawing the graph, returns the drawn network
@@ -212,17 +225,21 @@ function onDeselectNodes() {
 	vm.$apply('vm.resetTotalTxs();vm.selection = undefined;');
 }
 
-function stopPhysics(graph) {
+function stopPhysics(graph, center=true) {
 	setTimeout(function () {
-		network.stabilize();
+		if (center) {
+			network.stabilize();
+		}
 		network.setOptions({
 			"physics": {
-				"enabled": false
+				"enabled": physics
 			}
 		});
-		network.fit({
-			animation: true
-		});
+		if (center) {
+			network.fit({
+				animation: true
+			});
+		}
 		document.getElementById('graphContainer').style = "cursor: auto";
 		$('#filterBtn').prop('disabled', false);
 	}, graph.edges.length * 5);

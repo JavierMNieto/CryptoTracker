@@ -594,7 +594,7 @@ function txs(PagerService, $scope) {
 				onDeselectEdges();
 
 				setTimeout(function () {
-					stopPhysics(vm.graph);
+					stopPhysics(vm.graph, false);
 					$(function () {
 						$('[data-toggle="tooltip"]').tooltip({
 							trigger: 'hover',
