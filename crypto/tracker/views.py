@@ -88,7 +88,7 @@ def forgot_pass(request):
 	return HttpResponse("ERROR")
 
 def pass_change(request, uidb64, token):
-	signout(request)
+	#signout(request)
 
 	try:
 		uid  = urlsafe_base64_decode(uidb64)
@@ -218,8 +218,8 @@ def is_uniq_user_name(request):
 	return JsonResponse(not User.objects.filter(username__iexact=request.GET.get("username")).exists(), safe=False)
 
 def home(request, confirmation=None, rejection=None):
-	cmc = ccxt.coinbase()
-	btc = cmc.fetch_ticker('BTC/USD')
+	btc = None
+	#btc = ccxt.coinbase().fetch_ticker('BTC/USD')
 	return render(request, 'tracker/index.html', {
 		'search': [], 
 		'coin': None, 

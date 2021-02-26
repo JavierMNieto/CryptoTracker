@@ -67,27 +67,27 @@
 			<a class="navbar-brand nav-link" style="cursor: pointer;" href="{% url 'home' %}">
 				<img src="{% static 'images/tracking.png' %}" width="30" height="30"
 					class="d-inline-block align-top">
-				<span class="text-light">Site Name</span>
+				<span class="text-light"></span>
 			</a>
 		</div>
 		<div class="ng-cloak w-100 text-center py-2">
 		{% if coin is not None %}
 			<!--<span class='text-dark h6'>Hong Kong Time: </span><span
 				class="font-weight-bold text-light">{% verbatim %}{{ main.hk }}{% endverbatim %}</span>-->
+			{% if btc %}
 			<span class="h6 text-warning pl-5">BTC: </span><span
-				class='font-weight-bold'>${{ btc.last | floatformat:2 | numCommas}}</span>
-				{% comment '' %}
+				class='font-weight-bold pr-5'>${{ btc.last | floatformat:2 | numCommas}}</span>
 					{% if btc.percentage < 0 %}
 					<span class="font-italic text-danger pr-5"> ({{btc.percentage}}%)</span>
 					{% else %}
 					<span class="font-italic text-success pr-5"> (+{{btc.percentage}}%)</span>
 					{% endif %}
-				{% endcomment %}
+			{% endif %}
 			<span class='text-dark h6'>UTC Time: </span><span
 				class="font-weight-bold text-light">{% verbatim %}{{ main.ut }}{% endverbatim %}</span>
 		{% else %}
 			<a href="#" class="btn">Learn More</a>
-			<a href="#" class="btn">Buy</a>
+			<a href="#" class="btn"></a>
 		{% endif %}
 		</div>
 		<div style="white-space: nowrap; position: absolute; right: 1rem; top: 0.5rem;">
@@ -717,10 +717,14 @@
 	<div id="body-row" class="ng-cloak d-flex h-100 w-100 position-relative">
 		<div id="sidebar-container" ng-mouseenter="basic.slide = true" ng-mouseleave="basic.slide = false" class="pre-scrollable pb-5" style="z-index: 10; position: relative; width: 250px">
 			<div class="text-center text-white h5 m-2 text-truncate">
+				<a class="btn btn-xs btn-outline-light px-1 py-0 shadow-none text-center" href="/{{coin}}" data-toggle="tooltip" title="Exit"
+				style="position: relative; font-size: 0.8em; text-align: center; cursor: pointer;">
+					<i class="fas fa-chevron-circle-left fa-sm"></i>
+				</a>
 				{{session}}
 				{% if user.is_authenticated and user.settings.premium %}
-					<button class="btn btn-xs btn-outline-light ml-2 px-1 py-0 shadow-none text-center" data-toggle="tooltip" title="Copy into new session"
-					style="position: absolute; font-size: 0.8em; text-align: center;" ng-click="session.showSession({type:'addSession'});">
+					<button class="btn btn-xs btn-outline-light px-1 py-0 shadow-none text-center" data-toggle="tooltip" title="Copy into new session"
+					style="font-size: 0.8em; text-align: center;" ng-click="session.showSession({type:'addSession'});">
 						<i class="fas fa-external-link-alt fa-sm"></i>
 					</button>
 				{% endif %}
@@ -1057,7 +1061,7 @@
 	</div>
 {% else %}
 	<div id="iframe1" class="position-absolute text-center pb-5" style="overflow-y: auto;">
-		<h2 class="mt-5">USDT Statistics</h2>
+		<h2 class="mt-5"><!--USDT Statistics--></h2>
 		<h2>Sessions</h2>
 		<div class="card-group justify-content-center">
 			<a href="basic" style="text-decoration:none" id="basic">

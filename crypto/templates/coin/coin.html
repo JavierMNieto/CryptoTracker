@@ -29,7 +29,7 @@
 	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 	<link rel="stylesheet" href="{% static 'css/coin.css' %}">
 </head>
-{%if totalTxs < 1 %}
+{%if not totalTxs or totalTxs < 1 %}
 	<div class="h2 text-center mx-auto">{{label}} ({{addr.0}})</div>
 	<div class="h1 text-center">No Transactions</div>
 {% else %}
@@ -123,6 +123,33 @@
 					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
 						<input autocomplete="off" ng-change="vm.addCommas('minTx');" type="text" name="minTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Tx" defplaceholder="Min Tx" ng-model="vm.graphFilters.minTx">
 						<input autocomplete="off" ng-change="vm.addCommas('maxTx');" type="text" name="maxTx" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Tx" defplaceholder="Max Tx" ng-model="vm.graphFilters.maxTx">
+					</div>
+				</div>
+				<div class="dropdown dropdown-hover mx-2">
+					<button class="btn btn-dark dropdown-toggle shadow" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Total Transaction Amount
+					</button>
+					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
+						<input autocomplete="off" ng-change="vm.addCommas('minTotal');" type="text" name="minTotal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Total" defplaceholder="Min Total" ng-model="vm.graphFilters.minTotal">
+						<input autocomplete="off" ng-change="vm.addCommas('maxTotal');" type="text" name="maxTotal" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Total" defplaceholder="Max Total" ng-model="vm.graphFilters.maxTotal">
+					</div>
+				</div>
+				<div class="dropdown dropdown-hover mx-2">
+					<button class="btn btn-dark dropdown-toggle shadow" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Average Transaction Amount
+					</button>
+					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
+						<input autocomplete="off" ng-change="vm.addCommas('minAvg');" type="text" name="minAvg" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Average" defplaceholder="Min Average" ng-model="vm.graphFilters.minAvg">
+						<input autocomplete="off" ng-change="vm.addCommas('maxAvg');" type="text" name="maxAvg" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Average" defplaceholder="Max Average" ng-model="vm.graphFilters.maxAvg">
+					</div>
+				</div>
+				<div class="dropdown dropdown-hover mx-2">
+					<button class="btn btn-dark dropdown-toggle shadow" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Number of Transactions
+					</button>
+					<div class="dropdown-menu mt-n1" style="min-width: 10vw">
+						<input autocomplete="off" ng-change="vm.addCommas('minTxsNum');" type="text" name="minTxsNum" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Min Number of Txs" defplaceholder="Min Number of Txs" ng-model="vm.graphFilters.minTxsNum">
+						<input autocomplete="off" ng-change="vm.addCommas('maxTxsNum');" type="text" name="maxTxsNum" class="form-control text-center text-truncate mx-auto shadow m-1" placeholder="Max Number of Txs" defplaceholder="Max Number of Txs" ng-model="vm.graphFilters.maxTxsNum">
 					</div>
 				</div>
 			</div>
@@ -323,7 +350,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="container scroll" id="txListContainer" ng-switch="vm.txLoading" style="overflow-x: hidden;" ng-style="{'overflow-y': vm.txGraph ? 'auto' : 'hidden'}">
+			<div class="container scroll" id="txListContainer" ng-switch="vm.txLoading" style="overflow-x: hidden; padding-right: 0px;" ng-style="{'overflow-y': vm.txGraph ? 'auto' : 'hidden'}">
 				<div ng-switch-when="true" class="text-center mb-5">
 					<div class="spinner-grow plus" style="width: 5rem; height: 5rem;" role="status">
 						<span class="sr-only">Loading...</span>
@@ -335,12 +362,14 @@
 							<div class="col-sm-1">
 								<img ng-src="{% verbatim %}{{ tx.img }}{% endverbatim %}" width="48" height="48">
 							</div>
-							<div class="col-sm-7 h1">
-								{% verbatim %}{{ tx.value | number : fractionSize }}{% endverbatim %}
-								<!--<span ng-if="tx.type != 'USDTTX'" class="h6">(${% verbatim %}{{ tx.value | number : 2 }}{% endverbatim %})</span>-->
-								<button width="20" height="20" class="btn btn-icon" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.value }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Transaction Amount">
-									<i class="far fa-copy fa-lg"></i>
-								</button>
+							<div class="col-sm-7">
+								<div class="float-left ml-1 h1">
+									{% verbatim %}{{ tx.value | number : fractionSize }}{% endverbatim %}
+									<!--<span ng-if="tx.type != 'USDTTX'" class="h6">(${% verbatim %}{{ tx.value | number : 2 }}{% endverbatim %})</span>-->
+									<button width="20" height="20" class="btn btn-icon" style="background-color:rgba(0, 0, 0, 0)" data-clipboard-text="{% verbatim %}{{ tx.value }}{% endverbatim %}" data-toggle="tooltip" data-placement="top" title="Copy Transaction Amount">
+										<i class="far fa-copy fa-lg"></i>
+									</button>
+								</div>
 							</div>
 							<div class="col-sm-4 h4 font-italic text-right">{% verbatim %}{{ vm.formatTime(tx.time) }}{% endverbatim %}</div>
 						</div>

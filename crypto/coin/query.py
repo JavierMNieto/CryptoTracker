@@ -2,6 +2,7 @@ from neo4j import GraphDatabase
 from django.http import Http404
 from .clean import *
 from .defaults import *
+from .utils import is_numeric
 import json
 import time
 import re
@@ -13,9 +14,6 @@ import sys
 """
 class CoinController:
     driver = GraphDatabase.driver(Neo4j()['url'], auth=(Neo4j()['user'], Neo4j()['pass']))
-
-    def __init__(self):
-        pass
     
     """
         Pass filters into query for neo4j
@@ -152,10 +150,12 @@ class CoinController:
                 "addr": node.addr,
                 "url": node.get_url()
             }
-        except Http404 as e:
-            pass
-
-        return {"name": addr, "addr": addr, "url": session.get_url() + "/addr/" + addr}
+        except Http404:
+            return {
+                "name": addr, 
+                "addr": addr, 
+                "url": session.get_url() + "/addr/" + addr
+            }
 
     """
         Get specific node/address info from database
@@ -256,7 +256,7 @@ class CoinController:
         query = GraphQuery()
         
         # Get last id of tx if adding txs to existing graph
-        if is_int(last_id):
+        if is_numeric(last_id):
             last_id = int(last_id)
         else:
             last_id = 0
@@ -290,7 +290,7 @@ class CoinController:
 
                 group = "usdt"
 
-                if in_arr(params['addr[]'], a_node['addr']):
+                if a_node['addr'] in params['addr[]']:
                     group = "main"
                 elif last_id != 0:
                     group = "tempusdt"
@@ -319,7 +319,7 @@ class CoinController:
 
                 group = "usdt"
 
-                if in_arr(params['addr[]'], b_node['addr']):
+                if b_node['addr'] in params['addr[]']:
                     group = "main"
                 elif last_id != 0:
                     group = "tempusdt"
